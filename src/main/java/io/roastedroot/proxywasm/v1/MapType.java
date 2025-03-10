@@ -39,8 +39,7 @@ public enum MapType {
      * Convert an integer value to a MapType.
      *
      * @param value The integer value to convert
-     * @return The corresponding MapType
-     * @throws IllegalArgumentException if the value doesn't match any MapType
+     * @return The corresponding MapType or null if the value doesn't match any MapType
      */
     public static MapType fromInt(int value) {
         for (MapType type : values()) {
@@ -48,6 +47,6 @@ public enum MapType {
                 return type;
             }
         }
-        throw new IllegalArgumentException("Unknown MapType value: " + value);
+        return null;
     }
 }

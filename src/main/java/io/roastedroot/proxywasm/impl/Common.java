@@ -4,6 +4,8 @@ import com.dylibso.chicory.runtime.Instance;
 import io.roastedroot.proxywasm.v1.WasmException;
 import io.roastedroot.proxywasm.v1.WasmResult;
 
+import java.nio.ByteBuffer;
+
 /**
  * Common methods used to implement the Wasm modules.
  *
@@ -12,27 +14,18 @@ import io.roastedroot.proxywasm.v1.WasmResult;
  *
  * Once the translation is done, we can refactor it to be more idiomatic.
  */
-public class Common {
+abstract public class Common {
 
     // Size of a 32-bit integer in bytes
     static final int U32_LEN = 4;
 
     Instance instance;
 
+    public Instance getInstance() {
+        return this.instance;
+    }
     public void setInstance(Instance instance) {
         this.instance = instance;
-    }
-
-    int malloc(int size) throws WasmException {
-        long ptr = instance.export("malloc").apply(size)[0];
-        if (ptr == 0) {
-            throw new WasmException(WasmResult.INVALID_MEMORY_ACCESS);
-        }
-        return (int) ptr;
-    }
-
-    void free(int ptr) {
-        instance.export("free").apply(ptr);
     }
 
     /**
@@ -82,6 +75,29 @@ public class Common {
     }
 
     /**
+     * Write bytes to memory.
+     *
+     * @param address The address to write to
+     * @param data The data to write
+     * @throws WasmException if the memory access is invalid
+     */
+    void putMemory(int address, ByteBuffer data) throws WasmException {
+        try {
+            if ( data.hasArray() ) {
+                var array = data.array();
+                instance.memory().write(address, array, data.position(), data.remaining());
+            } else {
+                // This could likely be optimized by extending the memory interface to accept ByteBuffer
+                byte[] bytes = new byte[data.remaining()];
+                data.get(bytes);
+                instance.memory().write(address, bytes);
+            }
+        } catch (RuntimeException e) {
+            throw new WasmException(WasmResult.INVALID_MEMORY_ACCESS);
+        }
+    }
+
+    /**
      * Read bytes from memory.
      *
      * @param address The address to read from
@@ -111,4 +127,6 @@ public class Common {
             throw new WasmException(WasmResult.INVALID_MEMORY_ACCESS);
         }
     }
+
+    abstract int malloc(int length) throws WasmException;
 }

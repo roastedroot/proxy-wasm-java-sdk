@@ -1,10 +1,7 @@
 package io.roastedroot.proxywasm;
 
 import com.dylibso.chicory.wasm.Parser;
-import io.roastedroot.proxywasm.v1.Handler;
-import io.roastedroot.proxywasm.v1.LogLevel;
-import io.roastedroot.proxywasm.v1.ProxyWasmEnv;
-import io.roastedroot.proxywasm.v1.WasmException;
+import io.roastedroot.proxywasm.v1.*;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Path;
@@ -19,14 +16,15 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * Unit test for simple App.
  */
-public class ExampleTest {
+public class OnRequestHeadersTest {
 
     @Test
-    public void example() {
-        assertTrue(true);
-        var module = Parser.parse(Path.of("./src/test/resources/data/http.wasm"));
+    public void test() throws StartException {
 
-        try (var proxyWasm = ProxyWasmEnv.builder(module).build()) {
+        // This module uses the 0_1_0 ABI
+        var module = Parser.parse(Path.of("./src/test/cc-examples/on_request_headers/http.wasm"));
+
+        try (var proxyWasm = ProxyWasm.builder().build(module)) {
 
 
             Map<String, String> requestHeaders = Map.of("Hello", "World");
@@ -36,9 +34,9 @@ public class ExampleTest {
             //  be locked for exclusive access before the handler is set.
             ArrayList<String> loggedMessages = new ArrayList<>();
 
-
             // Set the import handler to the current request.
-            proxyWasm.setHandler(new Handler() {
+            proxyWasm.setHandler(new DefaultHandler() {
+                String test= "test";
 
                 @Override
                 public void log(LogLevel level, String message) throws WasmException {
@@ -66,7 +64,6 @@ public class ExampleTest {
                 ), loggedMessages);
 
             }
-
         }
 
     }
