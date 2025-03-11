@@ -113,4 +113,21 @@ public interface Handler {
      */
     WasmResult done();
 
+    /**
+     * Sets a low-resolution timer period (tick_period).
+     *
+     * When set, the host will call proxy_on_tick every tick_period milliseconds. Setting tick_period to 0 disables the timer.
+     *
+     * @return The current time in nanoseconds
+     */
+    WasmResult setTickPeriodMilliseconds(int tick_period);
+
+    /**
+     * Retrieves current time  or the approximation of it.
+     *
+     * Note Hosts might return approximate time (e.g. frozen at the context creation) to improve performance and/or prevent various attacks.
+     *
+     * @return The current time in nanoseconds
+     */
+    int getCurrentTimeNanoseconds() throws WasmException;
 }

@@ -125,4 +125,14 @@ public abstract class AbstractChainedHandler implements Handler {
     public WasmResult done() {
         return next().done();
     }
+
+    @Override
+    public WasmResult setTickPeriodMilliseconds(int tick_period) {
+        return next().setTickPeriodMilliseconds(tick_period);
+    }
+
+    @Override
+    public int getCurrentTimeNanoseconds() throws WasmException {
+        return next().getCurrentTimeNanoseconds();
+    }
 }
