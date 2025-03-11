@@ -35,8 +35,7 @@ public class OnRequestHeadersTest {
             ArrayList<String> loggedMessages = new ArrayList<>();
 
             // Set the import handler to the current request.
-            proxyWasm.setHandler(new DefaultHandler() {
-                String test= "test";
+            DefaultHandler handler = new DefaultHandler() {
 
                 @Override
                 public void log(LogLevel level, String message) throws WasmException {
@@ -48,10 +47,10 @@ public class OnRequestHeadersTest {
                     getHttpRequestHeaderCounter.incrementAndGet();
                     return requestHeaders;
                 }
-            });
+            };
 
             // create wasm-side context id for current http req
-            try (var context = proxyWasm.createContext()) {
+            try (var context = proxyWasm.createContext(handler)) {
 
                 // let the wasm module know the request headers are ready
                 assertEquals(0, getHttpRequestHeaderCounter.get());

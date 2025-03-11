@@ -16,7 +16,6 @@ public enum WasmResult {
     CAS_MISMATCH(8, "The provided CAS did not match that of the stored data"),
     RESULT_MISMATCH(9, "Returned result was unexpected, e.g. of the incorrect size"),
     INTERNAL_FAILURE(10, "Internal failure: trying check logs of the surrounding system"),
-    BROKEN_CONNECTION(11, "The connection/stream/pipe was broken/closed unexpectedly"),
     UNIMPLEMENTED(12, "Feature not implemented");
 
     private final int value;
@@ -65,5 +64,14 @@ public enum WasmResult {
             }
         }
         throw new IllegalArgumentException("Unknown WasmResult value: " + value);
+    }
+
+    public void expect(WasmResult ...expected) throws WasmException {
+        for (WasmResult result : expected) {
+            if (this == result) {
+                return;
+            }
+        }
+        throw new WasmException(this);
     }
 }

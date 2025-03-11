@@ -282,4 +282,10 @@ public class Imports extends Common {
     int proxySetEffectiveContext(int arg0) {
         return handler.setEffectiveContextID(arg0).getValue();
     }
+
+    @WasmExport
+    int proxyDone() {
+        return handler.done().getValue();
+    }
+
 }
