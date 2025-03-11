@@ -1,25 +1,4 @@
-## vm_plugin_configuration
+## Attribution
 
-This example reads the json string from Envoy's configuration yaml at the startup time
-
-
-```
-wasm log my_root_id: vm config: {
-  "name": "vm configuration"
-}
-
-
-wasm log my_root_id: plugin config: {
-  "name": "plugin configuration"
-}
-
-
-wasm log my_root_id: vm config: {
-  "name": "vm configuration"
-}
-
-
-wasm log my_root_id: plugin config: {
-  "name": "plugin configuration"
-}
-```
+This example originally came from:
+https://github.com/proxy-wasm/proxy-wasm-go-sdk/tree/main/examples/vm_plugin_configuration
