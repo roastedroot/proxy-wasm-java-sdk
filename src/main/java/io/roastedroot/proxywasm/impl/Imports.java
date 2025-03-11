@@ -279,13 +279,29 @@ public class Imports extends Common {
     }
 
     @WasmExport
-    int proxySetEffectiveContext(int arg0) {
-        return handler.setEffectiveContextID(arg0).getValue();
+    int proxySetEffectiveContext(int contextId) {
+        return handler.setEffectiveContextID(contextId).getValue();
     }
 
     @WasmExport
     int proxyDone() {
         return handler.done().getValue();
+    }
+
+    @WasmExport
+    int proxySetTickPeriodMilliseconds(int tick_period) {
+        return handler.setTickPeriodMilliseconds(tick_period).getValue();
+    }
+
+    @WasmExport
+    int proxyGetCurrentTimeNanoseconds(int returnTime) {
+        try {
+            int currentTimeNanoseconds = handler.getCurrentTimeNanoseconds();
+            putUint32(returnTime, currentTimeNanoseconds);
+            return WasmResult.OK.getValue();
+        } catch (WasmException e) {
+            return e.result().getValue();
+        }
     }
 
 }

@@ -144,10 +144,6 @@ public class ProxyWasm implements Closeable {
         return contexts;
     }
 
-    public Context createContext(Handler handler) {
-        return createContext(this.pluginContext.id(), handler);
-    }
-
     Context createContext(int parentContextID, Handler handler) {
         return new Context(this, parentContextID, handler);
     }
@@ -172,6 +168,19 @@ public class ProxyWasm implements Closeable {
 
     int nextContextID() {
         return nextContextID.getAndIncrement();
+    }
+
+    public Context createContext(Handler handler) {
+        return createContext(this.pluginContext.id(), handler);
+    }
+
+    /**
+     * Delivers a tick event to the plugin.
+     *
+     * tick() should be called in response to a Handler.setTickPeriodMilliseconds(int tick_period) callback.
+     */
+    public void tick() {
+        exports.proxyOnTick(pluginContext.id());
     }
 
     @Override

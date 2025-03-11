@@ -118,4 +118,15 @@ public class DefaultHandler implements Handler {
     public WasmResult done() {
         return WasmResult.NOT_FOUND;
     }
+
+    @Override
+    public WasmResult setTickPeriodMilliseconds(int tick_period) {
+        return WasmResult.UNIMPLEMENTED;
+    }
+
+    // Warning This function has been deprecated in favor of wasi_snapshot_preview1.clock_time_get.
+    @Override
+    public int getCurrentTimeNanoseconds() throws WasmException {
+        return (int) System.currentTimeMillis() * 1000000;
+    }
 }
