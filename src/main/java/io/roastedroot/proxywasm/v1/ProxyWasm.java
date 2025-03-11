@@ -65,13 +65,20 @@ public class ProxyWasm implements Closeable {
         }
 
         // start the vm with the vmHandler, it will receive stuff like log messages.
-        this.pluginContext = createContext(0, pluginHandler);
+        this.pluginContext = new PluginContext(this, pluginHandler);
+        registerContext(pluginContext, 0);
         if (!exports.proxyOnVmStart(pluginContext.id(), vmConfig.length)) {
             throw new StartException("proxy_on_vm_start failed");
         }
         if (!exports.proxyOnConfigure(pluginContext.id(), pluginConfig.length)) {
             throw new StartException("proxy_on_configure failed");
         }
+    }
+
+    private void registerContext(Context context, int parentContextID) {
+        contexts.put(context.id(), context);
+        activeContext = context;
+        exports.proxyOnContextCreate(context.id(), parentContextID);
     }
 
     private ABIVersion findAbiVersion() throws StartException {
@@ -99,7 +106,7 @@ public class ProxyWasm implements Closeable {
         return new AbstractChainedHandler() {
             @Override
             protected Handler next() {
-                return activeContext.handler;
+                return activeContext.handler();
             }
 
             @Override
@@ -117,8 +124,10 @@ public class ProxyWasm implements Closeable {
                 if (properties.containsKey(key)) {
                     return properties.get(key);
                 }
-                if (activeContext.handler != null) {
-                    return activeContext.handler.getProperty(key);
+
+                var handler = activeContext.handler();
+                if (handler != null) {
+                    return handler.getProperty(key);
                 }
                 return null;
             }
@@ -144,10 +153,6 @@ public class ProxyWasm implements Closeable {
         return contexts;
     }
 
-    Context createContext(int parentContextID, Handler handler) {
-        return new Context(this, parentContextID, handler);
-    }
-
     Exports exports() {
         return exports;
     }
@@ -170,13 +175,15 @@ public class ProxyWasm implements Closeable {
         return nextContextID.getAndIncrement();
     }
 
-    public Context createContext(Handler handler) {
-        return createContext(this.pluginContext.id(), handler);
+    public HttpContext createHttpContext(Handler handler) {
+        HttpContext context = new HttpContext(this, handler);
+        registerContext(context, this.pluginContext.id());
+        return context;
     }
 
     /**
      * Delivers a tick event to the plugin.
-     *
+     * <p>
      * tick() should be called in response to a Handler.setTickPeriodMilliseconds(int tick_period) callback.
      */
     public void tick() {

@@ -10,11 +10,9 @@ public enum WasmResult {
     BAD_ARGUMENT(2, "An argument was bad, e.g. did not conform to the required range"),
     SERIALIZATION_FAILURE(3, "A protobuf could not be serialized"),
     PARSE_FAILURE(4, "A protobuf could not be parsed"),
-    BAD_EXPRESSION(5, "A provided expression (e.g. \"foo.bar\") was illegal or unrecognized"),
     INVALID_MEMORY_ACCESS(6, "A provided memory range was not legal"),
     EMPTY(7, "Data was requested from an empty container"),
     CAS_MISMATCH(8, "The provided CAS did not match that of the stored data"),
-    RESULT_MISMATCH(9, "Returned result was unexpected, e.g. of the incorrect size"),
     INTERNAL_FAILURE(10, "Internal failure: trying check logs of the surrounding system"),
     UNIMPLEMENTED(12, "Feature not implemented");
 

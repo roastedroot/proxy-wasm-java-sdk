@@ -2,27 +2,19 @@ package io.roastedroot.proxywasm.v1;
 
 import java.io.Closeable;
 
-public class Context implements Closeable {
+abstract public class Context implements Closeable {
 
     ProxyWasm proxyWasm;
     final int id;
     boolean closeDone;
     boolean closeStarted;
-    Handler handler;
 
-    public Context(ProxyWasm proxyWasm, int parentContextID, Handler handler) {
+    Context(ProxyWasm proxyWasm) {
         this.proxyWasm = proxyWasm;
         this.id = proxyWasm.nextContextID();
-        this.handler = new AbstractChainedHandler() {
-            @Override
-            protected Handler next() {
-                return handler;
-            }
-        };
-        proxyWasm.contexts().put(id, this);
-        proxyWasm.setActiveContext(this);
-        proxyWasm.exports().proxyOnContextCreate(id, parentContextID);
     }
+
+    abstract Handler handler();
 
     void activate() throws WasmException {
         if (this != proxyWasm.getActiveContext() ) {
@@ -74,11 +66,6 @@ public class Context implements Closeable {
 
         // unset active context so that callbacks don't try to use us.
         proxyWasm.setActiveContext(null);
-    }
-
-
-    public int onRequestHeaders(int headerCount, boolean endOfStream) {
-        return proxyWasm.exports().proxyOnRequestHeaders(id, headerCount, endOfStream ? 1 : 0);
     }
 
 }
