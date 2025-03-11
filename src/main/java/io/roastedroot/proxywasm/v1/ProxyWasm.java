@@ -12,6 +12,7 @@ import io.roastedroot.proxywasm.impl.Imports_ModuleFactory;
 
 import java.io.Closeable;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -21,7 +22,7 @@ public class ProxyWasm implements Closeable {
 
     private final Exports exports;
     private final Imports imports;
-    private final Handler vmHandler;
+    private final Handler pluginHandler;
     private final byte[] pluginConfig;
     private final byte[] vmConfig;
     private final HashMap<String, String> properties;
@@ -29,23 +30,20 @@ public class ProxyWasm implements Closeable {
 
     private final AtomicInteger nextContextID = new AtomicInteger(1);
     private final ABIVersion abi_version;
-    private int rootContextID = 0;
-    private Handler handler;
+    private Context pluginContext;
+    private Context activeContext;
+
+    private HashMap<Integer, Context> contexts = new HashMap<>();
 
     private ProxyWasm(Builder other) throws StartException {
         this.vmConfig = other.vmConfig;
         this.pluginConfig = other.pluginConfig;
         this.properties = Objects.requireNonNullElse(other.properties, new HashMap<>());
-        this.vmHandler = Objects.requireNonNullElse(other.vmHandler, new DefaultHandler());
+        this.pluginHandler = Objects.requireNonNullElse(other.pluginHandler, new DefaultHandler());
         this.wasi = other.wasi;
-
-        // start the vm with the vmHandler, it will receive stuff like log messages.
-        this.handler = vmHandler;
-
         this.exports = other.exports;
         this.imports = other.imports;
         this.imports.setHandler(createImportsHandler());
-        this.rootContextID = nextContextID.getAndIncrement();
 
         this.abi_version = findAbiVersion();
 
@@ -66,12 +64,13 @@ public class ProxyWasm implements Closeable {
             }
         }
 
-        exports.proxyOnContextCreate(rootContextID, 0);
-        if (!exports.proxyOnVmStart(rootContextID, vmConfig.length)) {
+        // start the vm with the vmHandler, it will receive stuff like log messages.
+        this.pluginContext = createContext(0, pluginHandler);
+        if (!exports.proxyOnVmStart(pluginContext.id(), vmConfig.length)) {
             throw new StartException("proxy_on_vm_start failed");
         }
-        if (!exports.proxyOnConfigure(rootContextID, pluginConfig.length)) {
-            throw new StartException("proxy_on_vm_start failed");
+        if (!exports.proxyOnConfigure(pluginContext.id(), pluginConfig.length)) {
+            throw new StartException("proxy_on_configure failed");
         }
     }
 
@@ -100,7 +99,7 @@ public class ProxyWasm implements Closeable {
         return new AbstractChainedHandler() {
             @Override
             protected Handler next() {
-                return handler;
+                return activeContext.handler;
             }
 
             @Override
@@ -118,26 +117,66 @@ public class ProxyWasm implements Closeable {
                 if (properties.containsKey(key)) {
                     return properties.get(key);
                 }
-                if (handler != null) {
-                    return handler.getProperty(key);
+                if (activeContext.handler != null) {
+                    return activeContext.handler.getProperty(key);
                 }
                 return null;
+            }
+
+            @Override
+            public WasmResult setEffectiveContextID(int contextID) {
+                Context context = contexts.get(contextID);
+                if (context == null) {
+                    return WasmResult.BAD_ARGUMENT;
+                }
+                activeContext = context;
+                return WasmResult.OK;
+            }
+
+            @Override
+            public WasmResult done() {
+                return activeContext.done();
             }
         };
     }
 
-    public void setHandler(Handler handler) {
-        this.handler = handler;
+    HashMap<Integer, Context> contexts() {
+        return contexts;
     }
 
-    public Context createContext() {
-        var contextID = nextContextID.getAndIncrement();
-        exports.proxyOnContextCreate(contextID, this.rootContextID);
-        return new Context(exports, contextID);
+    public Context createContext(Handler handler) {
+        return createContext(this.pluginContext.id(), handler);
+    }
+
+    Context createContext(int parentContextID, Handler handler) {
+        return new Context(this, parentContextID, handler);
+    }
+
+    Exports exports() {
+        return exports;
+    }
+
+    Context getActiveContext() {
+        return activeContext;
+    }
+
+    void setActiveContext(Context activeContext) {
+        if (activeContext == null) {
+            // this happens when a context is finishes closing...
+            // assuming the current context should be the plugin context after that,
+            // but maybe it would be better to error out if a new context is not set.
+            activeContext = this.pluginContext;
+        }
+        this.activeContext = activeContext;
+    }
+
+    int nextContextID() {
+        return nextContextID.getAndIncrement();
     }
 
     @Override
     public void close() {
+        this.pluginContext.close();
         if (wasi != null) {
             wasi.close();
         }
@@ -156,7 +195,7 @@ public class ProxyWasm implements Closeable {
         private byte[] vmConfig = new byte[0];
         private byte[] pluginConfig = new byte[0];
         private HashMap<String, String> properties;
-        private Handler vmHandler;
+        private Handler pluginHandler;
         private ImportMemory memory;
         private WasiOptions wasiOptions;
 
@@ -173,13 +212,13 @@ public class ProxyWasm implements Closeable {
             return Imports_ModuleFactory.toHostFunctions(imports);
         }
 
-        public ProxyWasm.Builder withVmConfig(byte[] vmConfig) {
-            this.vmConfig = vmConfig.clone();
+        public ProxyWasm.Builder withVmConfig(String vmConfig) {
+            this.vmConfig = vmConfig.getBytes(StandardCharsets.UTF_8);
             return this;
         }
 
-        public ProxyWasm.Builder withPluginConfig(byte[] pluginConfig) {
-            this.pluginConfig = pluginConfig.clone();
+        public ProxyWasm.Builder withPluginConfig(String pluginConfig) {
+            this.pluginConfig = pluginConfig.getBytes(StandardCharsets.UTF_8);
             return this;
         }
 
@@ -192,8 +231,8 @@ public class ProxyWasm implements Closeable {
             return this;
         }
 
-        public ProxyWasm.Builder withVmHandler(Handler vmHandler) {
-            this.vmHandler = vmHandler;
+        public ProxyWasm.Builder withPluginHandler(Handler vmHandler) {
+            this.pluginHandler = vmHandler;
             return this;
         }
 

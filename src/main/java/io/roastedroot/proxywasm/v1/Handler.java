@@ -105,4 +105,12 @@ public interface Handler {
      * @return The result of the operation
      */
     WasmResult setEffectiveContextID(int contextID);
+
+    /**
+     * Indicates to the host that the plugin is done processing active context.
+     *
+     * @return The result of the operation
+     */
+    WasmResult done();
+
 }

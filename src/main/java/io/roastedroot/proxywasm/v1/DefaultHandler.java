@@ -113,4 +113,9 @@ public class DefaultHandler implements Handler {
     public WasmResult setEffectiveContextID(int contextID) {
         return WasmResult.UNIMPLEMENTED;
     }
+
+    @Override
+    public WasmResult done() {
+        return WasmResult.NOT_FOUND;
+    }
 }

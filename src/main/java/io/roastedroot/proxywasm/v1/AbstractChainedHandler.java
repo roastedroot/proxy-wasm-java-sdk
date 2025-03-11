@@ -121,4 +121,8 @@ public abstract class AbstractChainedHandler implements Handler {
         return next().setEffectiveContextID(contextID);
     }
 
+    @Override
+    public WasmResult done() {
+        return next().done();
+    }
 }
