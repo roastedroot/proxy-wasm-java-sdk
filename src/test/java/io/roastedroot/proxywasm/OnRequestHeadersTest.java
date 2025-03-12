@@ -1,16 +1,18 @@
 package io.roastedroot.proxywasm;
 
-import com.dylibso.chicory.wasm.Parser;
-import io.roastedroot.proxywasm.v1.*;
-import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import com.dylibso.chicory.wasm.Parser;
+import io.roastedroot.proxywasm.v1.Handler;
+import io.roastedroot.proxywasm.v1.LogLevel;
+import io.roastedroot.proxywasm.v1.ProxyWasm;
+import io.roastedroot.proxywasm.v1.StartException;
+import io.roastedroot.proxywasm.v1.WasmException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.junit.jupiter.api.Test;
 
 /**
  * Unit test for simple App.
@@ -28,12 +30,13 @@ public class OnRequestHeadersTest {
         ArrayList<String> loggedMessages = new ArrayList<>();
 
         // Set the import handler to the current request.
-        DefaultHandler handler = new DefaultHandler() {
-            @Override
-            public void log(LogLevel level, String message) throws WasmException {
-                loggedMessages.add(message);
-            }
-        };
+        Handler handler =
+                new Handler() {
+                    @Override
+                    public void log(LogLevel level, String message) throws WasmException {
+                        loggedMessages.add(message);
+                    }
+                };
 
         try (var proxyWasm = ProxyWasm.builder().withPluginHandler(handler).build(module)) {
 
@@ -44,13 +47,14 @@ public class OnRequestHeadersTest {
 
                 // let the wasm module know the request headers are ready
                 context.onRequestHeaders(requestHeaders, true);
-                assertEquals(List.of(
-                        "[http_wasm_example.cc:33]::onRequestHeaders() print from wasm, onRequestHeaders, context id: 2",
-                        "[http_wasm_example.cc:38]::onRequestHeaders() print from wasm, Hello -> World"
-                ), loggedMessages);
-
+                assertEquals(
+                        List.of(
+                                "[http_wasm_example.cc:33]::onRequestHeaders() print from wasm,"
+                                        + " onRequestHeaders, context id: 2",
+                                "[http_wasm_example.cc:38]::onRequestHeaders() print from wasm,"
+                                        + " Hello -> World"),
+                        loggedMessages);
             }
         }
-
     }
 }

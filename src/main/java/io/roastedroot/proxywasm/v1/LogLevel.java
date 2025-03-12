@@ -1,6 +1,5 @@
 package io.roastedroot.proxywasm.v1;
 
-
 /**
  * Represents log levels for proxy WASM.
  * Converted from Go's LogLevel type.
@@ -49,4 +48,3 @@ public enum LogLevel {
         throw new IllegalArgumentException("Unknown LogLevel value: " + value);
     }
 }
-

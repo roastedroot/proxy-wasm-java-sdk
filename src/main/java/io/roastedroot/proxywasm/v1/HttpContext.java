@@ -9,17 +9,18 @@ public class HttpContext extends Context {
 
     HttpContext(ProxyWasm proxyWasm, Handler handler) {
         super(proxyWasm);
-        this.handler = new AbstractChainedHandler() {
-            @Override
-            protected Handler next() {
-                return handler;
-            }
+        this.handler =
+                new ChainedHandler() {
+                    @Override
+                    protected Handler next() {
+                        return handler;
+                    }
 
-            @Override
-            public Map<String, String> getHttpRequestHeader() {
-                return requestHeaders;
-            }
-        };
+                    @Override
+                    public Map<String, String> getHttpRequestHeader() {
+                        return requestHeaders;
+                    }
+                };
     }
 
     Handler handler() {
@@ -28,8 +29,10 @@ public class HttpContext extends Context {
 
     public Action onRequestHeaders(Map<String, String> requestHeaders, boolean endOfStream) {
         this.requestHeaders = requestHeaders;
-        int result = proxyWasm.exports().proxyOnRequestHeaders(id, requestHeaders.size(), endOfStream ? 1 : 0);
+        int result =
+                proxyWasm
+                        .exports()
+                        .proxyOnRequestHeaders(id, requestHeaders.size(), endOfStream ? 1 : 0);
         return Action.fromInt(result);
     }
-
 }

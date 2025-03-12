@@ -2,7 +2,7 @@ package io.roastedroot.proxywasm.v1;
 
 import java.io.Closeable;
 
-abstract public class Context implements Closeable {
+public abstract class Context implements Closeable {
 
     ProxyWasm proxyWasm;
     final int id;
@@ -17,7 +17,7 @@ abstract public class Context implements Closeable {
     abstract Handler handler();
 
     void activate() throws WasmException {
-        if (this != proxyWasm.getActiveContext() ) {
+        if (this != proxyWasm.getActiveContext()) {
             proxyWasm.setActiveContext(this);
             proxyWasm.exports().proxySetEffectiveContext(id);
         }
@@ -34,7 +34,7 @@ abstract public class Context implements Closeable {
         closeStarted = true;
         if (!closeDone) {
             // the plugin may want to finish closing later...
-            if (proxyWasm.exports().proxyOnDone(id) ) {
+            if (proxyWasm.exports().proxyOnDone(id)) {
                 // close now...
                 finishClose();
             }
@@ -42,7 +42,8 @@ abstract public class Context implements Closeable {
     }
 
     // plugin is indicating it wants to finish closing
-    // TODO: need a unit test for this.  We likely can't implement the test until we provide tick callbacks to the plugin.
+    // TODO: need a unit test for this.  We likely can't implement the test until we provide tick
+    // callbacks to the plugin.
     WasmResult done() {
         if (!closeStarted) {
             // spec says: return NOT_FOUND when active context was not pending finalization.
@@ -59,7 +60,8 @@ abstract public class Context implements Closeable {
         proxyWasm.exports().proxyOnDelete(id);
         proxyWasm.contexts().remove(id);
 
-        // todo: we likely need to callback to user code to allow cleaning up resources like http connections.
+        // todo: we likely need to callback to user code to allow cleaning up resources like http
+        // connections.
 
         // I think we should allways be the current context...
         assert proxyWasm.getActiveContext() == this : "we are the active context";
@@ -67,5 +69,4 @@ abstract public class Context implements Closeable {
         // unset active context so that callbacks don't try to use us.
         proxyWasm.setActiveContext(null);
     }
-
 }

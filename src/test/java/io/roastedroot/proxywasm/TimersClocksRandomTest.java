@@ -1,17 +1,20 @@
 package io.roastedroot.proxywasm;
 
-import com.dylibso.chicory.wasm.Parser;
-import io.roastedroot.proxywasm.v1.*;
-import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.dylibso.chicory.wasm.Parser;
+import io.roastedroot.proxywasm.v1.Handler;
+import io.roastedroot.proxywasm.v1.LogLevel;
+import io.roastedroot.proxywasm.v1.ProxyWasm;
+import io.roastedroot.proxywasm.v1.StartException;
+import io.roastedroot.proxywasm.v1.WasmException;
+import io.roastedroot.proxywasm.v1.WasmResult;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.Test;
 
 /**
  * Unit test for simple App.
@@ -24,28 +27,25 @@ public class TimersClocksRandomTest {
         var loggedMessages = new ArrayList<String>();
         var setTickPeriodMillisecondsCalls = new AtomicInteger(0);
 
-        var handler = new DefaultHandler() {
-            @Override
-            public void log(LogLevel level, String message) throws WasmException {
-                loggedMessages.add(message);
-            }
+        var handler =
+                new Handler() {
+                    @Override
+                    public void log(LogLevel level, String message) throws WasmException {
+                        loggedMessages.add(message);
+                    }
 
-            @Override
-            public WasmResult setTickPeriodMilliseconds(int tick_period) {
-                setTickPeriodMillisecondsCalls.incrementAndGet();
-                return WasmResult.OK;
-            }
-
-        };
-        ProxyWasm.Builder builder = ProxyWasm.builder()
-                .withPluginHandler(handler);
+                    @Override
+                    public WasmResult setTickPeriodMilliseconds(int tick_period) {
+                        setTickPeriodMillisecondsCalls.incrementAndGet();
+                        return WasmResult.OK;
+                    }
+                };
+        ProxyWasm.Builder builder = ProxyWasm.builder().withPluginHandler(handler);
 
         var module = Parser.parse(Path.of("./src/test/go-examples/helloworld/main.wasm"));
         try (var proxyWasm = builder.build(module)) {
 
-            assertEquals(List.of(
-                    "OnPluginStart from Go!"
-            ), loggedMessages);
+            assertEquals(List.of("OnPluginStart from Go!"), loggedMessages);
             loggedMessages.clear();
 
             // the example requests tick events in the plugin start
@@ -61,6 +61,5 @@ public class TimersClocksRandomTest {
 
             assertEquals("OnTick called", loggedMessages.get(1));
         }
-
     }
 }

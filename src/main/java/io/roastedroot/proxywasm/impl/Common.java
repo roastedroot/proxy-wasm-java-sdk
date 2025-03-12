@@ -3,8 +3,8 @@ package io.roastedroot.proxywasm.impl;
 import com.dylibso.chicory.runtime.Instance;
 import io.roastedroot.proxywasm.v1.WasmException;
 import io.roastedroot.proxywasm.v1.WasmResult;
-
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Common methods used to implement the Wasm modules.
@@ -14,7 +14,7 @@ import java.nio.ByteBuffer;
  *
  * Once the translation is done, we can refactor it to be more idiomatic.
  */
-abstract public class Common {
+public abstract class Common {
 
     // Size of a 32-bit integer in bytes
     static final int U32_LEN = 4;
@@ -24,6 +24,7 @@ abstract public class Common {
     public Instance getInstance() {
         return this.instance;
     }
+
     public void setInstance(Instance instance) {
         this.instance = instance;
     }
@@ -38,6 +39,20 @@ abstract public class Common {
     void putUint32(int address, int value) throws WasmException {
         try {
             instance.memory().writeI32(address, value);
+        } catch (RuntimeException e) {
+            throw new WasmException(WasmResult.INVALID_MEMORY_ACCESS);
+        }
+    }
+
+    /**
+     * Read a 32-bit unsigned integer to memory.
+     *
+     * @param address The address to read from
+     * @throws WasmException if the memory access is invalid
+     */
+    long getUint32(int address) throws WasmException {
+        try {
+            return instance.memory().readU32(address);
         } catch (RuntimeException e) {
             throw new WasmException(WasmResult.INVALID_MEMORY_ACCESS);
         }
@@ -83,11 +98,12 @@ abstract public class Common {
      */
     void putMemory(int address, ByteBuffer data) throws WasmException {
         try {
-            if ( data.hasArray() ) {
+            if (data.hasArray()) {
                 var array = data.array();
                 instance.memory().write(address, array, data.position(), data.remaining());
             } else {
-                // This could likely be optimized by extending the memory interface to accept ByteBuffer
+                // This could likely be optimized by extending the memory interface to accept
+                // ByteBuffer
                 byte[] bytes = new byte[data.remaining()];
                 data.get(bytes);
                 instance.memory().write(address, bytes);
@@ -105,7 +121,7 @@ abstract public class Common {
      * @return The value read
      * @throws WasmException if the memory access is invalid
      */
-    byte[] getMemory(int address, int len) throws WasmException {
+    byte[] readMemory(int address, int len) throws WasmException {
         try {
             return instance.memory().readBytes(address, len);
         } catch (RuntimeException e) {
@@ -113,11 +129,16 @@ abstract public class Common {
         }
     }
 
-    void copyIntoInstance( String value, int retPtr, int retSize) throws WasmException {
+    String readString(int address, int len) throws WasmException {
+        var data = readMemory(address, len);
+        return new String(data, StandardCharsets.UTF_8);
+    }
+
+    void copyIntoInstance(String value, int retPtr, int retSize) throws WasmException {
         copyIntoInstance(value.getBytes(), retPtr, retSize);
     }
 
-    void copyIntoInstance( byte[] value, int retPtr, int retSize) throws WasmException {
+    void copyIntoInstance(byte[] value, int retPtr, int retSize) throws WasmException {
         try {
             int addr = malloc(value.length);
             putMemory(addr, value);
