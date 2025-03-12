@@ -1,43 +1,44 @@
 package io.roastedroot.proxywasm.v1;
 
-import java.util.Map;
+import static io.roastedroot.proxywasm.v1.Helpers.length;
 
 public class HttpContext extends Context {
 
     private final Handler handler;
-    private Map<String, String> requestHeaders;
 
     HttpContext(ProxyWasm proxyWasm, Handler handler) {
         super(proxyWasm);
-        this.handler =
-                new ChainedHandler() {
-                    @Override
-                    protected Handler next() {
-                        return handler;
-                    }
-
-                    @Override
-                    public Map<String, String> getHttpRequestHeader() {
-                        return requestHeaders;
-                    }
-                };
+        this.handler = handler;
     }
 
     Handler handler() {
         return handler;
     }
 
-    public Action callOnRequestHeaders(Map<String, String> requestHeaders, boolean endOfStream) {
-        this.requestHeaders = requestHeaders;
+    public Action callOnRequestHeaders(boolean endOfStream) {
+        var requestHeaders = handler.getHttpRequestHeader();
         int result =
                 proxyWasm
                         .exports()
-                        .proxyOnRequestHeaders(id, requestHeaders.size(), endOfStream ? 1 : 0);
+                        .proxyOnRequestHeaders(id, length(requestHeaders), endOfStream ? 1 : 0);
         return Action.fromInt(result);
     }
 
-    public Action callOnRequestBody(byte[] body, boolean endOfStream) {
-        int result = proxyWasm.exports().proxyOnRequestBody(id, body.length, endOfStream ? 1 : 0);
+    public Action callOnRequestBody(boolean endOfStream) {
+        var requestBody = handler.getHttpRequestBody();
+        int result =
+                proxyWasm
+                        .exports()
+                        .proxyOnRequestBody(id, length(requestBody), endOfStream ? 1 : 0);
+        return Action.fromInt(result);
+    }
+
+    public Action callOnResponseBody(boolean endOfStream) {
+        var responseBody = handler.getHttpResponseBody();
+        int result =
+                proxyWasm
+                        .exports()
+                        .proxyOnResponseBody(id, length(responseBody), endOfStream ? 1 : 0);
         return Action.fromInt(result);
     }
 }

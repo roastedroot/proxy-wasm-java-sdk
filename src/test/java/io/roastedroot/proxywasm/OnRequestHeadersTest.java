@@ -31,7 +31,8 @@ public class OnRequestHeadersTest {
             try (var context = proxyWasm.createHttpContext(handler)) {
 
                 // let the wasm module know the request headers are ready
-                context.callOnRequestHeaders(requestHeaders, true);
+                handler.setHttpRequestHeader(requestHeaders);
+                context.callOnRequestHeaders(true);
                 assertEquals(
                         List.of(
                                 "[http_wasm_example.cc:33]::onRequestHeaders() print from wasm,"

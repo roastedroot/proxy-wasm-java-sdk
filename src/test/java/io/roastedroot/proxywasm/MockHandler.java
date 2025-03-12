@@ -1,11 +1,14 @@
 package io.roastedroot.proxywasm;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import io.roastedroot.proxywasm.v1.Handler;
 import io.roastedroot.proxywasm.v1.LogLevel;
 import io.roastedroot.proxywasm.v1.WasmException;
 import io.roastedroot.proxywasm.v1.WasmResult;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class MockHandler implements Handler {
@@ -32,7 +35,7 @@ public class MockHandler implements Handler {
         }
     }
 
-    final ArrayList<String> loggedMessages = new ArrayList<String>();
+    final ArrayList<String> loggedMessages = new ArrayList<>();
 
     private Map<String, String> httpRequestHeaders = new HashMap<>();
     private Map<String, String> httpRequestTrailers = new HashMap<>();
@@ -44,6 +47,14 @@ public class MockHandler implements Handler {
     private Map<String, String> grpcReceiveTrailerMetadata = new HashMap<>();
     private HttpResponse senthttpResponse;
 
+    private byte[] funcCallData = new byte[0];
+    private byte[] httpRequestBody = new byte[0];
+    private byte[] httpResponseBody = new byte[0];
+    private byte[] downStreamData = new byte[0];
+    private byte[] upstreamData = new byte[0];
+    private byte[] httpCallResponseBody = new byte[0];
+    private byte[] grpcReceiveBuffer = new byte[0];
+
     @Override
     public void log(LogLevel level, String message) throws WasmException {
         loggedMessages.add(message);
@@ -51,6 +62,10 @@ public class MockHandler implements Handler {
 
     public ArrayList<String> loggedMessages() {
         return loggedMessages;
+    }
+
+    public void assertLogsEqual(String... messages) {
+        assertEquals(List.of(messages), loggedMessages());
     }
 
     @Override
@@ -138,6 +153,83 @@ public class MockHandler implements Handler {
     @Override
     public WasmResult setGrpcReceiveTrailerMetaData(Map<String, String> metadata) {
         this.grpcReceiveTrailerMetadata = metadata;
+        return WasmResult.OK;
+    }
+
+    @Override
+    public byte[] getFuncCallData() {
+        return this.funcCallData;
+    }
+
+    @Override
+    public byte[] getGrpcReceiveBuffer() {
+        return this.grpcReceiveBuffer;
+    }
+
+    @Override
+    public byte[] getHttpCallResponseBody() {
+        return this.httpCallResponseBody;
+    }
+
+    @Override
+    public byte[] getUpstreamData() {
+        return this.upstreamData;
+    }
+
+    @Override
+    public byte[] getDownStreamData() {
+        return this.downStreamData;
+    }
+
+    @Override
+    public byte[] getHttpResponseBody() {
+        return this.httpResponseBody;
+    }
+
+    @Override
+    public byte[] getHttpRequestBody() {
+        return this.httpRequestBody;
+    }
+
+    @Override
+    public WasmResult setHttpRequestBody(byte[] body) {
+        this.httpRequestBody = body;
+        return WasmResult.OK;
+    }
+
+    @Override
+    public WasmResult setHttpResponseBody(byte[] body) {
+        this.httpResponseBody = body;
+        return WasmResult.OK;
+    }
+
+    @Override
+    public WasmResult setDownStreamData(byte[] data) {
+        this.downStreamData = data;
+        return WasmResult.OK;
+    }
+
+    @Override
+    public WasmResult setUpstreamData(byte[] data) {
+        this.upstreamData = data;
+        return WasmResult.OK;
+    }
+
+    @Override
+    public WasmResult setHttpCallResponseBody(byte[] body) {
+        this.httpCallResponseBody = body;
+        return WasmResult.OK;
+    }
+
+    @Override
+    public WasmResult setGrpcReceiveBuffer(byte[] buffer) {
+        this.grpcReceiveBuffer = buffer;
+        return WasmResult.OK;
+    }
+
+    @Override
+    public WasmResult setFuncCallData(byte[] data) {
+        this.funcCallData = data;
         return WasmResult.OK;
     }
 
