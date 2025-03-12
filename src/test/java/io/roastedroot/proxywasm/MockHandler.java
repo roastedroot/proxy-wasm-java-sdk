@@ -3,6 +3,7 @@ package io.roastedroot.proxywasm;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import io.roastedroot.proxywasm.v1.Handler;
+import io.roastedroot.proxywasm.v1.Helpers;
 import io.roastedroot.proxywasm.v1.LogLevel;
 import io.roastedroot.proxywasm.v1.WasmException;
 import io.roastedroot.proxywasm.v1.WasmResult;
@@ -197,10 +198,18 @@ public class MockHandler implements Handler {
         return WasmResult.OK;
     }
 
+    public void appendHttpRequestBody(byte[] body) {
+        this.httpRequestBody = Helpers.append(this.httpRequestBody, body);
+    }
+
     @Override
     public WasmResult setHttpResponseBody(byte[] body) {
         this.httpResponseBody = body;
         return WasmResult.OK;
+    }
+
+    public void appendHttpResponseBody(byte[] body) {
+        this.httpResponseBody = Helpers.append(this.httpResponseBody, body);
     }
 
     @Override
