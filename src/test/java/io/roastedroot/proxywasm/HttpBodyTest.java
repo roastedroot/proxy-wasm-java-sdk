@@ -1,54 +1,71 @@
 package io.roastedroot.proxywasm;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import com.dylibso.chicory.wasm.Parser;
 import io.roastedroot.proxywasm.v1.Action;
-import io.roastedroot.proxywasm.v1.Handler;
-import io.roastedroot.proxywasm.v1.LogLevel;
+import io.roastedroot.proxywasm.v1.Helpers;
+import io.roastedroot.proxywasm.v1.HttpContext;
 import io.roastedroot.proxywasm.v1.ProxyWasm;
 import io.roastedroot.proxywasm.v1.StartException;
-import io.roastedroot.proxywasm.v1.WasmException;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Map;
-import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 public class HttpBodyTest {
 
-    @Test
-    @Disabled("implementation is still in progress")
-    public void testSetBodyContent() throws StartException {
+    private MockHandler handler;
+    private ProxyWasm proxyWasm;
+    private HttpContext httpContext;
 
-        var loggedMessages = new ArrayList<String>();
-
-        var handler =
-                new Handler() {
-                    @Override
-                    public void log(LogLevel level, String message) throws WasmException {
-                        loggedMessages.add(message);
-                    }
-                };
+    @BeforeEach
+    void setUp() throws StartException {
+        this.handler = new MockHandler();
         ProxyWasm.Builder builder = ProxyWasm.builder();
-
         var module = Parser.parse(Path.of("./src/test/go-examples/http_body/main.wasm"));
-        try (var proxyWasm = builder.build(module)) {
+        this.proxyWasm = builder.build(module);
+        this.httpContext = proxyWasm.createHttpContext(handler);
+    }
 
-            // Create http context.
-            try (var httpContext = proxyWasm.createHttpContext(handler)) {
+    @AfterEach
+    void tearDown() {
+        httpContext.close();
+        proxyWasm.close();
+    }
 
-                // Call OnRequestHeaders.
-                var action =
-                        httpContext.onRequestHeaders(
-                                Map.of(
-                                        "content-length", "10",
-                                        "buffer-operation", "replace"),
-                                false);
+    @Test
+    public void testRemoveRequestHeader() throws StartException {
 
-                // Must be continued.
-                assertEquals(Action.CONTINUE, action);
-            }
-        }
+        // Call OnRequestHeaders.
+        var action =
+                httpContext.onRequestHeaders(
+                        Map.of(
+                                "content-length", "10",
+                                "buffer-operation", "replace"),
+                        false);
+
+        // Must be continued.
+        assertEquals(Action.CONTINUE, action);
+
+        var headers = handler.getHttpRequestHeader();
+        assertEquals(Map.of("buffer-operation", "replace"), headers);
+    }
+
+    @Test
+    public void test400Response() throws StartException {
+        // Call OnRequestHeaders.
+        var action = httpContext.onRequestHeaders(Map.of(), false);
+
+        // Must be paused.
+        assertEquals(Action.PAUSE, action);
+
+        // Check the local response.
+        var response = handler.getSenthttpResponse();
+        assertNotNull(response);
+        assertEquals(400, response.statusCode);
+        assertEquals(Helpers.bytes("content must be provided"), response.body);
     }
 }

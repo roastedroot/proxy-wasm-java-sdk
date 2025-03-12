@@ -8,10 +8,10 @@ import java.nio.charset.StandardCharsets;
 
 /**
  * Common methods used to implement the Wasm modules.
- *
+ * <p>
  * Some of it may seem not-java idomatic, that's because it's being used to translate
  * from a go version
- *
+ * <p>
  * Once the translation is done, we can refactor it to be more idiomatic.
  */
 public abstract class Common {
@@ -33,7 +33,7 @@ public abstract class Common {
      * Write a 32-bit unsigned integer to memory.
      *
      * @param address The address to write to
-     * @param value The value to write
+     * @param value   The value to write
      * @throws WasmException if the memory access is invalid
      */
     void putUint32(int address, int value) throws WasmException {
@@ -62,7 +62,7 @@ public abstract class Common {
      * Write a byte to memory.
      *
      * @param address The address to write to
-     * @param value The value to write
+     * @param value   The value to write
      * @throws WasmException if the memory access is invalid
      */
     void putByte(int address, byte value) throws WasmException {
@@ -77,7 +77,7 @@ public abstract class Common {
      * Write bytes to memory.
      *
      * @param address The address to write to
-     * @param data The data to write
+     * @param data    The data to write
      * @throws WasmException if the memory access is invalid
      */
     void putMemory(int address, byte[] data) throws WasmException {
@@ -93,7 +93,7 @@ public abstract class Common {
      * Write bytes to memory.
      *
      * @param address The address to write to
-     * @param data The data to write
+     * @param data    The data to write
      * @throws WasmException if the memory access is invalid
      */
     void putMemory(int address, ByteBuffer data) throws WasmException {
@@ -117,7 +117,7 @@ public abstract class Common {
      * Read bytes from memory.
      *
      * @param address The address to read from
-     * @param len The number of bytes to read
+     * @param len     The number of bytes to read
      * @return The value read
      * @throws WasmException if the memory access is invalid
      */
@@ -140,9 +140,13 @@ public abstract class Common {
 
     void copyIntoInstance(byte[] value, int retPtr, int retSize) throws WasmException {
         try {
-            int addr = malloc(value.length);
-            putMemory(addr, value);
-            putUint32(retPtr, addr);
+            if (value.length != 0) {
+                int addr = malloc(value.length);
+                putMemory(addr, value);
+                putUint32(retPtr, addr);
+            } else {
+                putUint32(retPtr, 0);
+            }
             putUint32(retSize, value.length);
         } catch (WasmException e) {
             throw new WasmException(WasmResult.INVALID_MEMORY_ACCESS);

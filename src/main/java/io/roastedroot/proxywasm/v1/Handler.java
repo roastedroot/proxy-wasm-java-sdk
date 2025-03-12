@@ -189,7 +189,7 @@ public interface Handler {
      * @param grpcStatus The gRPC status code (-1 for non-gRPC responses)
      * @return The result of sending the response
      */
-    default WasmResult sendHttpResp(
+    default WasmResult sendHttpResponse(
             int responseCode,
             ByteBuffer responseCodeDetails,
             ByteBuffer responseBody,
@@ -276,6 +276,97 @@ public interface Handler {
      * @return WasmResult indicating success or failure
      */
     default WasmResult setCustomBuffer(int bufferType, ByteBuffer buffer) {
+        return WasmResult.UNIMPLEMENTED;
+    }
+
+    /**
+     * Set a custom header map.
+     *
+     * @param mapType The type of map to set
+     * @param map The header map to set
+     * @return WasmResult indicating success or failure
+     */
+    default WasmResult setCustomHeader(int mapType, Map<String, String> map) {
+        return WasmResult.UNIMPLEMENTED;
+    }
+
+    /**
+     * Set the HTTP request headers.
+     *
+     * @param headers The headers to set
+     * @return WasmResult indicating success or failure
+     */
+    default WasmResult setHttpRequestHeader(Map<String, String> headers) {
+        return WasmResult.UNIMPLEMENTED;
+    }
+
+    /**
+     * Set the HTTP request trailers.
+     *
+     * @param trailers The trailers to set
+     * @return WasmResult indicating success or failure
+     */
+    default WasmResult setHttpRequestTrailer(Map<String, String> trailers) {
+        return WasmResult.UNIMPLEMENTED;
+    }
+
+    /**
+     * Set the HTTP response headers.
+     *
+     * @param headers The headers to set
+     * @return WasmResult indicating success or failure
+     */
+    default WasmResult setHttpResponseHeader(Map<String, String> headers) {
+        return WasmResult.UNIMPLEMENTED;
+    }
+
+    /**
+     * Set the HTTP response trailers.
+     *
+     * @param trailers The trailers to set
+     * @return WasmResult indicating success or failure
+     */
+    default WasmResult setHttpResponseTrailer(Map<String, String> trailers) {
+        return WasmResult.UNIMPLEMENTED;
+    }
+
+    /**
+     * Set the HTTP call response headers.
+     *
+     * @param headers The headers to set
+     * @return WasmResult indicating success or failure
+     */
+    default WasmResult setHttpCallResponseHeaders(Map<String, String> headers) {
+        return WasmResult.UNIMPLEMENTED;
+    }
+
+    /**
+     * Set the HTTP call response trailers.
+     *
+     * @param trailers The trailers to set
+     * @return WasmResult indicating success or failure
+     */
+    default WasmResult setHttpCallResponseTrailer(Map<String, String> trailers) {
+        return WasmResult.UNIMPLEMENTED;
+    }
+
+    /**
+     * Set the gRPC receive initial metadata.
+     *
+     * @param metadata The metadata to set
+     * @return WasmResult indicating success or failure
+     */
+    default WasmResult setGrpcReceiveInitialMetaData(Map<String, String> metadata) {
+        return WasmResult.UNIMPLEMENTED;
+    }
+
+    /**
+     * Set the gRPC receive trailer metadata.
+     *
+     * @param metadata The metadata to set
+     * @return WasmResult indicating success or failure
+     */
+    default WasmResult setGrpcReceiveTrailerMetaData(Map<String, String> metadata) {
         return WasmResult.UNIMPLEMENTED;
     }
 }

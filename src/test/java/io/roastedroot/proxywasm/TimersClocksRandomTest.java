@@ -4,14 +4,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.dylibso.chicory.wasm.Parser;
-import io.roastedroot.proxywasm.v1.Handler;
-import io.roastedroot.proxywasm.v1.LogLevel;
 import io.roastedroot.proxywasm.v1.ProxyWasm;
 import io.roastedroot.proxywasm.v1.StartException;
-import io.roastedroot.proxywasm.v1.WasmException;
 import io.roastedroot.proxywasm.v1.WasmResult;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
@@ -24,27 +20,23 @@ public class TimersClocksRandomTest {
     @Test
     public void test() throws StartException {
 
-        var loggedMessages = new ArrayList<String>();
         var setTickPeriodMillisecondsCalls = new AtomicInteger(0);
 
         var handler =
-                new Handler() {
-                    @Override
-                    public void log(LogLevel level, String message) throws WasmException {
-                        loggedMessages.add(message);
-                    }
-
+                new MockHandler() {
                     @Override
                     public WasmResult setTickPeriodMilliseconds(int tick_period) {
                         setTickPeriodMillisecondsCalls.incrementAndGet();
                         return WasmResult.OK;
                     }
                 };
+
         ProxyWasm.Builder builder = ProxyWasm.builder().withPluginHandler(handler);
 
         var module = Parser.parse(Path.of("./src/test/go-examples/helloworld/main.wasm"));
         try (var proxyWasm = builder.build(module)) {
 
+            var loggedMessages = handler.loggedMessages();
             assertEquals(List.of("OnPluginStart from Go!"), loggedMessages);
             loggedMessages.clear();
 

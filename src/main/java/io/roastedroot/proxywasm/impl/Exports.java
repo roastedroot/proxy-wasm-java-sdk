@@ -24,6 +24,8 @@ public class Exports {
     }
 
     int malloc(int size) throws WasmException {
+        // I've noticed guests fail on malloc(0) so lets avoid that
+        assert size > 0 : "malloc size must be greater than zero";
         long ptr = exports.function(mallocFunctionName).apply(size)[0];
         if (ptr == 0) {
             throw new WasmException(WasmResult.INVALID_MEMORY_ACCESS);

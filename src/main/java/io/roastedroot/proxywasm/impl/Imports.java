@@ -88,6 +88,41 @@ public class Imports extends Common {
     }
 
     /**
+     * Set a header map based on the map type.
+     *
+     * @param instance The WebAssembly instance
+     * @param mapType  The type of map to set
+     * @param map      The header map to set
+     * @return WasmResult indicating success or failure
+     */
+    private WasmResult setMap(Instance instance, int mapType, Map<String, String> map) {
+        var knownType = MapType.fromInt(mapType);
+        if (knownType == null) {
+            return handler.setCustomHeader(mapType, map);
+        }
+
+        switch (knownType) {
+            case HTTP_REQUEST_HEADERS:
+                return handler.setHttpRequestHeader(map);
+            case HTTP_REQUEST_TRAILERS:
+                return handler.setHttpRequestTrailer(map);
+            case HTTP_RESPONSE_HEADERS:
+                return handler.setHttpResponseHeader(map);
+            case HTTP_RESPONSE_TRAILERS:
+                return handler.setHttpResponseTrailer(map);
+            case HTTP_CALL_RESPONSE_HEADERS:
+                return handler.setHttpCallResponseHeaders(map);
+            case HTTP_CALL_RESPONSE_TRAILERS:
+                return handler.setHttpCallResponseTrailer(map);
+            case GRPC_RECEIVE_INITIAL_METADATA:
+                return handler.setGrpcReceiveInitialMetaData(map);
+            case GRPC_RECEIVE_TRAILING_METADATA:
+                return handler.setGrpcReceiveTrailerMetaData(map);
+        }
+        return WasmResult.NOT_FOUND;
+    }
+
+    /**
      * Get a buffer based on the buffer type.
      *
      * @param instance   The WebAssembly instance
@@ -276,8 +311,8 @@ public class Imports extends Common {
     /**
      * Retrieves serialized size of all key-value pairs from the map mapType
      *
-     * @param mapType      The type of map to set
-     * @param returnSize   Pointer to ruturn the size of the map data
+     * @param mapType    The type of map to set
+     * @param returnSize Pointer to ruturn the size of the map data
      * @return WasmResult status code
      */
     @WasmExport
@@ -379,7 +414,10 @@ public class Imports extends Common {
             String value = readString(valueDataPtr, valueSize);
 
             // Replace value in map
+            var copy = new HashMap<>(headerMap);
             headerMap.put(key, value);
+            setMap(instance, mapType, copy);
+
             return WasmResult.OK.getValue();
 
         } catch (WasmRuntimeException e) {
@@ -429,7 +467,10 @@ public class Imports extends Common {
             }
 
             // Remove key from map
-            headerMap.remove(key);
+            var copy = new HashMap<>(headerMap);
+            copy.remove(key);
+            setMap(instance, mapType, copy);
+
             return WasmResult.OK.getValue();
 
         } catch (WasmRuntimeException e) {
@@ -441,17 +482,17 @@ public class Imports extends Common {
 
     /**
      * Decodes a byte array containing map data into a Map of String key-value pairs.
-     *
+     * <p>
      * The format is:
      * - First 4 bytes: number of entries (headerSize) in little endian
      * - For each entry:
-     *   - 4 bytes: key size in little endian
-     *   - 4 bytes: value size in little endian
+     * - 4 bytes: key size in little endian
+     * - 4 bytes: value size in little endian
      * - Then the actual data:
-     *   - key bytes (null terminated)
-     *   - value bytes (null terminated)
+     * - key bytes (null terminated)
+     * - value bytes (null terminated)
      *
-     * @param addr The memory address to read from
+     * @param addr     The memory address to read from
      * @param mem_size The size of memory to read
      * @return The decoded map containing string keys and values
      * @throws WasmException if there is an error accessing memory
@@ -547,7 +588,7 @@ public class Imports extends Common {
         try {
             // Get the buffer based on the buffer type
             ByteBuffer buffer = getBuffer(instance, bufferType);
-            if (buffer == null) {
+            if (buffer == null || buffer.remaining() == 0) {
                 return WasmResult.NOT_FOUND.getValue();
             }
 
@@ -610,14 +651,14 @@ public class Imports extends Common {
     /**
      * Send an HTTP response.
      *
-     * @param responseCode The HTTP response code
-     * @param responseCodeDetailsData Pointer to response code details in WebAssembly memory
-     * @param responseCodeDetailsSize Size of response code details
-     * @param responseBodyData Pointer to response body in WebAssembly memory
-     * @param responseBodySize Size of response body
+     * @param responseCode             The HTTP response code
+     * @param responseCodeDetailsData  Pointer to response code details in WebAssembly memory
+     * @param responseCodeDetailsSize  Size of response code details
+     * @param responseBodyData         Pointer to response body in WebAssembly memory
+     * @param responseBodySize         Size of response body
      * @param additionalHeadersMapData Pointer to additional headers map in WebAssembly memory
-     * @param additionalHeadersSize Size of additional headers map
-     * @param grpcStatus The gRPC status code (-1 for non-gRPC responses)
+     * @param additionalHeadersSize    Size of additional headers map
+     * @param grpcStatus               The gRPC status code (-1 for non-gRPC responses)
      * @return WasmResult status code
      */
     @WasmExport
@@ -654,7 +695,7 @@ public class Imports extends Common {
 
             // Send the response through the handler
             WasmResult result =
-                    handler.sendHttpResp(
+                    handler.sendHttpResponse(
                             responseCode,
                             responseCodeDetails,
                             responseBody,
