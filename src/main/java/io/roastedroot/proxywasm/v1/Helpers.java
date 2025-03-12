@@ -1,7 +1,6 @@
 package io.roastedroot.proxywasm.v1;
 
 import com.dylibso.chicory.runtime.HostFunction;
-import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
@@ -22,7 +21,11 @@ public final class Helpers {
                 .toArray(HostFunction[]::new);
     }
 
-    public static ByteBuffer bytes(String contentMustBeProvided) {
-        return ByteBuffer.wrap(contentMustBeProvided.getBytes(StandardCharsets.UTF_8));
+    public static byte[] bytes(String contentMustBeProvided) {
+        return contentMustBeProvided.getBytes(StandardCharsets.UTF_8);
+    }
+
+    public static String string(byte[] body) {
+        return new String(body, StandardCharsets.UTF_8);
     }
 }

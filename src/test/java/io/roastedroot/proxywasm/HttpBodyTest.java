@@ -9,6 +9,7 @@ import io.roastedroot.proxywasm.v1.Helpers;
 import io.roastedroot.proxywasm.v1.HttpContext;
 import io.roastedroot.proxywasm.v1.ProxyWasm;
 import io.roastedroot.proxywasm.v1.StartException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Map;
 import org.junit.jupiter.api.AfterEach;
@@ -41,7 +42,7 @@ public class HttpBodyTest {
 
         // Call OnRequestHeaders.
         var action =
-                httpContext.onRequestHeaders(
+                httpContext.callOnRequestHeaders(
                         Map.of(
                                 "content-length", "10",
                                 "buffer-operation", "replace"),
@@ -57,7 +58,7 @@ public class HttpBodyTest {
     @Test
     public void test400Response() throws StartException {
         // Call OnRequestHeaders.
-        var action = httpContext.onRequestHeaders(Map.of(), false);
+        var action = httpContext.callOnRequestHeaders(Map.of(), false);
 
         // Must be paused.
         assertEquals(Action.PAUSE, action);
@@ -66,6 +67,36 @@ public class HttpBodyTest {
         var response = handler.getSenthttpResponse();
         assertNotNull(response);
         assertEquals(400, response.statusCode);
-        assertEquals(Helpers.bytes("content must be provided"), response.body);
+        assertEquals("content must be provided", Helpers.string(response.body));
+    }
+
+    @Test
+    public void testPauseUntilEOS() throws StartException {
+        // Call callOnRequestBody
+        var action =
+                httpContext.callOnRequestBody(
+                        "aaaa".getBytes(StandardCharsets.UTF_8), false /* end of stream */);
+
+        // Must be paused.
+        assertEquals(Action.PAUSE, action);
+    }
+
+    @Test
+    public void testAppend() throws StartException {
+        // Call callOnRequestBody
+        var action =
+                httpContext.callOnRequestHeaders(
+                        Map.of(
+                                "content-length", "10",
+                                "buffer-operation", "append"),
+                        false /* end of stream */);
+
+        // Must be continued.
+        assertEquals(Action.CONTINUE, action);
+
+        // Call callOnRequestBody
+        //        var action = httpContext.callOnRequestBody("[original
+        // body]".getBytes(StandardCharsets.UTF_8), false /* end of stream */);
+
     }
 }
