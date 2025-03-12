@@ -20,22 +20,26 @@
   </licenses>
 
   <properties>
+    <!-- build settings -->
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-
     <maven.compiler.release>11</maven.compiler.release>
     <maven.compiler.failOnWarning>true</maven.compiler.failOnWarning>
     <maven.dependency.failOnWarning>true</maven.dependency.failOnWarning>
+    <project.build.outputTimestamp>2023-01-01T00:00:00Z</project.build.outputTimestamp>
 
+    <!-- build tool versions -->
     <checkstyle.version>10.21.4</checkstyle.version>
     <maven-checkstyle-plugin.version>3.6.0</maven-checkstyle-plugin.version>
     <spotless-maven-plugin.version>2.44.3</spotless-maven-plugin.version>
+    <maven.compiler.version>3.14.0</maven.compiler.version>
 
-    <!-- dependency versions -->
-    <chicory.version>1.1.0</chicory.version>
+    <!-- test time versions -->
     <junit.version>5.12.0</junit.version>
+
+    <!-- runtime versions -->
+    <chicory.version>1.1.0</chicory.version>
   </properties>
 
   <dependencies>
@@ -49,7 +53,6 @@
       <artifactId>host-module-annotations-experimental</artifactId>
       <version>${chicory.version}</version>
     </dependency>
-
     <dependency>
       <groupId>com.dylibso.chicory</groupId>
       <artifactId>runtime</artifactId>
@@ -239,6 +242,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
+        <version>${maven.compiler.version}</version>
         <configuration>
           <source>11</source>
           <target>11</target>
