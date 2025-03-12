@@ -14,7 +14,6 @@ import io.roastedroot.proxywasm.impl.Exports;
 import io.roastedroot.proxywasm.impl.Imports;
 import io.roastedroot.proxywasm.impl.Imports_ModuleFactory;
 import java.io.Closeable;
-import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
@@ -112,13 +111,13 @@ public final class ProxyWasm implements Closeable {
             }
 
             @Override
-            public ByteBuffer getVmConfig() {
-                return ByteBuffer.wrap(vmConfig);
+            public byte[] getVmConfig() {
+                return vmConfig;
             }
 
             @Override
-            public ByteBuffer getPluginConfig() {
-                return ByteBuffer.wrap(pluginConfig);
+            public byte[] getPluginConfig() {
+                return pluginConfig;
             }
 
             @Override

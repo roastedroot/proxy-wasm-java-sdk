@@ -4,7 +4,6 @@ import io.roastedroot.proxywasm.v1.Handler;
 import io.roastedroot.proxywasm.v1.LogLevel;
 import io.roastedroot.proxywasm.v1.WasmException;
 import io.roastedroot.proxywasm.v1.WasmResult;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -14,15 +13,15 @@ public class MockHandler implements Handler {
     public static class HttpResponse {
 
         public final int statusCode;
-        public final ByteBuffer statusCodeDetails;
-        public final ByteBuffer body;
+        public final byte[] statusCodeDetails;
+        public final byte[] body;
         public final Map<String, String> headers;
         public final int grpcStatus;
 
         public HttpResponse(
                 int responseCode,
-                ByteBuffer responseCodeDetails,
-                ByteBuffer responseBody,
+                byte[] responseCodeDetails,
+                byte[] responseBody,
                 Map<String, String> additionalHeaders,
                 int grpcStatus) {
             this.statusCode = responseCode;
@@ -145,8 +144,8 @@ public class MockHandler implements Handler {
     @Override
     public WasmResult sendHttpResponse(
             int responseCode,
-            ByteBuffer responseCodeDetails,
-            ByteBuffer responseBody,
+            byte[] responseCodeDetails,
+            byte[] responseBody,
             Map<String, String> additionalHeaders,
             int grpcStatus) {
         this.senthttpResponse =

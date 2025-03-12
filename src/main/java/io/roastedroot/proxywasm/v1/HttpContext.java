@@ -27,12 +27,17 @@ public class HttpContext extends Context {
         return handler;
     }
 
-    public Action onRequestHeaders(Map<String, String> requestHeaders, boolean endOfStream) {
+    public Action callOnRequestHeaders(Map<String, String> requestHeaders, boolean endOfStream) {
         this.requestHeaders = requestHeaders;
         int result =
                 proxyWasm
                         .exports()
                         .proxyOnRequestHeaders(id, requestHeaders.size(), endOfStream ? 1 : 0);
+        return Action.fromInt(result);
+    }
+
+    public Action callOnRequestBody(byte[] body, boolean endOfStream) {
+        int result = proxyWasm.exports().proxyOnRequestBody(id, body.length, endOfStream ? 1 : 0);
         return Action.fromInt(result);
     }
 }

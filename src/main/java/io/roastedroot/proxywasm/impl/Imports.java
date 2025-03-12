@@ -129,7 +129,7 @@ public class Imports extends Common {
      * @param bufferType The type of buffer to get
      * @return The buffer, or null if not found
      */
-    private ByteBuffer getBuffer(Instance instance, int bufferType) {
+    private byte[] getBuffer(Instance instance, int bufferType) {
         // Return the appropriate buffer based on the buffer type
         var knownType = BufferType.fromInt(bufferType);
         if (knownType == null) {
@@ -166,7 +166,7 @@ public class Imports extends Common {
      * @param buffer     The buffer to set
      * @return WasmResult indicating success or failure
      */
-    private WasmResult setBuffer(Instance instance, int bufferType, ByteBuffer buffer) {
+    private WasmResult setBuffer(Instance instance, int bufferType, byte[] buffer) {
         // Set the appropriate buffer based on the buffer type
         var knownType = BufferType.fromInt(bufferType);
         if (knownType == null) {
@@ -587,7 +587,7 @@ public class Imports extends Common {
 
         try {
             // Get the buffer based on the buffer type
-            ByteBuffer buffer = getBuffer(instance, bufferType);
+            ByteBuffer buffer = ByteBuffer.wrap(getBuffer(instance, bufferType));
             if (buffer == null || buffer.remaining() == 0) {
                 return WasmResult.NOT_FOUND.getValue();
             }
@@ -637,10 +637,9 @@ public class Imports extends Common {
         try {
             // Get content from WebAssembly memory
             byte[] content = instance.memory().readBytes(dataPtr, dataSize);
-            ByteBuffer buffer = ByteBuffer.wrap(content);
 
             // Set the buffer using the appropriate handler method
-            WasmResult result = setBuffer(instance, bufferType, buffer);
+            WasmResult result = setBuffer(instance, bufferType, content);
             return result.getValue();
 
         } catch (WasmRuntimeException e) {
@@ -674,19 +673,17 @@ public class Imports extends Common {
         try {
 
             // Get response code details from memory
-            ByteBuffer responseCodeDetails = null;
+            byte[] responseCodeDetails = null;
             if (responseCodeDetailsSize > 0) {
-                byte[] details =
+                responseCodeDetails =
                         instance.memory()
                                 .readBytes(responseCodeDetailsData, responseCodeDetailsSize);
-                responseCodeDetails = ByteBuffer.wrap(details);
             }
 
             // Get response body from memory
-            ByteBuffer responseBody = null;
+            byte[] responseBody = new byte[0];
             if (responseBodySize > 0) {
-                byte[] body = instance.memory().readBytes(responseBodyData, responseBodySize);
-                responseBody = ByteBuffer.wrap(body);
+                responseBody = instance.memory().readBytes(responseBodyData, responseBodySize);
             }
 
             // Get and decode additional headers from memory

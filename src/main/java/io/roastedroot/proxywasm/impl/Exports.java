@@ -98,8 +98,8 @@ public class Exports {
         return (int) result;
     }
 
-    public int proxyOnRequestBody(int arg0, int arg1, int arg2) {
-        long result = exports.function("proxy_on_request_body").apply(arg0, arg1, arg2)[0];
+    public int proxyOnRequestBody(int contextId, int bodySize, int arg2) {
+        long result = exports.function("proxy_on_request_body").apply(contextId, bodySize, arg2)[0];
         return (int) result;
     }
 

@@ -1,6 +1,5 @@
 package io.roastedroot.proxywasm.v1;
 
-import java.nio.ByteBuffer;
 import java.util.Map;
 
 public interface Handler {
@@ -50,81 +49,81 @@ public interface Handler {
     /**
      * Get the HTTP request body.
      *
-     * @return The HTTP request body as a ByteBuffer, or null if not available
+     * @return The HTTP request body as a byte[], or null if not available
      */
-    default ByteBuffer getHttpRequestBody() {
+    default byte[] getHttpRequestBody() {
         return null;
     }
 
     /**
      * Get the HTTP response body.
      *
-     * @return The HTTP response body as a ByteBuffer, or null if not available
+     * @return The HTTP response body as a byte[], or null if not available
      */
-    default ByteBuffer getHttpResponseBody() {
+    default byte[] getHttpResponseBody() {
         return null;
     }
 
     /**
      * Get the downstream data.
      *
-     * @return The downstream data as a ByteBuffer, or null if not available
+     * @return The downstream data as a byte[], or null if not available
      */
-    default ByteBuffer getDownStreamData() {
+    default byte[] getDownStreamData() {
         return null;
     }
 
     /**
      * Get the upstream data.
      *
-     * @return The upstream data as a ByteBuffer, or null if not available
+     * @return The upstream data as a byte[], or null if not available
      */
-    default ByteBuffer getUpstreamData() {
+    default byte[] getUpstreamData() {
         return null;
     }
 
     /**
      * Get the HTTP call response body.
      *
-     * @return The HTTP call response body as a ByteBuffer, or null if not available
+     * @return The HTTP call response body as a byte[], or null if not available
      */
-    default ByteBuffer getHttpCallResponseBody() {
+    default byte[] getHttpCallResponseBody() {
         return null;
     }
 
     /**
      * Get the gRPC receive buffer.
      *
-     * @return The gRPC receive buffer as a ByteBuffer, or null if not available
+     * @return The gRPC receive buffer as a byte[], or null if not available
      */
-    default ByteBuffer getGrpcReceiveBuffer() {
+    default byte[] getGrpcReceiveBuffer() {
         return null;
     }
 
     /**
      * Get the plugin configuration.
      *
-     * @return The plugin configuration as a ByteBuffer, or null if not available
+     * @return The plugin configuration as a byte[], or null if not available
      */
-    default ByteBuffer getPluginConfig() {
+    default byte[] getPluginConfig() {
         return null;
     }
 
     /**
      * Get the VM configuration.
      *
-     * @return The VM configuration as a ByteBuffer, or null if not available
+     * @return The VM configuration as a byte[], or null if not available
      */
-    default ByteBuffer getVmConfig() {
+    default byte[] getVmConfig() {
         return null;
     }
 
     /**
      * Get the function call data.
      *
-     * @return The function call data as a ByteBuffer, or null if not available
+     * @return The function call data as a byte[], or null if not available
      */
-    default ByteBuffer getFuncCallData() {
+    default byte[] getFuncCallData() {
         return null;
     }
 
@@ -132,9 +131,9 @@ public interface Handler {
      * Get a custom buffer.
      *
      * @param bufferType The buffer type
-     * @return The custom buffer as a ByteBuffer, or null if not available
+     * @return The custom buffer as a byte[], or null if not available
      */
-    default ByteBuffer getCustomBuffer(int bufferType) {
+    default byte[] getCustomBuffer(int bufferType) {
         return null;
     }
 
@@ -191,8 +190,8 @@ public interface Handler {
      */
     default WasmResult sendHttpResponse(
             int responseCode,
-            ByteBuffer responseCodeDetails,
-            ByteBuffer responseBody,
+            byte[] responseCodeDetails,
+            byte[] responseBody,
             Map<String, String> additionalHeaders,
             int grpcStatus) {
         return WasmResult.UNIMPLEMENTED;
@@ -201,70 +200,70 @@ public interface Handler {
     /**
      * Set the HTTP request body.
      *
-     * @param body The HTTP request body as a ByteBuffer
+     * @param body The HTTP request body as a byte[]
      * @return WasmResult indicating success or failure
      */
-    default WasmResult setHttpRequestBody(ByteBuffer body) {
+    default WasmResult setHttpRequestBody(byte[] body) {
         return WasmResult.UNIMPLEMENTED;
     }
 
     /**
      * Set the HTTP response body.
      *
-     * @param body The HTTP response body as a ByteBuffer
+     * @param body The HTTP response body as a byte[]
      * @return WasmResult indicating success or failure
      */
-    default WasmResult setHttpResponseBody(ByteBuffer body) {
+    default WasmResult setHttpResponseBody(byte[] body) {
         return WasmResult.UNIMPLEMENTED;
     }
 
     /**
      * Set the downstream data.
      *
-     * @param data The downstream data as a ByteBuffer
+     * @param data The downstream data as a byte[]
      * @return WasmResult indicating success or failure
      */
-    default WasmResult setDownStreamData(ByteBuffer data) {
+    default WasmResult setDownStreamData(byte[] data) {
         return WasmResult.UNIMPLEMENTED;
     }
 
     /**
      * Set the upstream data.
      *
-     * @param data The upstream data as a ByteBuffer
+     * @param data The upstream data as a byte[]
      * @return WasmResult indicating success or failure
      */
-    default WasmResult setUpstreamData(ByteBuffer data) {
+    default WasmResult setUpstreamData(byte[] data) {
         return WasmResult.UNIMPLEMENTED;
     }
 
     /**
      * Set the HTTP call response body.
      *
-     * @param body The HTTP call response body as a ByteBuffer
+     * @param body The HTTP call response body as a byte[]
      * @return WasmResult indicating success or failure
      */
-    default WasmResult setHttpCallResponseBody(ByteBuffer body) {
+    default WasmResult setHttpCallResponseBody(byte[] body) {
         return WasmResult.UNIMPLEMENTED;
     }
 
     /**
      * Set the gRPC receive buffer.
      *
-     * @param buffer The gRPC receive buffer as a ByteBuffer
+     * @param buffer The gRPC receive buffer as a byte[]
      * @return WasmResult indicating success or failure
      */
-    default WasmResult setGrpcReceiveBuffer(ByteBuffer buffer) {
+    default WasmResult setGrpcReceiveBuffer(byte[] buffer) {
         return WasmResult.UNIMPLEMENTED;
     }
 
     /**
      * Set the function call data.
      *
-     * @param data The function call data as a ByteBuffer
+     * @param data The function call data as a byte[]
      * @return WasmResult indicating success or failure
      */
-    default WasmResult setFuncCallData(ByteBuffer data) {
+    default WasmResult setFuncCallData(byte[] data) {
         return WasmResult.UNIMPLEMENTED;
     }
 
@@ -272,10 +271,10 @@ public interface Handler {
      * Set a custom buffer.
      *
      * @param bufferType The buffer type
-     * @param buffer The custom buffer as a ByteBuffer
+     * @param buffer The custom buffer as a byte[]
      * @return WasmResult indicating success or failure
      */
-    default WasmResult setCustomBuffer(int bufferType, ByteBuffer buffer) {
+    default WasmResult setCustomBuffer(int bufferType, byte[] buffer) {
         return WasmResult.UNIMPLEMENTED;
     }
 

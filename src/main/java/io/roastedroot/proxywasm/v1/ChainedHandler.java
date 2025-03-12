@@ -1,6 +1,5 @@
 package io.roastedroot.proxywasm.v1;
 
-import java.nio.ByteBuffer;
 import java.util.Map;
 
 /**
@@ -111,52 +110,52 @@ public abstract class ChainedHandler implements Handler {
     }
 
     @Override
-    public ByteBuffer getHttpRequestBody() {
+    public byte[] getHttpRequestBody() {
         return next().getHttpRequestBody();
     }
 
     @Override
-    public ByteBuffer getHttpResponseBody() {
+    public byte[] getHttpResponseBody() {
         return next().getHttpResponseBody();
     }
 
     @Override
-    public ByteBuffer getDownStreamData() {
+    public byte[] getDownStreamData() {
         return next().getDownStreamData();
     }
 
     @Override
-    public ByteBuffer getUpstreamData() {
+    public byte[] getUpstreamData() {
         return next().getUpstreamData();
     }
 
     @Override
-    public ByteBuffer getHttpCallResponseBody() {
+    public byte[] getHttpCallResponseBody() {
         return next().getHttpCallResponseBody();
     }
 
     @Override
-    public ByteBuffer getGrpcReceiveBuffer() {
+    public byte[] getGrpcReceiveBuffer() {
         return next().getGrpcReceiveBuffer();
     }
 
     @Override
-    public ByteBuffer getPluginConfig() {
+    public byte[] getPluginConfig() {
         return next().getPluginConfig();
     }
 
     @Override
-    public ByteBuffer getVmConfig() {
+    public byte[] getVmConfig() {
         return next().getVmConfig();
     }
 
     @Override
-    public ByteBuffer getFuncCallData() {
+    public byte[] getFuncCallData() {
         return next().getFuncCallData();
     }
 
     @Override
-    public ByteBuffer getCustomBuffer(int bufferType) {
+    public byte[] getCustomBuffer(int bufferType) {
         return next().getCustomBuffer(bufferType);
     }
 
@@ -183,8 +182,8 @@ public abstract class ChainedHandler implements Handler {
     @Override
     public WasmResult sendHttpResponse(
             int responseCode,
-            ByteBuffer responseCodeDetails,
-            ByteBuffer responseBody,
+            byte[] responseCodeDetails,
+            byte[] responseBody,
             Map<String, String> additionalHeaders,
             int grpcStatus) {
         return next().sendHttpResponse(
@@ -196,42 +195,42 @@ public abstract class ChainedHandler implements Handler {
     }
 
     @Override
-    public WasmResult setCustomBuffer(int bufferType, ByteBuffer buffer) {
+    public WasmResult setCustomBuffer(int bufferType, byte[] buffer) {
         return next().setCustomBuffer(bufferType, buffer);
     }
 
     @Override
-    public WasmResult setFuncCallData(ByteBuffer data) {
+    public WasmResult setFuncCallData(byte[] data) {
         return next().setFuncCallData(data);
     }
 
     @Override
-    public WasmResult setGrpcReceiveBuffer(ByteBuffer buffer) {
+    public WasmResult setGrpcReceiveBuffer(byte[] buffer) {
         return next().setGrpcReceiveBuffer(buffer);
     }
 
     @Override
-    public WasmResult setHttpCallResponseBody(ByteBuffer body) {
+    public WasmResult setHttpCallResponseBody(byte[] body) {
         return next().setHttpCallResponseBody(body);
     }
 
     @Override
-    public WasmResult setUpstreamData(ByteBuffer data) {
+    public WasmResult setUpstreamData(byte[] data) {
         return next().setUpstreamData(data);
     }
 
     @Override
-    public WasmResult setDownStreamData(ByteBuffer data) {
+    public WasmResult setDownStreamData(byte[] data) {
         return next().setDownStreamData(data);
     }
 
     @Override
-    public WasmResult setHttpResponseBody(ByteBuffer body) {
+    public WasmResult setHttpResponseBody(byte[] body) {
         return next().setHttpResponseBody(body);
     }
 
     @Override
-    public WasmResult setHttpRequestBody(ByteBuffer body) {
+    public WasmResult setHttpRequestBody(byte[] body) {
         return next().setHttpRequestBody(body);
     }
 }
