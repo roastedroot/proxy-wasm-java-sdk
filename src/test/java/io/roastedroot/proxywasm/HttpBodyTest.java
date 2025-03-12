@@ -1,11 +1,12 @@
 package io.roastedroot.proxywasm;
 
+import static io.roastedroot.proxywasm.v1.Helpers.bytes;
+import static io.roastedroot.proxywasm.v1.Helpers.string;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import com.dylibso.chicory.wasm.Parser;
 import io.roastedroot.proxywasm.v1.Action;
-import io.roastedroot.proxywasm.v1.Helpers;
 import io.roastedroot.proxywasm.v1.HttpContext;
 import io.roastedroot.proxywasm.v1.ProxyWasm;
 import io.roastedroot.proxywasm.v1.StartException;
@@ -38,15 +39,14 @@ public class HttpBodyTest {
     }
 
     @Test
-    public void testRemoveRequestHeader() throws StartException {
+    public void testOnHttpRequestHeadersRemoveRequestHeader() throws StartException {
 
         // Call OnRequestHeaders.
-        var action =
-                httpContext.callOnRequestHeaders(
-                        Map.of(
-                                "content-length", "10",
-                                "buffer-operation", "replace"),
-                        false);
+        handler.setHttpRequestHeader(
+                Map.of(
+                        "content-length", "10",
+                        "buffer-operation", "replace"));
+        var action = httpContext.callOnRequestHeaders(false);
 
         // Must be continued.
         assertEquals(Action.CONTINUE, action);
@@ -56,9 +56,9 @@ public class HttpBodyTest {
     }
 
     @Test
-    public void test400Response() throws StartException {
+    public void testOnHttpRequestHeaders400Response() throws StartException {
         // Call OnRequestHeaders.
-        var action = httpContext.callOnRequestHeaders(Map.of(), false);
+        var action = httpContext.callOnRequestHeaders(false);
 
         // Must be paused.
         assertEquals(Action.PAUSE, action);
@@ -67,36 +67,146 @@ public class HttpBodyTest {
         var response = handler.getSenthttpResponse();
         assertNotNull(response);
         assertEquals(400, response.statusCode);
-        assertEquals("content must be provided", Helpers.string(response.body));
+        assertEquals("content must be provided", string(response.body));
     }
 
     @Test
-    public void testPauseUntilEOS() throws StartException {
+    public void testOnHttpRequestBodyPauseUntilEOS() throws StartException {
         // Call callOnRequestBody
-        var action =
-                httpContext.callOnRequestBody(
-                        "aaaa".getBytes(StandardCharsets.UTF_8), false /* end of stream */);
+        handler.setHttpRequestBody(bytes("aaaa"));
+        var action = httpContext.callOnRequestBody(false /* end of stream */);
 
         // Must be paused.
         assertEquals(Action.PAUSE, action);
     }
 
     @Test
-    public void testAppend() throws StartException {
+    public void testOnHttpRequestBodyAppend() throws StartException {
         // Call callOnRequestBody
-        var action =
-                httpContext.callOnRequestHeaders(
-                        Map.of(
-                                "content-length", "10",
-                                "buffer-operation", "append"),
-                        false /* end of stream */);
+        handler.setHttpRequestHeader(
+                Map.of(
+                        "content-length", "10",
+                        "buffer-operation", "append"));
+
+        var action = httpContext.callOnRequestHeaders(false /* end of stream */);
 
         // Must be continued.
         assertEquals(Action.CONTINUE, action);
 
         // Call callOnRequestBody
-        //        var action = httpContext.callOnRequestBody("[original
-        // body]".getBytes(StandardCharsets.UTF_8), false /* end of stream */);
+        handler.setHttpRequestBody("[original body]".getBytes(StandardCharsets.UTF_8));
+        action = httpContext.callOnRequestBody(true);
+        assertEquals(Action.CONTINUE, action);
 
+        handler.assertLogsEqual("original request body: [original body]");
+        assertEquals(
+                "[original body][this is appended body]", string(handler.getHttpRequestBody()));
+    }
+
+    @Test
+    public void testOnHttpRequestBodyPrepend() throws StartException {
+        // Call callOnRequestBody
+        handler.setHttpRequestHeader(
+                Map.of(
+                        "content-length", "10",
+                        "buffer-operation", "prepend"));
+
+        var action = httpContext.callOnRequestHeaders(false /* end of stream */);
+
+        // Must be continued.
+        assertEquals(Action.CONTINUE, action);
+
+        // Call callOnRequestBody
+        handler.setHttpRequestBody("[original body]".getBytes(StandardCharsets.UTF_8));
+        action = httpContext.callOnRequestBody(true);
+        assertEquals(Action.CONTINUE, action);
+
+        handler.assertLogsEqual("original request body: [original body]");
+        assertEquals(
+                "[this is prepended body][original body]", string(handler.getHttpRequestBody()));
+    }
+
+    @Test
+    public void testOnHttpRequestBodyReplace() throws StartException {
+        // Call callOnRequestBody
+        handler.setHttpRequestHeader(
+                Map.of(
+                        "content-length", "10",
+                        "buffer-operation", "replace"));
+
+        var action = httpContext.callOnRequestHeaders(false /* end of stream */);
+
+        // Must be continued.
+        assertEquals(Action.CONTINUE, action);
+
+        // Call callOnRequestBody
+        handler.setHttpRequestBody(bytes("[original body]"));
+        action = httpContext.callOnRequestBody(true);
+        assertEquals(Action.CONTINUE, action);
+
+        handler.assertLogsEqual("original request body: [original body]");
+        assertEquals("[this is replaced body]", string(handler.getHttpRequestBody()));
+    }
+
+    @Test
+    public void testOnHttpResponseBodyAppend() throws StartException {
+
+        // Call OnRequestHeaders
+        handler.setHttpRequestHeader(
+                Map.of(
+                        "buffer-replace-at", "response",
+                        "content-length", "10",
+                        "buffer-operation", "append"));
+        var action = httpContext.callOnRequestHeaders(false /* end of stream */);
+        assertEquals(Action.CONTINUE, action);
+
+        handler.setHttpResponseBody(bytes("[original body]"));
+        action = httpContext.callOnResponseBody(true);
+        assertEquals(Action.CONTINUE, action);
+
+        handler.assertLogsEqual("original response body: [original body]");
+        assertEquals(
+                "[original body][this is appended body]", string(handler.getHttpResponseBody()));
+    }
+
+    @Test
+    public void testOnHttpResponseBodyPrepend() throws StartException {
+
+        // Call OnRequestHeaders
+        handler.setHttpRequestHeader(
+                Map.of(
+                        "buffer-replace-at", "response",
+                        "content-length", "10",
+                        "buffer-operation", "prepend"));
+        var action = httpContext.callOnRequestHeaders(false /* end of stream */);
+        assertEquals(Action.CONTINUE, action);
+
+        handler.setHttpResponseBody(bytes("[original body]"));
+        action = httpContext.callOnResponseBody(true);
+        assertEquals(Action.CONTINUE, action);
+
+        handler.assertLogsEqual("original response body: [original body]");
+        assertEquals(
+                "[this is prepended body][original body]", string(handler.getHttpResponseBody()));
+    }
+
+    @Test
+    public void testOnHttpResponseBodyReplace() throws StartException {
+
+        // Call OnRequestHeaders
+        handler.setHttpRequestHeader(
+                Map.of(
+                        "buffer-replace-at", "response",
+                        "content-length", "10",
+                        "buffer-operation", "replace"));
+        var action = httpContext.callOnRequestHeaders(false /* end of stream */);
+        assertEquals(Action.CONTINUE, action);
+
+        handler.setHttpResponseBody(bytes("[original body]"));
+        action = httpContext.callOnResponseBody(true);
+        assertEquals(Action.CONTINUE, action);
+
+        handler.assertLogsEqual("original response body: [original body]");
+        assertEquals("[this is replaced body]", string(handler.getHttpResponseBody()));
     }
 }

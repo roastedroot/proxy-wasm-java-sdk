@@ -587,8 +587,8 @@ public class Imports extends Common {
 
         try {
             // Get the buffer based on the buffer type
-            ByteBuffer buffer = ByteBuffer.wrap(getBuffer(instance, bufferType));
-            if (buffer == null || buffer.remaining() == 0) {
+            byte[] b = getBuffer(instance, bufferType);
+            if (b == null || b.length == 0) {
                 return WasmResult.NOT_FOUND.getValue();
             }
 
@@ -596,6 +596,7 @@ public class Imports extends Common {
                 return WasmResult.BAD_ARGUMENT.getValue();
             }
 
+            ByteBuffer buffer = ByteBuffer.wrap(b);
             if (start + length > buffer.capacity()) {
                 length = buffer.capacity() - start;
             }
@@ -635,8 +636,17 @@ public class Imports extends Common {
     public int proxySetBufferBytes(
             int bufferType, int start, int length, int dataPtr, int dataSize) {
         try {
+
+            // Get the buffer based on the buffer type
+            var buf = getBuffer(instance, bufferType);
+            if (buf == null) {
+                return WasmResult.NOT_FOUND.getValue();
+            }
+
             // Get content from WebAssembly memory
             byte[] content = instance.memory().readBytes(dataPtr, dataSize);
+
+            content = replaceBytes(buf, content, start, length);
 
             // Set the buffer using the appropriate handler method
             WasmResult result = setBuffer(instance, bufferType, content);
@@ -645,6 +655,43 @@ public class Imports extends Common {
         } catch (WasmRuntimeException e) {
             return WasmResult.INVALID_MEMORY_ACCESS.getValue();
         }
+    }
+
+    public static byte[] replaceBytes(
+            byte[] existing, byte[] change, int replaceStart, int replaceLength) {
+
+        if (replaceStart > existing.length) {
+            replaceStart = existing.length;
+        }
+        if (replaceLength > existing.length) {
+            replaceLength = existing.length;
+        }
+
+        // when we are replacing the whole buffer
+        if (replaceStart == 0 && replaceLength == existing.length) {
+            return change;
+        }
+
+        int newLength = change.length + (existing.length - replaceLength);
+        byte[] result = new byte[newLength];
+
+        // Copy the unchanged part before the start position
+        System.arraycopy(existing, 0, result, 0, Math.min(replaceStart, existing.length));
+
+        // Copy the new change bytes
+        System.arraycopy(change, 0, result, replaceStart, change.length);
+
+        // Copy the remaining unchanged part after replacement
+        if (replaceStart + replaceLength < existing.length) {
+            System.arraycopy(
+                    existing,
+                    replaceStart + replaceLength,
+                    result,
+                    replaceStart + change.length,
+                    existing.length - (replaceStart + replaceLength));
+        }
+
+        return result;
     }
 
     /**
