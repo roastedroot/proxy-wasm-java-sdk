@@ -13,7 +13,6 @@ import io.roastedroot.proxywasm.v1.StartException;
 import java.nio.file.Path;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 public class EchoHttpBodyTest {
@@ -26,7 +25,7 @@ public class EchoHttpBodyTest {
     void setUp() throws StartException {
         this.handler = new MockHandler();
         ProxyWasm.Builder builder = ProxyWasm.builder();
-        builder.withVmConfig("echo");
+        builder.withPluginConfig("echo");
         var module = Parser.parse(Path.of("./src/test/go-examples/http_body/main.wasm"));
         this.proxyWasm = builder.build(module);
         this.httpContext = proxyWasm.createHttpContext(handler);
@@ -49,18 +48,17 @@ public class EchoHttpBodyTest {
     }
 
     @Test
-    @Disabled("seems like we need to buffer the body until EOS")
     public void echoRequest() throws StartException {
         for (var frame : new String[] {"frame1...", "frame2...", "frame3..."}) {
             // Call callOnRequestBody without "content-length"
-            handler.setHttpRequestBody(bytes(frame));
+            handler.appendHttpRequestBody(bytes(frame));
             var action = httpContext.callOnRequestBody(false /* end of stream */);
 
             // Must be paused.
             assertEquals(Action.PAUSE, action);
         }
 
-        handler.setHttpRequestBody(null);
+        handler.appendHttpRequestBody(null);
         var action = httpContext.callOnRequestBody(true /* end of stream */);
 
         System.out.println(handler.loggedMessages());

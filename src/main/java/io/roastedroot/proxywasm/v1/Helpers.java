@@ -43,4 +43,17 @@ public final class Helpers {
         }
         return value.size();
     }
+
+    public static byte[] append(byte[] value1, byte[] value2) {
+        if (length(value1) == 0) {
+            return value2;
+        }
+        if (length(value2) == 0) {
+            return value1;
+        }
+        byte[] result = new byte[value1.length + value2.length];
+        System.arraycopy(value1, 0, result, 0, value1.length);
+        System.arraycopy(value2, 0, result, value1.length, value2.length);
+        return result;
+    }
 }
