@@ -61,6 +61,51 @@ public abstract class ChainedHandler implements Handler {
     }
 
     @Override
+    public WasmResult setCustomHeader(int mapType, Map<String, String> map) {
+        return next().setCustomHeader(mapType, map);
+    }
+
+    @Override
+    public WasmResult setHttpRequestHeader(Map<String, String> headers) {
+        return next().setHttpRequestHeader(headers);
+    }
+
+    @Override
+    public WasmResult setHttpRequestTrailer(Map<String, String> trailers) {
+        return next().setHttpRequestTrailer(trailers);
+    }
+
+    @Override
+    public WasmResult setHttpResponseHeader(Map<String, String> headers) {
+        return next().setHttpResponseHeader(headers);
+    }
+
+    @Override
+    public WasmResult setHttpResponseTrailer(Map<String, String> trailers) {
+        return next().setHttpResponseTrailer(trailers);
+    }
+
+    @Override
+    public WasmResult setHttpCallResponseHeaders(Map<String, String> headers) {
+        return next().setHttpCallResponseHeaders(headers);
+    }
+
+    @Override
+    public WasmResult setHttpCallResponseTrailer(Map<String, String> trailers) {
+        return next().setHttpCallResponseTrailer(trailers);
+    }
+
+    @Override
+    public WasmResult setGrpcReceiveInitialMetaData(Map<String, String> metadata) {
+        return next().setGrpcReceiveInitialMetaData(metadata);
+    }
+
+    @Override
+    public WasmResult setGrpcReceiveTrailerMetaData(Map<String, String> metadata) {
+        return next().setGrpcReceiveTrailerMetaData(metadata);
+    }
+
+    @Override
     public String getProperty(String key) throws WasmException {
         return next().getProperty(key);
     }
@@ -136,13 +181,13 @@ public abstract class ChainedHandler implements Handler {
     }
 
     @Override
-    public WasmResult sendHttpResp(
+    public WasmResult sendHttpResponse(
             int responseCode,
             ByteBuffer responseCodeDetails,
             ByteBuffer responseBody,
             Map<String, String> additionalHeaders,
             int grpcStatus) {
-        return next().sendHttpResp(
+        return next().sendHttpResponse(
                         responseCode,
                         responseCodeDetails,
                         responseBody,
