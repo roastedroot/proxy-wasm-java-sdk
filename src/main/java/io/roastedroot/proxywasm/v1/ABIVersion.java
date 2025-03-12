@@ -20,5 +20,4 @@ public enum ABIVersion {
     public String getAbiMarkerFunction() {
         return abiMarkerFunction;
     }
-
 }

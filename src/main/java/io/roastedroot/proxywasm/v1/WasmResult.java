@@ -64,7 +64,7 @@ public enum WasmResult {
         throw new IllegalArgumentException("Unknown WasmResult value: " + value);
     }
 
-    public void expect(WasmResult ...expected) throws WasmException {
+    public void expect(WasmResult... expected) throws WasmException {
         for (WasmResult result : expected) {
             if (this == result) {
                 return;

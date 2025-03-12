@@ -2,12 +2,11 @@ package io.roastedroot.proxywasm.v1;
 
 import java.nio.ByteBuffer;
 import java.util.Map;
-import java.util.Objects;
 
 /**
  * A Handler implementation that chains to another handler if it can't handle the request.
  */
-public abstract class AbstractChainedHandler implements Handler {
+public abstract class ChainedHandler implements Handler {
 
     protected abstract Handler next();
 
@@ -134,5 +133,60 @@ public abstract class AbstractChainedHandler implements Handler {
     @Override
     public int getCurrentTimeNanoseconds() throws WasmException {
         return next().getCurrentTimeNanoseconds();
+    }
+
+    @Override
+    public WasmResult sendHttpResp(
+            int responseCode,
+            ByteBuffer responseCodeDetails,
+            ByteBuffer responseBody,
+            Map<String, String> additionalHeaders,
+            int grpcStatus) {
+        return next().sendHttpResp(
+                        responseCode,
+                        responseCodeDetails,
+                        responseBody,
+                        additionalHeaders,
+                        grpcStatus);
+    }
+
+    @Override
+    public WasmResult setCustomBuffer(int bufferType, ByteBuffer buffer) {
+        return next().setCustomBuffer(bufferType, buffer);
+    }
+
+    @Override
+    public WasmResult setFuncCallData(ByteBuffer data) {
+        return next().setFuncCallData(data);
+    }
+
+    @Override
+    public WasmResult setGrpcReceiveBuffer(ByteBuffer buffer) {
+        return next().setGrpcReceiveBuffer(buffer);
+    }
+
+    @Override
+    public WasmResult setHttpCallResponseBody(ByteBuffer body) {
+        return next().setHttpCallResponseBody(body);
+    }
+
+    @Override
+    public WasmResult setUpstreamData(ByteBuffer data) {
+        return next().setUpstreamData(data);
+    }
+
+    @Override
+    public WasmResult setDownStreamData(ByteBuffer data) {
+        return next().setDownStreamData(data);
+    }
+
+    @Override
+    public WasmResult setHttpResponseBody(ByteBuffer body) {
+        return next().setHttpResponseBody(body);
+    }
+
+    @Override
+    public WasmResult setHttpRequestBody(ByteBuffer body) {
+        return next().setHttpRequestBody(body);
     }
 }

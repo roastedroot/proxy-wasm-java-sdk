@@ -1,103 +1,257 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
 
-    <groupId>io.roastedroot</groupId>
-    <artifactId>proxy-wasm-java-sdk</artifactId>
-    <version>1.0-SNAPSHOT</version>
-    <packaging>jar</packaging>
+  <groupId>io.roastedroot</groupId>
+  <artifactId>proxy-wasm-java-sdk</artifactId>
+  <version>1.0-SNAPSHOT</version>
+  <packaging>jar</packaging>
 
-    <name>proxy-wasm-java-sdk</name>
-    <url>http://maven.apache.org</url>
+  <name>proxy-wasm-java-sdk</name>
+  <url>http://maven.apache.org</url>
 
-    <licenses>
-        <license>
-            <name>Apache-2.0</name>
-            <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
-            <distribution>repo</distribution>
-            <comments>A business-friendly OSS license</comments>
-        </license>
-    </licenses>
+  <licenses>
+    <license>
+      <name>Apache-2.0</name>
+      <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>repo</distribution>
+      <comments>A business-friendly OSS license</comments>
+    </license>
+  </licenses>
 
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    <maven.compiler.release>11</maven.compiler.release>
+    <maven.compiler.failOnWarning>true</maven.compiler.failOnWarning>
+    <maven.dependency.failOnWarning>true</maven.dependency.failOnWarning>
 
-        <maven.compiler.release>11</maven.compiler.release>
-        <maven.compiler.failOnWarning>true</maven.compiler.failOnWarning>
-        <maven.dependency.failOnWarning>true</maven.dependency.failOnWarning>
+    <checkstyle.version>10.21.4</checkstyle.version>
+    <maven-checkstyle-plugin.version>3.6.0</maven-checkstyle-plugin.version>
+    <spotless-maven-plugin.version>2.44.3</spotless-maven-plugin.version>
 
+    <!-- dependency versions -->
+    <chicory.version>1.1.0</chicory.version>
+    <junit.version>5.12.0</junit.version>
+  </properties>
 
-        <!-- dependency versions -->
-        <chicory.version>1.1.0</chicory.version>
-        <junit.version>5.12.0</junit.version>
-    </properties>
+  <dependencies>
+    <dependency>
+      <groupId>com.dylibso.chicory</groupId>
+      <artifactId>aot-experimental</artifactId>
+      <version>${chicory.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.dylibso.chicory</groupId>
+      <artifactId>host-module-annotations-experimental</artifactId>
+      <version>${chicory.version}</version>
+    </dependency>
 
-    <dependencies>
+    <dependency>
+      <groupId>com.dylibso.chicory</groupId>
+      <artifactId>runtime</artifactId>
+      <version>${chicory.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.dylibso.chicory</groupId>
+      <artifactId>wasi</artifactId>
+      <version>${chicory.version}</version>
+    </dependency>
 
-        <dependency>
-            <groupId>com.dylibso.chicory</groupId>
-            <artifactId>runtime</artifactId>
-            <version>${chicory.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.dylibso.chicory</groupId>
-            <artifactId>host-module-annotations-experimental</artifactId>
-            <version>${chicory.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.dylibso.chicory</groupId>
-            <artifactId>aot-experimental</artifactId>
-            <version>${chicory.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.dylibso.chicory</groupId>
-            <artifactId>wasi</artifactId>
-            <version>${chicory.version}</version>
-        </dependency>
+    <!-- ============= Testing ============= -->
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-api</artifactId>
+      <version>${junit.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-engine</artifactId>
+      <version>${junit.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-params</artifactId>
+      <version>${junit.version}</version>
+      <scope>test</scope>
+    </dependency>
 
-        <!-- ============= Testing ============= -->
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-api</artifactId>
-            <version>${junit.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-engine</artifactId>
-            <version>${junit.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-params</artifactId>
-            <version>${junit.version}</version>
-            <scope>test</scope>
-        </dependency>
+  </dependencies>
+  <build>
+    <plugins>
 
-    </dependencies>
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <source>11</source>
-                    <target>11</target>
-                    <annotationProcessorPathsUseDepMgmt>true</annotationProcessorPathsUseDepMgmt>
-                    <annotationProcessorPaths>
-                        <path>
-                            <groupId>com.dylibso.chicory</groupId>
-                            <artifactId>host-module-processor-experimental</artifactId>
-                            <version>${chicory.version}</version>
-                        </path>
-                    </annotationProcessorPaths>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
+      <plugin>
+        <groupId>com.diffplug.spotless</groupId>
+        <artifactId>spotless-maven-plugin</artifactId>
+        <version>${spotless-maven-plugin.version}</version>
+        <configuration>
+          <formats>
+            <format>
+              <includes>
+                <include>*.md</include>
+                <include>.gitignore</include>
+              </includes>
+              <trimTrailingWhitespace/>
+              <endWithNewline/>
+              <indent>
+                <spaces>true</spaces>
+                <spacesPerTab>2</spacesPerTab>
+              </indent>
+            </format>
+          </formats>
+          <java>
+            <includes>
+              <include>**/src/main/java/**/*.java</include>
+              <include>**/src/test/java/**/*.java</include>
+            </includes>
+            <googleJavaFormat>
+              <version>1.18.1</version>
+              <style>AOSP</style>
+              <reflowLongStrings>true</reflowLongStrings>
+              <formatJavadoc>false</formatJavadoc>
+            </googleJavaFormat>
+            <importOrder/>
+            <replaceRegex>
+              <name>Remove wildcard imports</name>
+              <searchRegex>import\s+(?:static\s+)?[^\*\s]+\*;(\r\n|\r|\n)</searchRegex>
+              <replacement>$1</replacement>
+            </replaceRegex>
+            <removeUnusedImports/>
+          </java>
+          <pom>
+            <includes>
+              <include>**/pom.xml</include>
+            </includes>
+            <excludes>
+              <exclude>**/target/**/*.xml</exclude>
+            </excludes>
+            <sortPom>
+              <expandEmptyElements>false</expandEmptyElements>
+              <sortModules>true</sortModules>
+              <sortDependencies>scope,groupId,artifactId</sortDependencies>
+              <sortDependencyExclusions>groupId,artifactId</sortDependencyExclusions>
+              <sortPlugins>groupId,artifactId</sortPlugins>
+            </sortPom>
+          </pom>
+        </configuration>
+        <executions>
+          <execution>
+            <id>format</id>
+            <goals>
+              <goal>check</goal>
+            </goals>
+            <phase>process-sources</phase>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-checkstyle-plugin</artifactId>
+        <version>${maven-checkstyle-plugin.version}</version>
+        <configuration>
+          <failOnViolation>true</failOnViolation>
+          <includeTestSourceDirectory>true</includeTestSourceDirectory>
+          <excludeGeneratedSources>true</excludeGeneratedSources>
+          <checkstyleRules>
+            <module name="Checker">
+              <module name="FileTabCharacter">
+                <property name="fileExtensions" value="java,xml"/>
+              </module>
+              <module name="SuppressWarningsFilter"/>
+              <module name="TreeWalker">
+                <module name="AnnotationUseStyle"/>
+                <module name="ArrayTypeStyle"/>
+                <module name="AtclauseOrder"/>
+                <module name="AvoidDoubleBraceInitialization"/>
+                <module name="AvoidNoArgumentSuperConstructorCall"/>
+                <module name="ConstructorsDeclarationGrouping"/>
+                <module name="DefaultComesLast"/>
+                <module name="EmptyBlock">
+                  <property name="option" value="text"/>
+                </module>
+                <module name="EmptyCatchBlock"/>
+                <module name="ExplicitInitialization"/>
+                <module name="FallThrough"/>
+                <module name="FinalClass"/>
+                <module name="HideUtilityClassConstructor"/>
+                <module name="IllegalCatch">
+                  <property name="illegalClassNames" value="Exception"/>
+                </module>
+                <module name="InnerAssignment"/>
+                <module name="InvalidJavadocPosition"/>
+                <module name="JavadocBlockTagLocation"/>
+                <module name="JavadocContentLocation"/>
+                <module name="JavadocMissingLeadingAsterisk"/>
+                <module name="JavadocMissingWhitespaceAfterAsterisk"/>
+                <module name="JavadocTagContinuationIndentation"/>
+                <module name="ModifiedControlVariable"/>
+                <module name="ModifierOrder"/>
+                <module name="MultipleVariableDeclarations"/>
+                <module name="MutableException"/>
+                <module name="NeedBraces"/>
+                <module name="NoClone"/>
+                <module name="NoFinalizer"/>
+                <module name="NonEmptyAtclauseDescription"/>
+                <module name="OneStatementPerLine"/>
+                <module name="OneTopLevelClass"/>
+                <module name="OverloadMethodsDeclarationOrder"/>
+                <module name="PackageDeclaration"/>
+                <module name="RequireEmptyLineBeforeBlockTagGroup"/>
+                <module name="SimplifyBooleanExpression"/>
+                <module name="SimplifyBooleanReturn"/>
+                <module name="SingleLineJavadoc"/>
+                <module name="StringLiteralEquality"/>
+                <module name="SuppressWarningsHolder"/>
+                <module name="TypeName"/>
+                <module name="UnnecessarySemicolonAfterOuterTypeDeclaration"/>
+                <module name="UnnecessarySemicolonAfterTypeMemberDeclaration"/>
+                <module name="UnnecessarySemicolonInEnumeration"/>
+                <module name="UnnecessarySemicolonInTryWithResources"/>
+                <module name="UnusedLocalVariable"/>
+                <module name="UpperEll"/>
+              </module>
+            </module>
+          </checkstyleRules>
+        </configuration>
+        <dependencies>
+          <dependency>
+            <groupId>com.puppycrawl.tools</groupId>
+            <artifactId>checkstyle</artifactId>
+            <version>${checkstyle.version}</version>
+          </dependency>
+        </dependencies>
+        <executions>
+          <execution>
+            <id>checkstyle</id>
+            <goals>
+              <goal>check</goal>
+            </goals>
+            <phase>validate</phase>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <source>11</source>
+          <target>11</target>
+          <annotationProcessorPathsUseDepMgmt>true</annotationProcessorPathsUseDepMgmt>
+          <annotationProcessorPaths>
+            <path>
+              <groupId>com.dylibso.chicory</groupId>
+              <artifactId>host-module-processor-experimental</artifactId>
+              <version>${chicory.version}</version>
+            </path>
+          </annotationProcessorPaths>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
 </project>

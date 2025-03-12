@@ -5,6 +5,7 @@ package io.roastedroot.proxywasm.v1;
  * Converted from Go's WasmResult type.
  */
 public class WasmException extends Exception {
+
     private final WasmResult result;
 
     public WasmException(WasmResult result) {

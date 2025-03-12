@@ -4,7 +4,7 @@ import com.dylibso.chicory.runtime.Instance;
 import io.roastedroot.proxywasm.v1.WasmException;
 import io.roastedroot.proxywasm.v1.WasmResult;
 
-//@WasmModuleInterface("main.wasm")
+// @WasmModuleInterface("main.wasm")
 public class Exports {
 
     private final Instance.Exports exports;
@@ -54,7 +54,8 @@ public class Exports {
         exports.function("proxy_on_context_create").apply(contextID, parentContextID);
     }
 
-    // This can be used to change active context, e.g. during proxy_on_http_call_response, proxy_on_grpc_receive and/or proxy_on_queue_ready callbacks.
+    // This can be used to change active context, e.g. during proxy_on_http_call_response,
+    // proxy_on_grpc_receive and/or proxy_on_queue_ready callbacks.
     public void proxySetEffectiveContext(int contextID) throws WasmException {
         long result = exports.function("proxy_set_effective_context").apply(contextID)[0];
         WasmResult.fromInt((int) result).expect(WasmResult.OK);
@@ -77,16 +78,16 @@ public class Exports {
 
     public void proxyOnDownstreamConnectionClose(int arg0, int arg1) {
         exports.function("proxy_on_downstream_connection_close").apply(arg0, arg1);
-
     }
 
     public void proxyOnUpstreamConnectionClose(int arg0, int arg1) {
         exports.function("proxy_on_upstream_connection_close").apply(arg0, arg1);
-
     }
 
     public int proxyOnRequestHeaders(int contextID, int headers, int endOfStream) {
-        long result = exports.function("proxy_on_request_headers").apply(contextID, headers, endOfStream)[0];
+        long result =
+                exports.function("proxy_on_request_headers")
+                        .apply(contextID, headers, endOfStream)[0];
         return (int) result;
     }
 

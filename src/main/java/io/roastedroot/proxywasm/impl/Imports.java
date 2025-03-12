@@ -3,8 +3,13 @@ package io.roastedroot.proxywasm.impl;
 import com.dylibso.chicory.experimental.hostmodule.annotations.HostModule;
 import com.dylibso.chicory.experimental.hostmodule.annotations.WasmExport;
 import com.dylibso.chicory.runtime.Instance;
-import io.roastedroot.proxywasm.v1.*;
-
+import com.dylibso.chicory.runtime.WasmRuntimeException;
+import io.roastedroot.proxywasm.v1.BufferType;
+import io.roastedroot.proxywasm.v1.Handler;
+import io.roastedroot.proxywasm.v1.LogLevel;
+import io.roastedroot.proxywasm.v1.MapType;
+import io.roastedroot.proxywasm.v1.WasmException;
+import io.roastedroot.proxywasm.v1.WasmResult;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
@@ -119,6 +124,41 @@ public class Imports extends Common {
     }
 
     /**
+     * Set a buffer based on the buffer type.
+     *
+     * @param instance   The WebAssembly instance
+     * @param bufferType The type of buffer to set
+     * @param buffer     The buffer to set
+     * @return WasmResult indicating success or failure
+     */
+    private WasmResult setBuffer(Instance instance, int bufferType, ByteBuffer buffer) {
+        // Set the appropriate buffer based on the buffer type
+        var knownType = BufferType.fromInt(bufferType);
+        if (knownType == null) {
+            return handler.setCustomBuffer(bufferType, buffer);
+        }
+
+        // TODO: check if the buffers that can be set may depend on the ABI version.
+        switch (knownType) {
+            case HTTP_REQUEST_BODY:
+                return handler.setHttpRequestBody(buffer);
+            case HTTP_RESPONSE_BODY:
+                return handler.setHttpResponseBody(buffer);
+            case DOWNSTREAM_DATA:
+                return handler.setDownStreamData(buffer);
+            case UPSTREAM_DATA:
+                return handler.setUpstreamData(buffer);
+            case HTTP_CALL_RESPONSE_BODY:
+                return handler.setHttpCallResponseBody(buffer);
+            case GRPC_RECEIVE_BUFFER:
+                return handler.setGrpcReceiveBuffer(buffer);
+            case CALL_DATA:
+                return handler.setFuncCallData(buffer);
+        }
+        return WasmResult.NOT_FOUND;
+    }
+
+    /**
      * Get header map pairs and format them for WebAssembly memory.
      *
      * @param mapType        The type of map to get
@@ -140,15 +180,13 @@ public class Imports extends Common {
             final Map<String, String> cloneMap = new HashMap<>();
             int totalBytesLen = U32_LEN; // Start with space for the count
 
-
             for (Map.Entry<String, String> entry : header.entrySet()) {
                 String key = entry.getKey();
                 String value = entry.getValue();
                 cloneMap.put(key, value);
-                totalBytesLen += U32_LEN + U32_LEN;                     // keyLen + valueLen
+                totalBytesLen += U32_LEN + U32_LEN; // keyLen + valueLen
                 totalBytesLen += key.length() + 1 + value.length() + 1; // key + \0 + value + \0
             }
-
 
             // Allocate memory in the WebAssembly instance
             int addr = malloc(totalBytesLen);
@@ -203,12 +241,275 @@ public class Imports extends Common {
         }
     }
 
+    /**
+     * Set header map pairs from WebAssembly memory.
+     *
+     * @param mapType The type of map to set
+     * @param ptr     Pointer to the map data in WebAssembly memory
+     * @param size    Size of the map data
+     * @return WasmResult status code
+     */
+    @WasmExport
+    public int proxySetHeaderMapPairs(int mapType, int ptr, int size) {
+
+        try {
+            // Get the header map based on the map type
+            Map<String, String> headerMap = getMap(instance, mapType);
+            if (headerMap == null) {
+                return WasmResult.BAD_ARGUMENT.getValue();
+            }
+
+            // Decode the map content and set each key-value pair
+            Map<String, String> newMap = decodeMap(ptr, size);
+            for (Map.Entry<String, String> entry : newMap.entrySet()) {
+                headerMap.put(entry.getKey(), entry.getValue());
+            }
+
+            return WasmResult.OK.getValue();
+        } catch (WasmRuntimeException e) {
+            return WasmResult.INVALID_MEMORY_ACCESS.getValue();
+        } catch (WasmException e) {
+            return e.result().getValue();
+        }
+    }
+
+    /**
+     * Retrieves serialized size of all key-value pairs from the map mapType
+     *
+     * @param mapType      The type of map to set
+     * @param returnSize   Pointer to ruturn the size of the map data
+     * @return WasmResult status code
+     */
+    @WasmExport
+    public int proxyGetHeaderMapSize(int mapType, int returnSize) {
+        try {
+
+            // Get the header map based on the map type
+            Map<String, String> header = getMap(instance, mapType);
+            if (header == null) {
+                return WasmResult.BAD_ARGUMENT.getValue();
+            }
+
+            // to clone the headers so that they don't change on while we process them in the loop
+            final Map<String, String> cloneMap = new HashMap<>();
+            int totalBytesLen = U32_LEN; // Start with space for the count
+
+            for (Map.Entry<String, String> entry : header.entrySet()) {
+                String key = entry.getKey();
+                String value = entry.getValue();
+                cloneMap.put(key, value);
+                totalBytesLen += U32_LEN + U32_LEN; // keyLen + valueLen
+                totalBytesLen += key.length() + 1 + value.length() + 1; // key + \0 + value + \0
+            }
+
+            // Write the total size to the return size pointer
+            putUint32(returnSize, totalBytesLen);
+
+            return WasmResult.OK.getValue();
+
+        } catch (WasmException e) {
+            return e.result().getValue();
+        }
+    }
+
+    /**
+     * Get a value from a header map by key.
+     *
+     * @param mapType      The type of map to get from
+     * @param keyDataPtr   Pointer to the key data in WebAssembly memory
+     * @param keySize      Size of the key data
+     * @param valueDataPtr Pointer to where the value data should be stored
+     * @param valueSize    Size of the value data buffer
+     * @return WasmResult status code
+     */
+    @WasmExport
+    public int proxyGetHeaderMapValue(
+            int mapType, int keyDataPtr, int keySize, int valueDataPtr, int valueSize) {
+        try {
+            // Get the header map based on the map type
+            Map<String, String> headerMap = getMap(instance, mapType);
+            if (headerMap == null) {
+                return WasmResult.BAD_ARGUMENT.getValue();
+            }
+
+            // Get key from memory
+            String key = readString(keyDataPtr, keySize);
+
+            // Get value from map
+            String value = headerMap.get(key);
+            if (value == null) {
+                return WasmResult.NOT_FOUND.getValue();
+            }
+
+            // Copy value into WebAssembly memory
+            copyIntoInstance(value, valueDataPtr, valueSize);
+            return WasmResult.OK.getValue();
+
+        } catch (WasmRuntimeException e) {
+            return WasmResult.INVALID_MEMORY_ACCESS.getValue();
+        } catch (WasmException e) {
+            return e.result().getValue();
+        }
+    }
+
+    /**
+     * Replace a value in a header map.
+     *
+     * @param mapType      The type of map to modify
+     * @param keyDataPtr   Pointer to the key data in WebAssembly memory
+     * @param keySize      Size of the key data
+     * @param valueDataPtr Pointer to the value data in WebAssembly memory
+     * @param valueSize    Size of the value data
+     * @return WasmResult status code
+     */
+    @WasmExport
+    public int proxyReplaceHeaderMapValue(
+            int mapType, int keyDataPtr, int keySize, int valueDataPtr, int valueSize) {
+        try {
+            // Get the header map based on the map type
+            Map<String, String> headerMap = getMap(instance, mapType);
+            if (headerMap == null) {
+                return WasmResult.BAD_ARGUMENT.getValue();
+            }
+
+            // Get key from memory
+            String key = readString(keyDataPtr, keySize);
+
+            // Get value from memory
+            String value = readString(valueDataPtr, valueSize);
+
+            // Replace value in map
+            headerMap.put(key, value);
+            return WasmResult.OK.getValue();
+
+        } catch (WasmRuntimeException e) {
+            return WasmResult.INVALID_MEMORY_ACCESS.getValue();
+        } catch (WasmException e) {
+            return e.result().getValue();
+        }
+    }
+
+    /**
+     * Add a value to a header map.
+     *
+     * @param mapType      The type of map to modify
+     * @param keyDataPtr   Pointer to the key data in WebAssembly memory
+     * @param keySize      Size of the key data
+     * @param valueDataPtr Pointer to the value data in WebAssembly memory
+     * @param valueSize    Size of the value data
+     * @return WasmResult status code
+     */
+    @WasmExport
+    public int proxyAddHeaderMapValue(
+            int mapType, int keyDataPtr, int keySize, int valueDataPtr, int valueSize) {
+        return proxyReplaceHeaderMapValue(mapType, keyDataPtr, keySize, valueDataPtr, valueSize);
+    }
+
+    /**
+     * Remove a value from a header map.
+     *
+     * @param mapType    The type of map to modify
+     * @param keyDataPtr Pointer to the key data in WebAssembly memory
+     * @param keySize    Size of the key data
+     * @return WasmResult status code
+     */
+    @WasmExport
+    public int proxyRemoveHeaderMapValue(int mapType, int keyDataPtr, int keySize) {
+        try {
+            // Get the header map based on the map type
+            Map<String, String> headerMap = getMap(instance, mapType);
+            if (headerMap == null) {
+                return WasmResult.NOT_FOUND.getValue();
+            }
+
+            // Get key from memory
+            String key = readString(keyDataPtr, keySize);
+            if (key.isEmpty()) {
+                return WasmResult.BAD_ARGUMENT.getValue();
+            }
+
+            // Remove key from map
+            headerMap.remove(key);
+            return WasmResult.OK.getValue();
+
+        } catch (WasmRuntimeException e) {
+            return WasmResult.INVALID_MEMORY_ACCESS.getValue();
+        } catch (WasmException e) {
+            return e.result().getValue();
+        }
+    }
+
+    /**
+     * Decodes a byte array containing map data into a Map of String key-value pairs.
+     *
+     * The format is:
+     * - First 4 bytes: number of entries (headerSize) in little endian
+     * - For each entry:
+     *   - 4 bytes: key size in little endian
+     *   - 4 bytes: value size in little endian
+     * - Then the actual data:
+     *   - key bytes (null terminated)
+     *   - value bytes (null terminated)
+     *
+     * @param addr The memory address to read from
+     * @param mem_size The size of memory to read
+     * @return The decoded map containing string keys and values
+     * @throws WasmException if there is an error accessing memory
+     */
+    private HashMap<String, String> decodeMap(int addr, int mem_size) throws WasmException {
+        if (mem_size < U32_LEN) {
+            return new HashMap<>();
+        }
+
+        // Read header size (number of entries)
+        var mapSize = getUint32(addr);
+
+        // Calculate start of data section
+        // mapSize + (key1_size + value1_size) * mapSize
+        long dataOffset = U32_LEN + (U32_LEN + U32_LEN) * mapSize;
+        if (dataOffset >= mem_size) {
+            return new HashMap<>();
+        }
+
+        // Create result map with initial capacity
+        var result = new HashMap<String, String>((int) mapSize);
+
+        // Process each entry
+        for (int i = 0; i < mapSize; i++) {
+
+            // Calculate index for length values
+            int keySizeOffset = U32_LEN + (U32_LEN + U32_LEN) * i;
+            int valueSizeOffset = keySizeOffset + U32_LEN;
+
+            // Read key and value sizes
+            long keySize = getUint32(addr + keySizeOffset);
+            long valueSize = getUint32(addr + valueSizeOffset);
+
+            // Check if we have enough data for the key/value
+            if (dataOffset >= mem_size || dataOffset + keySize + valueSize + 2 > mem_size) {
+                break;
+            }
+
+            // Extract key
+            String key = readString((int) (addr + dataOffset), (int) keySize);
+            dataOffset += keySize + 1; // Skip null terminator
+
+            // Extract value
+            String value = readString((int) (addr + dataOffset), (int) valueSize);
+            dataOffset += valueSize + 1;
+
+            // Add to result map
+            result.put(key, value);
+        }
+
+        return result;
+    }
 
     @WasmExport
     public int proxyGetProperty(int keyPtr, int keySize, int returnValueData, int returnValueSize) {
         try {
             // Get key from memory
-            byte[] keyBytes = getMemory(keyPtr, keySize);
+            byte[] keyBytes = readMemory(keyPtr, keySize);
             if (keyBytes.length == 0) {
                 return WasmResult.BAD_ARGUMENT.getValue();
             }
@@ -240,7 +541,8 @@ public class Imports extends Common {
      * @return WasmResult status code
      */
     @WasmExport
-    public int proxyGetBufferBytes(int bufferType, int start, int length, int returnBufferData, int returnBufferSize) {
+    public int proxyGetBufferBytes(
+            int bufferType, int start, int length, int returnBufferData, int returnBufferSize) {
 
         try {
             // Get the buffer based on the buffer type
@@ -249,11 +551,11 @@ public class Imports extends Common {
                 return WasmResult.NOT_FOUND.getValue();
             }
 
-            if (start > start+length) {
+            if (start > start + length) {
                 return WasmResult.BAD_ARGUMENT.getValue();
             }
 
-            if (start+length > buffer.capacity()) {
+            if (start + length > buffer.capacity()) {
                 length = buffer.capacity() - start;
             }
 
@@ -273,6 +575,95 @@ public class Imports extends Common {
             putUint32(returnBufferSize, length);
             return WasmResult.OK.getValue();
 
+        } catch (WasmException e) {
+            return e.result().getValue();
+        }
+    }
+
+    /**
+     * Set bytes in a buffer.
+     *
+     * @param bufferType The type of buffer to modify
+     * @param start      The start index in the buffer
+     * @param length     The number of bytes to set
+     * @param dataPtr    Pointer to the data in WebAssembly memory
+     * @param dataSize   Size of the data
+     * @return WasmResult status code
+     */
+    @WasmExport
+    public int proxySetBufferBytes(
+            int bufferType, int start, int length, int dataPtr, int dataSize) {
+        try {
+            // Get content from WebAssembly memory
+            byte[] content = instance.memory().readBytes(dataPtr, dataSize);
+            ByteBuffer buffer = ByteBuffer.wrap(content);
+
+            // Set the buffer using the appropriate handler method
+            WasmResult result = setBuffer(instance, bufferType, buffer);
+            return result.getValue();
+
+        } catch (WasmRuntimeException e) {
+            return WasmResult.INVALID_MEMORY_ACCESS.getValue();
+        }
+    }
+
+    /**
+     * Send an HTTP response.
+     *
+     * @param responseCode The HTTP response code
+     * @param responseCodeDetailsData Pointer to response code details in WebAssembly memory
+     * @param responseCodeDetailsSize Size of response code details
+     * @param responseBodyData Pointer to response body in WebAssembly memory
+     * @param responseBodySize Size of response body
+     * @param additionalHeadersMapData Pointer to additional headers map in WebAssembly memory
+     * @param additionalHeadersSize Size of additional headers map
+     * @param grpcStatus The gRPC status code (-1 for non-gRPC responses)
+     * @return WasmResult status code
+     */
+    @WasmExport
+    public int proxySendLocalResponse(
+            int responseCode,
+            int responseCodeDetailsData,
+            int responseCodeDetailsSize,
+            int responseBodyData,
+            int responseBodySize,
+            int additionalHeadersMapData,
+            int additionalHeadersSize,
+            int grpcStatus) {
+        try {
+
+            // Get response code details from memory
+            ByteBuffer responseCodeDetails = null;
+            if (responseCodeDetailsSize > 0) {
+                byte[] details =
+                        instance.memory()
+                                .readBytes(responseCodeDetailsData, responseCodeDetailsSize);
+                responseCodeDetails = ByteBuffer.wrap(details);
+            }
+
+            // Get response body from memory
+            ByteBuffer responseBody = null;
+            if (responseBodySize > 0) {
+                byte[] body = instance.memory().readBytes(responseBodyData, responseBodySize);
+                responseBody = ByteBuffer.wrap(body);
+            }
+
+            // Get and decode additional headers from memory
+            HashMap<String, String> additionalHeaders =
+                    decodeMap(additionalHeadersMapData, additionalHeadersSize);
+
+            // Send the response through the handler
+            WasmResult result =
+                    handler.sendHttpResp(
+                            responseCode,
+                            responseCodeDetails,
+                            responseBody,
+                            additionalHeaders,
+                            grpcStatus);
+            return result.getValue();
+
+        } catch (WasmRuntimeException e) {
+            return WasmResult.INVALID_MEMORY_ACCESS.getValue();
         } catch (WasmException e) {
             return e.result().getValue();
         }
@@ -303,5 +694,4 @@ public class Imports extends Common {
             return e.result().getValue();
         }
     }
-
 }

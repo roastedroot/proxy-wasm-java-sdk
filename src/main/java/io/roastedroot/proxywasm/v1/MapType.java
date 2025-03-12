@@ -5,7 +5,6 @@ package io.roastedroot.proxywasm.v1;
  * Converted from Go's MapType type.
  */
 public enum MapType {
-
     HTTP_REQUEST_HEADERS(0),
     HTTP_REQUEST_TRAILERS(1),
     HTTP_RESPONSE_HEADERS(2),

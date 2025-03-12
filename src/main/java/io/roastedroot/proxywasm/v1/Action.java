@@ -4,7 +4,6 @@ package io.roastedroot.proxywasm.v1;
  * Action represents the action which Wasm contexts expects hosts to take.
  */
 public enum Action {
-
     CONTINUE(0),
     PAUSE(1);
 
