@@ -60,7 +60,7 @@ public class PropertiesTest {
         int id = 0;
         try (var host = proxyWasm.createHttpContext(handler)) {
             id = host.id();
-            handler.setHttpRequestHeader(Map.of("cookie", "value"));
+            handler.setHttpRequestHeaders(Map.of("cookie", "value"));
             var action = host.callOnRequestHeaders(false);
             assertEquals(Action.CONTINUE, action);
         }

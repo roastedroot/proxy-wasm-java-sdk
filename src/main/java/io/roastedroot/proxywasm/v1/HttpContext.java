@@ -16,11 +16,16 @@ public class HttpContext extends Context {
     }
 
     public Action callOnRequestHeaders(boolean endOfStream) {
-        var requestHeaders = handler.getHttpRequestHeader();
+        var headers = handler.getHttpRequestHeaders();
         int result =
-                proxyWasm
-                        .exports()
-                        .proxyOnRequestHeaders(id, len(requestHeaders), endOfStream ? 1 : 0);
+                proxyWasm.exports().proxyOnRequestHeaders(id, len(headers), endOfStream ? 1 : 0);
+        return Action.fromInt(result);
+    }
+
+    public Action callOnResponseHeaders(boolean endOfStream) {
+        var headers = handler.getHttpResponseHeaders();
+        int result =
+                proxyWasm.exports().proxyOnResponseHeaders(id, len(headers), endOfStream ? 1 : 0);
         return Action.fromInt(result);
     }
 

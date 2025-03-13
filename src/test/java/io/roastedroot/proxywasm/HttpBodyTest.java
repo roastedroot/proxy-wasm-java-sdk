@@ -42,7 +42,7 @@ public class HttpBodyTest {
     public void testOnHttpRequestHeadersRemoveRequestHeader() throws StartException {
 
         // Call OnRequestHeaders.
-        handler.setHttpRequestHeader(
+        handler.setHttpRequestHeaders(
                 Map.of(
                         "content-length", "10",
                         "buffer-operation", "replace"));
@@ -51,7 +51,7 @@ public class HttpBodyTest {
         // Must be continued.
         assertEquals(Action.CONTINUE, action);
 
-        var headers = handler.getHttpRequestHeader();
+        var headers = handler.getHttpRequestHeaders();
         assertEquals(Map.of("buffer-operation", "replace"), headers);
     }
 
@@ -83,7 +83,7 @@ public class HttpBodyTest {
     @Test
     public void testOnHttpRequestBodyAppend() throws StartException {
         // Call callOnRequestBody
-        handler.setHttpRequestHeader(
+        handler.setHttpRequestHeaders(
                 Map.of(
                         "content-length", "10",
                         "buffer-operation", "append"));
@@ -106,7 +106,7 @@ public class HttpBodyTest {
     @Test
     public void testOnHttpRequestBodyPrepend() throws StartException {
         // Call callOnRequestBody
-        handler.setHttpRequestHeader(
+        handler.setHttpRequestHeaders(
                 Map.of(
                         "content-length", "10",
                         "buffer-operation", "prepend"));
@@ -129,7 +129,7 @@ public class HttpBodyTest {
     @Test
     public void testOnHttpRequestBodyReplace() throws StartException {
         // Call callOnRequestBody
-        handler.setHttpRequestHeader(
+        handler.setHttpRequestHeaders(
                 Map.of(
                         "content-length", "10",
                         "buffer-operation", "replace"));
@@ -152,7 +152,7 @@ public class HttpBodyTest {
     public void testOnHttpResponseBodyAppend() throws StartException {
 
         // Call OnRequestHeaders
-        handler.setHttpRequestHeader(
+        handler.setHttpRequestHeaders(
                 Map.of(
                         "buffer-replace-at", "response",
                         "content-length", "10",
@@ -173,7 +173,7 @@ public class HttpBodyTest {
     public void testOnHttpResponseBodyPrepend() throws StartException {
 
         // Call OnRequestHeaders
-        handler.setHttpRequestHeader(
+        handler.setHttpRequestHeaders(
                 Map.of(
                         "buffer-replace-at", "response",
                         "content-length", "10",
@@ -194,7 +194,7 @@ public class HttpBodyTest {
     public void testOnHttpResponseBodyReplace() throws StartException {
 
         // Call OnRequestHeaders
-        handler.setHttpRequestHeader(
+        handler.setHttpRequestHeaders(
                 Map.of(
                         "buffer-replace-at", "response",
                         "content-length", "10",

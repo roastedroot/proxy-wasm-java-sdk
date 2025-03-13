@@ -63,22 +63,22 @@ public class Imports extends Common {
 
         var knownType = MapType.fromInt(mapType);
         if (knownType == null) {
-            return handler.getCustomHeader(mapType);
+            return handler.getCustomHeaders(mapType);
         }
 
         switch (knownType) {
             case HTTP_REQUEST_HEADERS:
-                return handler.getHttpRequestHeader();
+                return handler.getHttpRequestHeaders();
             case HTTP_REQUEST_TRAILERS:
-                return handler.getHttpRequestTrailer();
+                return handler.getHttpRequestTrailers();
             case HTTP_RESPONSE_HEADERS:
-                return handler.getHttpResponseHeader();
+                return handler.getHttpResponseHeaders();
             case HTTP_RESPONSE_TRAILERS:
-                return handler.getHttpResponseTrailer();
+                return handler.getHttpResponseTrailers();
             case HTTP_CALL_RESPONSE_HEADERS:
                 return handler.getHttpCallResponseHeaders();
             case HTTP_CALL_RESPONSE_TRAILERS:
-                return handler.getHttpCallResponseTrailer();
+                return handler.getHttpCallResponseTrailers();
             case GRPC_RECEIVE_INITIAL_METADATA:
                 return handler.getGrpcReceiveInitialMetaData();
             case GRPC_RECEIVE_TRAILING_METADATA:
@@ -98,22 +98,22 @@ public class Imports extends Common {
     private WasmResult setMap(Instance instance, int mapType, Map<String, String> map) {
         var knownType = MapType.fromInt(mapType);
         if (knownType == null) {
-            return handler.setCustomHeader(mapType, map);
+            return handler.setCustomHeaders(mapType, map);
         }
 
         switch (knownType) {
             case HTTP_REQUEST_HEADERS:
-                return handler.setHttpRequestHeader(map);
+                return handler.setHttpRequestHeaders(map);
             case HTTP_REQUEST_TRAILERS:
-                return handler.setHttpRequestTrailer(map);
+                return handler.setHttpRequestTrailers(map);
             case HTTP_RESPONSE_HEADERS:
-                return handler.setHttpResponseHeader(map);
+                return handler.setHttpResponseHeaders(map);
             case HTTP_RESPONSE_TRAILERS:
-                return handler.setHttpResponseTrailer(map);
+                return handler.setHttpResponseTrailers(map);
             case HTTP_CALL_RESPONSE_HEADERS:
                 return handler.setHttpCallResponseHeaders(map);
             case HTTP_CALL_RESPONSE_TRAILERS:
-                return handler.setHttpCallResponseTrailer(map);
+                return handler.setHttpCallResponseTrailers(map);
             case GRPC_RECEIVE_INITIAL_METADATA:
                 return handler.setGrpcReceiveInitialMetaData(map);
             case GRPC_RECEIVE_TRAILING_METADATA:
@@ -415,7 +415,7 @@ public class Imports extends Common {
 
             // Replace value in map
             var copy = new HashMap<>(headerMap);
-            headerMap.put(key, value);
+            copy.put(key, value);
             setMap(instance, mapType, copy);
 
             return WasmResult.OK.getValue();
