@@ -20,10 +20,13 @@ public class OnRequestHeadersTest {
 
         // This module uses the 0_1_0 ABI
         var module = Parser.parse(Path.of("./src/test/cc-examples/on_request_headers/http.wasm"));
-
         var handler = new MockHandler();
+        ProxyWasm.Builder builder =
+                ProxyWasm.builder()
+                        .withProperties(Map.of("plugin_root_id", ""))
+                        .withPluginHandler(handler);
 
-        try (var proxyWasm = ProxyWasm.builder().withPluginHandler(handler).build(module)) {
+        try (var proxyWasm = builder.build(module)) {
 
             Map<String, String> requestHeaders = Map.of("Hello", "World");
 

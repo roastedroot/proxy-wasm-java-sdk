@@ -57,9 +57,15 @@ public abstract class Context implements Closeable {
 
     protected void finishClose() {
         closeDone = true;
-        proxyWasm.exports().proxyOnDelete(id);
-        proxyWasm.contexts().remove(id);
 
+        // TODO: I think we need to call proxyOnLog for all ABI version, but we have a 0.1.0 wasm
+        // test
+        // that fails, need to see if the .wasm file is wrong or if we really need to do this
+        if (proxyWasm.abiVersion() != ABIVersion.V0_1_0) {
+            proxyWasm.exports().proxyOnLog(id);
+        }
+
+        proxyWasm.contexts().remove(id);
         // todo: we likely need to callback to user code to allow cleaning up resources like http
         // connections.
 
@@ -68,5 +74,6 @@ public abstract class Context implements Closeable {
 
         // unset active context so that callbacks don't try to use us.
         proxyWasm.setActiveContext(null);
+        proxyWasm.exports().proxyOnDelete(id);
     }
 }

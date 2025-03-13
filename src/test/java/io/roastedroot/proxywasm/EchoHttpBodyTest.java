@@ -61,8 +61,6 @@ public class EchoHttpBodyTest {
         handler.appendHttpRequestBody(null);
         var action = httpContext.callOnRequestBody(true /* end of stream */);
 
-        System.out.println(handler.loggedMessages());
-
         // Must be paused.
         assertEquals(Action.PAUSE, action);
 
