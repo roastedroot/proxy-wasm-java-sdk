@@ -1,4 +1,4 @@
-module github.com/proxy-wasm/proxy-wasm-go-sdk/examples/http_body
+module github.com/proxy-wasm/proxy-wasm-go-sdk/examples/http_body_chunk
 
 go 1.24
 

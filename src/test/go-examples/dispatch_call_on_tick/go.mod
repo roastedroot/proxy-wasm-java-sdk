@@ -1,4 +1,4 @@
-module github.com/proxy-wasm/proxy-wasm-go-sdk/examples/properties
+module github.com/proxy-wasm/proxy-wasm-go-sdk/examples/dispatch_call_on_tick
 
 go 1.24
 

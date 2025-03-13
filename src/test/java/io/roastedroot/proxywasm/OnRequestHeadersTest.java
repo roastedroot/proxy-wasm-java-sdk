@@ -10,9 +10,6 @@ import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 
-/**
- * Unit test for simple App.
- */
 public class OnRequestHeadersTest {
 
     @Test
