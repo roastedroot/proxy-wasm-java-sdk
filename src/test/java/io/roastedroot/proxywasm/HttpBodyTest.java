@@ -64,7 +64,7 @@ public class HttpBodyTest {
         assertEquals(Action.PAUSE, action);
 
         // Check the local response.
-        var response = handler.getSenthttpResponse();
+        var response = handler.getSentHttpResponse();
         assertNotNull(response);
         assertEquals(400, response.statusCode);
         assertEquals("content must be provided", string(response.body));
