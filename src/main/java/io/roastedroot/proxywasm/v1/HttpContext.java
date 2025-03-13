@@ -1,6 +1,6 @@
 package io.roastedroot.proxywasm.v1;
 
-import static io.roastedroot.proxywasm.v1.Helpers.length;
+import static io.roastedroot.proxywasm.v1.Helpers.len;
 
 public class HttpContext extends Context {
 
@@ -20,7 +20,7 @@ public class HttpContext extends Context {
         int result =
                 proxyWasm
                         .exports()
-                        .proxyOnRequestHeaders(id, length(requestHeaders), endOfStream ? 1 : 0);
+                        .proxyOnRequestHeaders(id, len(requestHeaders), endOfStream ? 1 : 0);
         return Action.fromInt(result);
     }
 
@@ -29,7 +29,7 @@ public class HttpContext extends Context {
         int result =
                 proxyWasm
                         .exports()
-                        .proxyOnRequestBody(id, length(requestBody), endOfStream ? 1 : 0);
+                        .proxyOnRequestBody(id, Helpers.len(requestBody), endOfStream ? 1 : 0);
         return Action.fromInt(result);
     }
 
@@ -38,7 +38,7 @@ public class HttpContext extends Context {
         int result =
                 proxyWasm
                         .exports()
-                        .proxyOnResponseBody(id, length(responseBody), endOfStream ? 1 : 0);
+                        .proxyOnResponseBody(id, Helpers.len(responseBody), endOfStream ? 1 : 0);
         return Action.fromInt(result);
     }
 }

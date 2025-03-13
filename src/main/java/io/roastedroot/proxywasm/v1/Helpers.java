@@ -30,14 +30,28 @@ public final class Helpers {
         return new String(value, StandardCharsets.UTF_8);
     }
 
-    public static int length(byte[] value) {
+    public static int len(byte[] value) {
         if (value == null) {
             return 0;
         }
         return value.length;
     }
 
-    public static <K, V> int length(Map<K, V> value) {
+    public static <T> int len(String value) {
+        if (value == null) {
+            return 0;
+        }
+        return value.length();
+    }
+
+    public static <T> int len(T[] value) {
+        if (value == null) {
+            return 0;
+        }
+        return value.length;
+    }
+
+    public static <K, V> int len(Map<K, V> value) {
         if (value == null) {
             return 0;
         }
@@ -45,13 +59,26 @@ public final class Helpers {
     }
 
     public static byte[] append(byte[] value1, byte[] value2) {
-        if (length(value1) == 0) {
+        if (len(value1) == 0) {
             return value2;
         }
-        if (length(value2) == 0) {
+        if (len(value2) == 0) {
             return value1;
         }
         byte[] result = new byte[value1.length + value2.length];
+        System.arraycopy(value1, 0, result, 0, value1.length);
+        System.arraycopy(value2, 0, result, value1.length, value2.length);
+        return result;
+    }
+
+    public static String[] append(String[] value1, String... value2) {
+        if (len(value1) == 0) {
+            return value2;
+        }
+        if (len(value2) == 0) {
+            return value1;
+        }
+        String[] result = new String[value1.length + value2.length];
         System.arraycopy(value1, 0, result, 0, value1.length);
         System.arraycopy(value2, 0, result, value1.length, value2.length);
         return result;

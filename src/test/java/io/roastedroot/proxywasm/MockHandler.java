@@ -56,8 +56,13 @@ public class MockHandler implements Handler {
     private byte[] httpCallResponseBody = new byte[0];
     private byte[] grpcReceiveBuffer = new byte[0];
 
+    static final boolean DEBUG = "true".equals(System.getenv("DEBUG"));
+
     @Override
     public void log(LogLevel level, String message) throws WasmException {
+        if (DEBUG) {
+            System.out.println(level + ": " + message);
+        }
         loggedMessages.add(message);
     }
 

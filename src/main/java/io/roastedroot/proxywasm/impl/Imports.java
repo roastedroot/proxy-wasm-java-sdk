@@ -560,10 +560,10 @@ public class Imports extends Common {
             // Get property value using handler
             String value = handler.getProperty(key);
             if (value == null) {
-                value = "";
+                return WasmResult.NOT_FOUND.getValue();
             }
 
-            copyIntoInstance(value, returnValueSize, returnValueSize);
+            copyIntoInstance(value, returnValueData, returnValueSize);
             return WasmResult.OK.getValue();
 
         } catch (WasmException e) {

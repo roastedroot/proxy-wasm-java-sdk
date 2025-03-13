@@ -1,5 +1,7 @@
 package io.roastedroot.proxywasm.v1;
 
+import static io.roastedroot.proxywasm.v1.Helpers.len;
+
 import com.dylibso.chicory.runtime.ByteBufferMemory;
 import com.dylibso.chicory.runtime.HostFunction;
 import com.dylibso.chicory.runtime.ImportMemory;
@@ -31,7 +33,7 @@ public final class ProxyWasm implements Closeable {
     private final WasiPreview1 wasi;
 
     private final AtomicInteger nextContextID = new AtomicInteger(1);
-    private final ABIVersion abi_version;
+    private final ABIVersion abiVersion;
     private Context pluginContext;
     private Context activeContext;
 
@@ -47,7 +49,7 @@ public final class ProxyWasm implements Closeable {
         this.imports = other.imports;
         this.imports.setHandler(createImportsHandler());
 
-        this.abi_version = findAbiVersion();
+        this.abiVersion = findAbiVersion();
 
         // Since 0_2_0, prefer proxy_on_memory_allocate over malloc
         if (instanceExportsFunction("proxy_on_memory_allocate")) {
@@ -189,6 +191,28 @@ public final class ProxyWasm implements Closeable {
      */
     public void tick() {
         exports.proxyOnTick(pluginContext.id());
+    }
+
+    public ABIVersion abiVersion() {
+        return abiVersion;
+    }
+
+    public void setProperty(String[] path, String data) {
+        if (len(path) == 0) {
+            throw new IllegalArgumentException("path must not be empty");
+        }
+        if (len(data) == 0) {
+            throw new IllegalArgumentException("data must not be empty");
+        }
+
+        this.properties.put(String.join("\u0000", path), data);
+    }
+
+    public String getProperty(String[] path) {
+        if (len(path) == 0) {
+            throw new IllegalArgumentException("path must not be empty");
+        }
+        return this.properties.get(String.join("\u0000", path));
     }
 
     @Override
