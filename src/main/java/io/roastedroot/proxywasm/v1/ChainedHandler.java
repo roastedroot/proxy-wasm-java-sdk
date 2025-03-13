@@ -233,4 +233,24 @@ public abstract class ChainedHandler implements Handler {
     public WasmResult setHttpRequestBody(byte[] body) {
         return next().setHttpRequestBody(body);
     }
+
+    @Override
+    public WasmResult continueRequest() {
+        return next().continueRequest();
+    }
+
+    @Override
+    public WasmResult continueResponse() {
+        return next().continueResponse();
+    }
+
+    @Override
+    public WasmResult continueDownstream() {
+        return next().continueDownstream();
+    }
+
+    @Override
+    public WasmResult continueUpstream() {
+        return next().continueUpstream();
+    }
 }
