@@ -6,19 +6,20 @@ public interface Handler {
 
     default void log(LogLevel level, String message) throws WasmException {}
 
-    default Map<String, String> getHttpRequestHeader() {
+    // TODO: use a better type than Map so that we can support repeated headers
+    default Map<String, String> getHttpRequestHeaders() {
         return null;
     }
 
-    default Map<String, String> getHttpRequestTrailer() {
+    default Map<String, String> getHttpRequestTrailers() {
         return null;
     }
 
-    default Map<String, String> getHttpResponseHeader() {
+    default Map<String, String> getHttpResponseHeaders() {
         return null;
     }
 
-    default Map<String, String> getHttpResponseTrailer() {
+    default Map<String, String> getHttpResponseTrailers() {
         return null;
     }
 
@@ -26,7 +27,7 @@ public interface Handler {
         return null;
     }
 
-    default Map<String, String> getHttpCallResponseTrailer() {
+    default Map<String, String> getHttpCallResponseTrailers() {
         return null;
     }
 
@@ -38,7 +39,7 @@ public interface Handler {
         return null;
     }
 
-    default Map<String, String> getCustomHeader(int mapType) {
+    default Map<String, String> getCustomHeaders(int mapType) {
         return null;
     }
 
@@ -285,7 +286,7 @@ public interface Handler {
      * @param map The header map to set
      * @return WasmResult indicating success or failure
      */
-    default WasmResult setCustomHeader(int mapType, Map<String, String> map) {
+    default WasmResult setCustomHeaders(int mapType, Map<String, String> map) {
         return WasmResult.UNIMPLEMENTED;
     }
 
@@ -295,7 +296,7 @@ public interface Handler {
      * @param headers The headers to set
      * @return WasmResult indicating success or failure
      */
-    default WasmResult setHttpRequestHeader(Map<String, String> headers) {
+    default WasmResult setHttpRequestHeaders(Map<String, String> headers) {
         return WasmResult.UNIMPLEMENTED;
     }
 
@@ -305,7 +306,7 @@ public interface Handler {
      * @param trailers The trailers to set
      * @return WasmResult indicating success or failure
      */
-    default WasmResult setHttpRequestTrailer(Map<String, String> trailers) {
+    default WasmResult setHttpRequestTrailers(Map<String, String> trailers) {
         return WasmResult.UNIMPLEMENTED;
     }
 
@@ -315,7 +316,7 @@ public interface Handler {
      * @param headers The headers to set
      * @return WasmResult indicating success or failure
      */
-    default WasmResult setHttpResponseHeader(Map<String, String> headers) {
+    default WasmResult setHttpResponseHeaders(Map<String, String> headers) {
         return WasmResult.UNIMPLEMENTED;
     }
 
@@ -325,7 +326,7 @@ public interface Handler {
      * @param trailers The trailers to set
      * @return WasmResult indicating success or failure
      */
-    default WasmResult setHttpResponseTrailer(Map<String, String> trailers) {
+    default WasmResult setHttpResponseTrailers(Map<String, String> trailers) {
         return WasmResult.UNIMPLEMENTED;
     }
 
@@ -345,7 +346,7 @@ public interface Handler {
      * @param trailers The trailers to set
      * @return WasmResult indicating success or failure
      */
-    default WasmResult setHttpCallResponseTrailer(Map<String, String> trailers) {
+    default WasmResult setHttpCallResponseTrailers(Map<String, String> trailers) {
         return WasmResult.UNIMPLEMENTED;
     }
 

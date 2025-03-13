@@ -15,23 +15,23 @@ public abstract class ChainedHandler implements Handler {
     }
 
     @Override
-    public Map<String, String> getHttpRequestHeader() {
-        return next().getHttpRequestHeader();
+    public Map<String, String> getHttpRequestHeaders() {
+        return next().getHttpRequestHeaders();
     }
 
     @Override
-    public Map<String, String> getHttpRequestTrailer() {
-        return next().getHttpRequestTrailer();
+    public Map<String, String> getHttpRequestTrailers() {
+        return next().getHttpRequestTrailers();
     }
 
     @Override
-    public Map<String, String> getHttpResponseHeader() {
-        return next().getHttpResponseHeader();
+    public Map<String, String> getHttpResponseHeaders() {
+        return next().getHttpResponseHeaders();
     }
 
     @Override
-    public Map<String, String> getHttpResponseTrailer() {
-        return next().getHttpResponseTrailer();
+    public Map<String, String> getHttpResponseTrailers() {
+        return next().getHttpResponseTrailers();
     }
 
     @Override
@@ -40,8 +40,8 @@ public abstract class ChainedHandler implements Handler {
     }
 
     @Override
-    public Map<String, String> getHttpCallResponseTrailer() {
-        return next().getHttpCallResponseTrailer();
+    public Map<String, String> getHttpCallResponseTrailers() {
+        return next().getHttpCallResponseTrailers();
     }
 
     @Override
@@ -55,33 +55,33 @@ public abstract class ChainedHandler implements Handler {
     }
 
     @Override
-    public Map<String, String> getCustomHeader(int mapType) {
-        return next().getCustomHeader(mapType);
+    public Map<String, String> getCustomHeaders(int mapType) {
+        return next().getCustomHeaders(mapType);
     }
 
     @Override
-    public WasmResult setCustomHeader(int mapType, Map<String, String> map) {
-        return next().setCustomHeader(mapType, map);
+    public WasmResult setCustomHeaders(int mapType, Map<String, String> map) {
+        return next().setCustomHeaders(mapType, map);
     }
 
     @Override
-    public WasmResult setHttpRequestHeader(Map<String, String> headers) {
-        return next().setHttpRequestHeader(headers);
+    public WasmResult setHttpRequestHeaders(Map<String, String> headers) {
+        return next().setHttpRequestHeaders(headers);
     }
 
     @Override
-    public WasmResult setHttpRequestTrailer(Map<String, String> trailers) {
-        return next().setHttpRequestTrailer(trailers);
+    public WasmResult setHttpRequestTrailers(Map<String, String> trailers) {
+        return next().setHttpRequestTrailers(trailers);
     }
 
     @Override
-    public WasmResult setHttpResponseHeader(Map<String, String> headers) {
-        return next().setHttpResponseHeader(headers);
+    public WasmResult setHttpResponseHeaders(Map<String, String> headers) {
+        return next().setHttpResponseHeaders(headers);
     }
 
     @Override
-    public WasmResult setHttpResponseTrailer(Map<String, String> trailers) {
-        return next().setHttpResponseTrailer(trailers);
+    public WasmResult setHttpResponseTrailers(Map<String, String> trailers) {
+        return next().setHttpResponseTrailers(trailers);
     }
 
     @Override
@@ -90,8 +90,8 @@ public abstract class ChainedHandler implements Handler {
     }
 
     @Override
-    public WasmResult setHttpCallResponseTrailer(Map<String, String> trailers) {
-        return next().setHttpCallResponseTrailer(trailers);
+    public WasmResult setHttpCallResponseTrailers(Map<String, String> trailers) {
+        return next().setHttpCallResponseTrailers(trailers);
     }
 
     @Override

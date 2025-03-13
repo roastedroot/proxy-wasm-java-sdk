@@ -11,6 +11,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class MockHandler implements Handler {
 
@@ -74,23 +76,29 @@ public class MockHandler implements Handler {
         assertEquals(List.of(messages), loggedMessages());
     }
 
+    public void assertSortedLogsEqual(String... messages) {
+        assertEquals(
+                Stream.of(messages).sorted().collect(Collectors.toList()),
+                loggedMessages().stream().sorted().collect(Collectors.toList()));
+    }
+
     @Override
-    public Map<String, String> getHttpRequestHeader() {
+    public Map<String, String> getHttpRequestHeaders() {
         return httpRequestHeaders;
     }
 
     @Override
-    public Map<String, String> getHttpRequestTrailer() {
+    public Map<String, String> getHttpRequestTrailers() {
         return httpRequestTrailers;
     }
 
     @Override
-    public Map<String, String> getHttpResponseHeader() {
+    public Map<String, String> getHttpResponseHeaders() {
         return httpResponseHeaders;
     }
 
     @Override
-    public Map<String, String> getHttpResponseTrailer() {
+    public Map<String, String> getHttpResponseTrailers() {
         return httpResponseTrailers;
     }
 
@@ -100,7 +108,7 @@ public class MockHandler implements Handler {
     }
 
     @Override
-    public Map<String, String> getHttpCallResponseTrailer() {
+    public Map<String, String> getHttpCallResponseTrailers() {
         return httpCallResponseTrailers;
     }
 
@@ -115,25 +123,25 @@ public class MockHandler implements Handler {
     }
 
     @Override
-    public WasmResult setHttpRequestHeader(Map<String, String> headers) {
+    public WasmResult setHttpRequestHeaders(Map<String, String> headers) {
         this.httpRequestHeaders = headers;
         return WasmResult.OK;
     }
 
     @Override
-    public WasmResult setHttpRequestTrailer(Map<String, String> trailers) {
+    public WasmResult setHttpRequestTrailers(Map<String, String> trailers) {
         this.httpRequestTrailers = trailers;
         return WasmResult.OK;
     }
 
     @Override
-    public WasmResult setHttpResponseHeader(Map<String, String> headers) {
+    public WasmResult setHttpResponseHeaders(Map<String, String> headers) {
         this.httpResponseHeaders = headers;
         return WasmResult.OK;
     }
 
     @Override
-    public WasmResult setHttpResponseTrailer(Map<String, String> trailers) {
+    public WasmResult setHttpResponseTrailers(Map<String, String> trailers) {
         this.httpResponseTrailers = trailers;
         return WasmResult.OK;
     }
@@ -145,7 +153,7 @@ public class MockHandler implements Handler {
     }
 
     @Override
-    public WasmResult setHttpCallResponseTrailer(Map<String, String> trailers) {
+    public WasmResult setHttpCallResponseTrailers(Map<String, String> trailers) {
         this.httpCallResponseTrailers = trailers;
         return WasmResult.OK;
     }
