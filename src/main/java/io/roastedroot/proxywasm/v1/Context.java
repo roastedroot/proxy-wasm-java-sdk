@@ -42,8 +42,6 @@ public abstract class Context implements Closeable {
     }
 
     // plugin is indicating it wants to finish closing
-    // TODO: need a unit test for this.  We likely can't implement the test until we provide tick
-    // callbacks to the plugin.
     WasmResult done() {
         if (!closeStarted) {
             // spec says: return NOT_FOUND when active context was not pending finalization.

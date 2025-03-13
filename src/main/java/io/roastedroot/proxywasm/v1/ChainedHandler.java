@@ -1,5 +1,6 @@
 package io.roastedroot.proxywasm.v1;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -252,5 +253,16 @@ public abstract class ChainedHandler implements Handler {
     @Override
     public WasmResult continueUpstream() {
         return next().continueUpstream();
+    }
+
+    @Override
+    public int httpCall(
+            String uri,
+            HashMap<String, String> headers,
+            byte[] body,
+            HashMap<String, String> trailers,
+            int timeout)
+            throws WasmException {
+        return next().httpCall(uri, headers, body, trailers, timeout);
     }
 }
