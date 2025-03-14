@@ -265,4 +265,20 @@ public abstract class ChainedHandler implements Handler {
             throws WasmException {
         return next().httpCall(uri, headers, body, trailers, timeout);
     }
+
+    @Override
+    public int dispatchHttpCall(
+            String upstreamName,
+            HashMap<String, String> headers,
+            byte[] body,
+            HashMap<String, String> trailers,
+            int timeoutMilliseconds)
+            throws WasmException {
+        return next().dispatchHttpCall(upstreamName, headers, body, trailers, timeoutMilliseconds);
+    }
+
+    @Override
+    public byte[] callForeignFunction(String name, byte[] bytes) throws WasmException {
+        return next().callForeignFunction(name, bytes);
+    }
 }
