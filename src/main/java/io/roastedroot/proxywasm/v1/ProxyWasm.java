@@ -307,8 +307,18 @@ public final class ProxyWasm implements Closeable {
             return Imports_ModuleFactory.toHostFunctions(imports);
         }
 
+        public ProxyWasm.Builder withVmConfig(byte[] vmConfig) {
+            this.vmConfig = vmConfig;
+            return this;
+        }
+
         public ProxyWasm.Builder withVmConfig(String vmConfig) {
             this.vmConfig = vmConfig.getBytes(StandardCharsets.UTF_8);
+            return this;
+        }
+
+        public ProxyWasm.Builder withPluginConfig(byte[] pluginConfig) {
+            this.pluginConfig = pluginConfig;
             return this;
         }
 
