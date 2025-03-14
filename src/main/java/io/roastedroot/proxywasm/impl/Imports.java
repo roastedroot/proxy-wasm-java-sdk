@@ -862,4 +862,31 @@ public class Imports extends Common {
             return e.result().getValue();
         }
     }
+
+    @WasmExport
+    int proxyCallForeignFunction(
+            int nameDataPtr,
+            int nameSize,
+            int argumentDataPtr,
+            int argumentSize,
+            int returnResultsPtr,
+            int returnResultsSizePtr) {
+        try {
+            var name = string(readMemory(nameDataPtr, nameSize));
+            var argument = readMemory(argumentDataPtr, argumentSize);
+            var result = handler.callForeignFunction(name, argument);
+
+            // Allocate memory in the WebAssembly instance
+            int addr = malloc(result.length);
+            putMemory(addr, result);
+            // Write the address to the return pointer
+            putUint32(returnResultsPtr, addr);
+            // Write the length to the return size pointer
+            putUint32(returnResultsSizePtr, result.length);
+            return WasmResult.OK.getValue();
+
+        } catch (WasmException e) {
+            return e.result().getValue();
+        }
+    }
 }
