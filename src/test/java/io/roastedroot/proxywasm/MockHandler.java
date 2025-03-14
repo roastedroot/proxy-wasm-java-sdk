@@ -83,14 +83,17 @@ public class MockHandler implements Handler {
                 loggedMessages().stream().sorted().collect(Collectors.toList()));
     }
 
-    public void assertLogsContain(String message) {
-        assertTrue(
-                loggedMessages().contains(message), "logged messages does not contain: " + message);
+    public void assertLogsContain(String... message) {
+        for (String m : message) {
+            assertTrue(loggedMessages().contains(m), "logged messages does not contain: " + m);
+        }
     }
 
-    public void assertLogsDoNotContain(String message) {
+    public void assertLogsDoNotContain(String... message) {
         for (String log : loggedMessages()) {
-            assertFalse(log.contains(message), "logged messages contains: " + message);
+            for (String m : message) {
+                assertFalse(log.contains(m), "logged messages contains: " + m);
+            }
         }
     }
 
@@ -271,6 +274,7 @@ public class MockHandler implements Handler {
             DISPATCH
         }
 
+        public final int id;
         public final Type callType;
         public final String uri;
         public final Object headers;
@@ -279,12 +283,14 @@ public class MockHandler implements Handler {
         public final int timeoutMilliseconds;
 
         public HttpCall(
+                int id,
                 Type callType,
                 String uri,
                 HashMap<String, String> headers,
                 byte[] body,
                 HashMap<String, String> trailers,
                 int timeoutMilliseconds) {
+            this.id = id;
             this.callType = callType;
             this.uri = uri;
             this.headers = headers;
@@ -312,7 +318,13 @@ public class MockHandler implements Handler {
         var id = lastCallId.incrementAndGet();
         HttpCall value =
                 new HttpCall(
-                        HttpCall.Type.REGULAR, uri, headers, body, trailers, timeoutMilliseconds);
+                        id,
+                        HttpCall.Type.REGULAR,
+                        uri,
+                        headers,
+                        body,
+                        trailers,
+                        timeoutMilliseconds);
         httpCalls.put(id, value);
         return id;
     }
@@ -328,6 +340,7 @@ public class MockHandler implements Handler {
         var id = lastCallId.incrementAndGet();
         HttpCall value =
                 new HttpCall(
+                        id,
                         HttpCall.Type.DISPATCH,
                         upstreamName,
                         headers,

@@ -33,7 +33,7 @@ public class DispatchCallOnTickTest {
             handler.getHttpCalls().entrySet().stream()
                     .forEach(
                             entry -> {
-                                host.callOnHttpCallResponse(
+                                host.sendHttpCallResponse(
                                         entry.getKey(), Map.of(), Map.of(), new byte[0]);
                             });
 
