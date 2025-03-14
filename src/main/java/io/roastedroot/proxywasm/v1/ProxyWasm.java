@@ -43,6 +43,7 @@ public final class ProxyWasm implements Closeable {
     private Map<String, String> httpCallResponseHeaders;
     private Map<String, String> httpCallResponseTrailers;
     private byte[] httpCallResponseBody;
+    private HashMap<String, ForeignFunction> foreignFunctions = new HashMap<>();
 
     private ProxyWasm(Builder other) throws StartException {
         this.vmConfig = other.vmConfig;
@@ -169,6 +170,15 @@ public final class ProxyWasm implements Closeable {
             public byte[] getHttpCallResponseBody() {
                 return httpCallResponseBody;
             }
+
+            @Override
+            public byte[] callForeignFunction(String name, byte[] bytes) throws WasmException {
+                ForeignFunction func = foreignFunctions.get(name);
+                if (func == null) {
+                    throw new WasmException(WasmResult.NOT_FOUND);
+                }
+                return func.apply(bytes);
+            }
         };
     }
 
@@ -264,6 +274,10 @@ public final class ProxyWasm implements Closeable {
 
     public int contextId() {
         return pluginContext.id();
+    }
+
+    public void registerForeignFunction(String name, ForeignFunction func) {
+        foreignFunctions.put(name, func);
     }
 
     public static class Builder implements Cloneable {
