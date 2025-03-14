@@ -38,9 +38,9 @@ public class OnRequestHeadersTest {
                 context.callOnRequestHeaders(true);
                 assertEquals(
                         List.of(
-                                "[http_wasm_example.cc:33]::onRequestHeaders() print from wasm,"
+                                "[http.cc:36]::onRequestHeaders() print from wasm,"
                                         + " onRequestHeaders, context id: 2",
-                                "[http_wasm_example.cc:38]::onRequestHeaders() print from wasm,"
+                                "[http.cc:41]::onRequestHeaders() print from wasm,"
                                         + " Hello -> World"),
                         handler.loggedMessages());
             }

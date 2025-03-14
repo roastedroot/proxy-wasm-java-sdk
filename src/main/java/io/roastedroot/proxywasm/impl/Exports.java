@@ -128,8 +128,8 @@ public class Exports {
         return (int) result;
     }
 
-    public void proxyOnLog(int arg0) {
-        exports.function("proxy_on_log").apply(arg0);
+    public void proxyOnLog(int context_id) {
+        exports.function("proxy_on_log").apply(context_id);
     }
 
     public boolean proxyOnDone(int context_id) {
