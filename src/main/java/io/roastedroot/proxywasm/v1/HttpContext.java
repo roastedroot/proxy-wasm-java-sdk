@@ -5,6 +5,7 @@ import static io.roastedroot.proxywasm.v1.Helpers.len;
 public class HttpContext extends Context {
 
     private final Handler handler;
+    Action action;
 
     HttpContext(ProxyWasm proxyWasm, Handler handler) {
         super(proxyWasm);

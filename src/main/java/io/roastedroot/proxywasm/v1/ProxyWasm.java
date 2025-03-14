@@ -257,7 +257,7 @@ public final class ProxyWasm implements Closeable {
         return new ProxyWasm.Builder();
     }
 
-    public void callOnHttpCallResponse(
+    public void sendHttpCallResponse(
             int calloutID, Map<String, String> headers, Map<String, String> trailers, byte[] body) {
 
         this.httpCallResponseHeaders = headers;
