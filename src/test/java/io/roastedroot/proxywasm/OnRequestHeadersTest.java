@@ -10,6 +10,9 @@ import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 
+/**
+ * Java port of https://github.com/mosn/proxy-wasm-go-host/blob/25a9e133320ed52aee6ef87f6dcbed77f526550e/example/main_test.go
+ */
 public class OnRequestHeadersTest {
 
     @Test
