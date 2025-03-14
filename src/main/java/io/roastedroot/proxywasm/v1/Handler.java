@@ -369,4 +369,20 @@ public interface Handler {
     default WasmResult setGrpcReceiveTrailerMetaData(Map<String, String> metadata) {
         return WasmResult.UNIMPLEMENTED;
     }
+
+    default WasmResult continueRequest() {
+        return WasmResult.UNIMPLEMENTED;
+    }
+
+    default WasmResult continueResponse() {
+        return WasmResult.UNIMPLEMENTED;
+    }
+
+    default WasmResult continueDownstream() {
+        return WasmResult.UNIMPLEMENTED;
+    }
+
+    default WasmResult continueUpstream() {
+        return WasmResult.UNIMPLEMENTED;
+    }
 }

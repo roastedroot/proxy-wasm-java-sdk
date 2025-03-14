@@ -1,6 +1,8 @@
 package io.roastedroot.proxywasm;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.roastedroot.proxywasm.v1.Handler;
 import io.roastedroot.proxywasm.v1.Helpers;
@@ -80,6 +82,17 @@ public class MockHandler implements Handler {
         assertEquals(
                 Stream.of(messages).sorted().collect(Collectors.toList()),
                 loggedMessages().stream().sorted().collect(Collectors.toList()));
+    }
+
+    public void assertLogsContain(String message) {
+        assertTrue(
+                loggedMessages().contains(message), "logged messages does not contain: " + message);
+    }
+
+    public void assertLogsDoNotContain(String message) {
+        for (String log : loggedMessages()) {
+            assertFalse(log.contains(message), "logged messages contains: " + message);
+        }
     }
 
     @Override
@@ -272,7 +285,7 @@ public class MockHandler implements Handler {
         return WasmResult.OK;
     }
 
-    public HttpResponse getSenthttpResponse() {
+    public HttpResponse getSentHttpResponse() {
         return senthttpResponse;
     }
 }
