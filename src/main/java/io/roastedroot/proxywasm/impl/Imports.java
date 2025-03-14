@@ -1,5 +1,7 @@
 package io.roastedroot.proxywasm.impl;
 
+import static io.roastedroot.proxywasm.v1.Helpers.string;
+
 import com.dylibso.chicory.experimental.hostmodule.annotations.HostModule;
 import com.dylibso.chicory.experimental.hostmodule.annotations.WasmExport;
 import com.dylibso.chicory.runtime.Instance;
@@ -799,5 +801,65 @@ public class Imports extends Common {
         }
         // should never reach here
         return WasmResult.INTERNAL_FAILURE.getValue();
+    }
+
+    @WasmExport
+    int proxyHttpCall(
+            int uriData,
+            int uriSize,
+            int headersData,
+            int headersSize,
+            int bodyData,
+            int bodySize,
+            int trailersData,
+            int trailersSize,
+            int timeout,
+            int returnCalloutID) {
+
+        try {
+            var uri = string(readMemory(uriData, uriSize));
+            var headers = decodeMap(headersData, headersSize);
+            var body = readMemory(bodyData, bodySize);
+            var trailers = decodeMap(trailersData, trailersSize);
+
+            int calloutId = handler.httpCall(uri, headers, body, trailers, timeout);
+
+            putUint32(returnCalloutID, calloutId);
+            return WasmResult.OK.getValue();
+
+        } catch (WasmException e) {
+            return e.result().getValue();
+        }
+    }
+
+    @WasmExport
+    int proxyDispatchHttpCall(
+            int upstreamNameData,
+            int upstreamNameSize,
+            int headersData,
+            int headersSize,
+            int bodyData,
+            int bodySize,
+            int trailersData,
+            int trailersSize,
+            int timeoutMilliseconds,
+            int returnCalloutID) {
+
+        try {
+            var upstreamName = string(readMemory(upstreamNameData, upstreamNameSize));
+            var headers = decodeMap(headersData, headersSize);
+            var body = readMemory(bodyData, bodySize);
+            var trailers = decodeMap(trailersData, trailersSize);
+
+            int calloutId =
+                    handler.dispatchHttpCall(
+                            upstreamName, headers, body, trailers, timeoutMilliseconds);
+
+            putUint32(returnCalloutID, calloutId);
+            return WasmResult.OK.getValue();
+
+        } catch (WasmException e) {
+            return e.result().getValue();
+        }
     }
 }

@@ -1,5 +1,6 @@
 package io.roastedroot.proxywasm.v1;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public interface Handler {
@@ -160,11 +161,11 @@ public interface Handler {
     /**
      * Sets a low-resolution timer period (tick_period).
      *
-     * When set, the host will call proxy_on_tick every tick_period milliseconds. Setting tick_period to 0 disables the timer.
+     * When set, the host will call proxy_on_tick every tickPeriodMilliseconds milliseconds. Setting tickPeriodMilliseconds to 0 disables the timer.
      *
      * @return The current time in nanoseconds
      */
-    default WasmResult setTickPeriodMilliseconds(int tick_period) {
+    default WasmResult setTickPeriodMilliseconds(int tickPeriodMilliseconds) {
         return WasmResult.UNIMPLEMENTED;
     }
 
@@ -384,5 +385,25 @@ public interface Handler {
 
     default WasmResult continueUpstream() {
         return WasmResult.UNIMPLEMENTED;
+    }
+
+    default int httpCall(
+            String uri,
+            HashMap<String, String> headers,
+            byte[] body,
+            HashMap<String, String> trailers,
+            int timeoutMilliseconds)
+            throws WasmException {
+        throw new WasmException(WasmResult.UNIMPLEMENTED);
+    }
+
+    default int dispatchHttpCall(
+            String upstreamName,
+            HashMap<String, String> headers,
+            byte[] body,
+            HashMap<String, String> trailers,
+            int timeoutMilliseconds)
+            throws WasmException {
+        throw new WasmException(WasmResult.UNIMPLEMENTED);
     }
 }
