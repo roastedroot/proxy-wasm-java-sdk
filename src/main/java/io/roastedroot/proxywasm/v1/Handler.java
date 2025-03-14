@@ -406,4 +406,8 @@ public interface Handler {
             throws WasmException {
         throw new WasmException(WasmResult.UNIMPLEMENTED);
     }
+
+    default byte[] callForeignFunction(String name, byte[] bytes) throws WasmException {
+        throw new WasmException(WasmResult.NOT_FOUND);
+    }
 }
