@@ -83,7 +83,7 @@ public class PropertiesTest {
             assertEquals(Action.PAUSE, action);
         }
 
-        var response = handler.getSenthttpResponse();
+        var response = handler.getSentHttpResponse();
         assertNotNull(response);
         assertEquals(401, response.statusCode);
         assertArrayEquals(new byte[0], response.body);

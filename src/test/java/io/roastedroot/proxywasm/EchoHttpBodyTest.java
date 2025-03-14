@@ -64,7 +64,7 @@ public class EchoHttpBodyTest {
         // Must be paused.
         assertEquals(Action.PAUSE, action);
 
-        var response = handler.getSenthttpResponse();
+        var response = handler.getSentHttpResponse();
         assertNotNull(response);
         assertEquals(200, response.statusCode);
         assertEquals("frame1...frame2...frame3...", string(response.body));

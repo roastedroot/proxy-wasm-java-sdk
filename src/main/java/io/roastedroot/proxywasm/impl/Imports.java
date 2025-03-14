@@ -8,6 +8,7 @@ import io.roastedroot.proxywasm.v1.BufferType;
 import io.roastedroot.proxywasm.v1.Handler;
 import io.roastedroot.proxywasm.v1.LogLevel;
 import io.roastedroot.proxywasm.v1.MapType;
+import io.roastedroot.proxywasm.v1.StreamType;
 import io.roastedroot.proxywasm.v1.WasmException;
 import io.roastedroot.proxywasm.v1.WasmResult;
 import java.nio.ByteBuffer;
@@ -778,5 +779,25 @@ public class Imports extends Common {
         } catch (WasmException e) {
             return e.result().getValue();
         }
+    }
+
+    @WasmExport
+    int proxyContinueStream(int arg) {
+        var streamType = StreamType.fromInt(arg);
+        if (streamType == null) {
+            return WasmResult.BAD_ARGUMENT.getValue();
+        }
+        switch (streamType) {
+            case REQUEST:
+                return handler.continueRequest().getValue();
+            case RESPONSE:
+                return handler.continueResponse().getValue();
+            case DOWNSTREAM:
+                return handler.continueDownstream().getValue();
+            case UPSTREAM:
+                return handler.continueUpstream().getValue();
+        }
+        // should never reach here
+        return WasmResult.INTERNAL_FAILURE.getValue();
     }
 }
