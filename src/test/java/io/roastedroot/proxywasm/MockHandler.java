@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -42,12 +43,11 @@ public class MockHandler implements Handler {
 
     final ArrayList<String> loggedMessages = new ArrayList<>();
 
+    private int tickPeriodMilliseconds;
     private Map<String, String> httpRequestHeaders = new HashMap<>();
     private Map<String, String> httpRequestTrailers = new HashMap<>();
     private Map<String, String> httpResponseHeaders = new HashMap<>();
     private Map<String, String> httpResponseTrailers = new HashMap<>();
-    private Map<String, String> httpCallResponseHeaders = new HashMap<>();
-    private Map<String, String> httpCallResponseTrailers = new HashMap<>();
     private Map<String, String> grpcReceiveInitialMetadata = new HashMap<>();
     private Map<String, String> grpcReceiveTrailerMetadata = new HashMap<>();
     private HttpResponse senthttpResponse;
@@ -57,7 +57,6 @@ public class MockHandler implements Handler {
     private byte[] httpResponseBody = new byte[0];
     private byte[] downStreamData = new byte[0];
     private byte[] upstreamData = new byte[0];
-    private byte[] httpCallResponseBody = new byte[0];
     private byte[] grpcReceiveBuffer = new byte[0];
 
     static final boolean DEBUG = "true".equals(System.getenv("DEBUG"));
@@ -96,6 +95,16 @@ public class MockHandler implements Handler {
     }
 
     @Override
+    public WasmResult setTickPeriodMilliseconds(int tickPeriodMilliseconds) {
+        this.tickPeriodMilliseconds = tickPeriodMilliseconds;
+        return WasmResult.OK;
+    }
+
+    public int getTickPeriodMilliseconds() {
+        return tickPeriodMilliseconds;
+    }
+
+    @Override
     public Map<String, String> getHttpRequestHeaders() {
         return httpRequestHeaders;
     }
@@ -113,16 +122,6 @@ public class MockHandler implements Handler {
     @Override
     public Map<String, String> getHttpResponseTrailers() {
         return httpResponseTrailers;
-    }
-
-    @Override
-    public Map<String, String> getHttpCallResponseHeaders() {
-        return httpCallResponseHeaders;
-    }
-
-    @Override
-    public Map<String, String> getHttpCallResponseTrailers() {
-        return httpCallResponseTrailers;
     }
 
     @Override
@@ -160,18 +159,6 @@ public class MockHandler implements Handler {
     }
 
     @Override
-    public WasmResult setHttpCallResponseHeaders(Map<String, String> headers) {
-        this.httpCallResponseHeaders = headers;
-        return WasmResult.OK;
-    }
-
-    @Override
-    public WasmResult setHttpCallResponseTrailers(Map<String, String> trailers) {
-        this.httpCallResponseTrailers = trailers;
-        return WasmResult.OK;
-    }
-
-    @Override
     public WasmResult setGrpcReceiveInitialMetaData(Map<String, String> metadata) {
         this.grpcReceiveInitialMetadata = metadata;
         return WasmResult.OK;
@@ -191,11 +178,6 @@ public class MockHandler implements Handler {
     @Override
     public byte[] getGrpcReceiveBuffer() {
         return this.grpcReceiveBuffer;
-    }
-
-    @Override
-    public byte[] getHttpCallResponseBody() {
-        return this.httpCallResponseBody;
     }
 
     @Override
@@ -251,12 +233,6 @@ public class MockHandler implements Handler {
     }
 
     @Override
-    public WasmResult setHttpCallResponseBody(byte[] body) {
-        this.httpCallResponseBody = body;
-        return WasmResult.OK;
-    }
-
-    @Override
     public WasmResult setGrpcReceiveBuffer(byte[] buffer) {
         this.grpcReceiveBuffer = buffer;
         return WasmResult.OK;
@@ -287,5 +263,78 @@ public class MockHandler implements Handler {
 
     public HttpResponse getSentHttpResponse() {
         return senthttpResponse;
+    }
+
+    public static class HttpCall {
+        public enum Type {
+            REGULAR,
+            DISPATCH
+        }
+
+        public final Type callType;
+        public final String uri;
+        public final Object headers;
+        public final byte[] body;
+        public final HashMap<String, String> trailers;
+        public final int timeoutMilliseconds;
+
+        public HttpCall(
+                Type callType,
+                String uri,
+                HashMap<String, String> headers,
+                byte[] body,
+                HashMap<String, String> trailers,
+                int timeoutMilliseconds) {
+            this.callType = callType;
+            this.uri = uri;
+            this.headers = headers;
+            this.body = body;
+            this.trailers = trailers;
+            this.timeoutMilliseconds = timeoutMilliseconds;
+        }
+    }
+
+    private final AtomicInteger lastCallId = new AtomicInteger(0);
+    private final HashMap<Integer, HttpCall> httpCalls = new HashMap<>();
+
+    public HashMap<Integer, HttpCall> getHttpCalls() {
+        return httpCalls;
+    }
+
+    @Override
+    public int httpCall(
+            String uri,
+            HashMap<String, String> headers,
+            byte[] body,
+            HashMap<String, String> trailers,
+            int timeoutMilliseconds)
+            throws WasmException {
+        var id = lastCallId.incrementAndGet();
+        HttpCall value =
+                new HttpCall(
+                        HttpCall.Type.REGULAR, uri, headers, body, trailers, timeoutMilliseconds);
+        httpCalls.put(id, value);
+        return id;
+    }
+
+    @Override
+    public int dispatchHttpCall(
+            String upstreamName,
+            HashMap<String, String> headers,
+            byte[] body,
+            HashMap<String, String> trailers,
+            int timeoutMilliseconds)
+            throws WasmException {
+        var id = lastCallId.incrementAndGet();
+        HttpCall value =
+                new HttpCall(
+                        HttpCall.Type.DISPATCH,
+                        upstreamName,
+                        headers,
+                        body,
+                        trailers,
+                        timeoutMilliseconds);
+        httpCalls.put(id, value);
+        return id;
     }
 }

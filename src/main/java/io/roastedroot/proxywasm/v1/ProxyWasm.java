@@ -40,6 +40,9 @@ public final class ProxyWasm implements Closeable {
     private Context activeContext;
 
     private HashMap<Integer, Context> contexts = new HashMap<>();
+    private Map<String, String> httpCallResponseHeaders;
+    private Map<String, String> httpCallResponseTrailers;
+    private byte[] httpCallResponseBody;
 
     private ProxyWasm(Builder other) throws StartException {
         this.vmConfig = other.vmConfig;
@@ -151,6 +154,21 @@ public final class ProxyWasm implements Closeable {
             public WasmResult done() {
                 return activeContext.done();
             }
+
+            @Override
+            public Map<String, String> getHttpCallResponseHeaders() {
+                return httpCallResponseHeaders;
+            }
+
+            @Override
+            public Map<String, String> getHttpCallResponseTrailers() {
+                return httpCallResponseTrailers;
+            }
+
+            @Override
+            public byte[] getHttpCallResponseBody() {
+                return httpCallResponseBody;
+            }
         };
     }
 
@@ -227,6 +245,25 @@ public final class ProxyWasm implements Closeable {
 
     public static ProxyWasm.Builder builder() {
         return new ProxyWasm.Builder();
+    }
+
+    public void callOnHttpCallResponse(
+            int calloutID, Map<String, String> headers, Map<String, String> trailers, byte[] body) {
+
+        this.httpCallResponseHeaders = headers;
+        this.httpCallResponseTrailers = trailers;
+        this.httpCallResponseBody = body;
+
+        this.exports.proxyOnHttpCallResponse(
+                pluginContext.id(), calloutID, len(headers), len(body), len(trailers));
+
+        this.httpCallResponseHeaders = null;
+        this.httpCallResponseTrailers = null;
+        this.httpCallResponseBody = null;
+    }
+
+    public int contextId() {
+        return pluginContext.id();
     }
 
     public static class Builder implements Cloneable {
