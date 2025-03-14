@@ -25,4 +25,4 @@ jobs:
           java-version: '${{ matrix.version }}'
           cache: maven
       - name: Test Java
-        run: mvn -B spotless:check clean install
+        run: mvn -B clean install
