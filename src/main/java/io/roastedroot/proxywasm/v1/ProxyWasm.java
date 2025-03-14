@@ -12,12 +12,14 @@ import com.dylibso.chicory.wasi.WasiPreview1;
 import com.dylibso.chicory.wasm.InvalidException;
 import com.dylibso.chicory.wasm.WasmModule;
 import com.dylibso.chicory.wasm.types.MemoryLimits;
+import com.dylibso.chicory.wasm.types.ValueType;
 import io.roastedroot.proxywasm.impl.Exports;
 import io.roastedroot.proxywasm.impl.Imports;
 import io.roastedroot.proxywasm.impl.Imports_ModuleFactory;
 import java.io.Closeable;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -302,6 +304,15 @@ public final class ProxyWasm implements Closeable {
 
             imports.addMemory(Objects.requireNonNullElseGet(memory, this::defaultImportMemory));
             imports.addFunction(toHostFunctions());
+            imports.addFunction(
+                    new HostFunction(
+                            "env",
+                            "emscripten_notify_memory_growth",
+                            List.of(ValueType.I32),
+                            List.of(),
+                            (inst, args) -> {
+                                return null;
+                            }));
 
             wasi =
                     WasiPreview1.builder()
