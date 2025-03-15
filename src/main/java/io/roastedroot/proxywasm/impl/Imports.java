@@ -6,6 +6,7 @@ import com.dylibso.chicory.experimental.hostmodule.annotations.HostModule;
 import com.dylibso.chicory.experimental.hostmodule.annotations.WasmExport;
 import com.dylibso.chicory.runtime.Instance;
 import com.dylibso.chicory.runtime.WasmRuntimeException;
+import io.roastedroot.proxywasm.v1.Action;
 import io.roastedroot.proxywasm.v1.BufferType;
 import io.roastedroot.proxywasm.v1.Handler;
 import io.roastedroot.proxywasm.v1.LogLevel;
@@ -784,24 +785,49 @@ public class Imports extends Common {
         }
     }
 
+    /**
+     * Resumes processing of paused stream_type.
+     *
+     * see: https://github.com/proxy-wasm/spec/tree/main/abi-versions/v0.2.1#proxy_continue_stream
+     */
     @WasmExport
     int proxyContinueStream(int arg) {
         var streamType = StreamType.fromInt(arg);
         if (streamType == null) {
             return WasmResult.BAD_ARGUMENT.getValue();
         }
-        switch (streamType) {
-            case REQUEST:
-                return handler.continueRequest().getValue();
-            case RESPONSE:
-                return handler.continueResponse().getValue();
-            case DOWNSTREAM:
-                return handler.continueDownstream().getValue();
-            case UPSTREAM:
-                return handler.continueUpstream().getValue();
-        }
-        // should never reach here
-        return WasmResult.INTERNAL_FAILURE.getValue();
+        WasmResult result = handler.setAction(streamType, Action.CONTINUE);
+        return result.getValue();
+    }
+
+    /**
+     * Resumes processing of paused HTTP request.
+     *
+     * see: https://github.com/proxy-wasm/spec/blob/main/abi-versions/v0.1.0/README.md#proxy_continue_request
+     */
+    @WasmExport
+    void proxyContinueRequest() {
+        handler.setAction(StreamType.REQUEST, Action.CONTINUE);
+    }
+
+    /**
+     * Resumes processing of paused HTTP response.
+     *
+     * see: https://github.com/proxy-wasm/spec/blob/main/abi-versions/v0.1.0/README.md#proxy_continue_response
+     */
+    @WasmExport
+    void proxyContinueResponse() {
+        handler.setAction(StreamType.RESPONSE, Action.CONTINUE);
+    }
+
+    /**
+     * Clears cached HTTP route.
+     *
+     * see: https://github.com/proxy-wasm/spec/blob/main/abi-versions/v0.1.0/README.md#proxy_clear_route_cache
+     */
+    @WasmExport
+    void proxyClearRouteCache() {
+        handler.clearRouteCache();
     }
 
     @WasmExport
