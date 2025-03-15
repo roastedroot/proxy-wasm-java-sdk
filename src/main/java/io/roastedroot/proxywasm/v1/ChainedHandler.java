@@ -281,4 +281,29 @@ public abstract class ChainedHandler implements Handler {
     public byte[] callForeignFunction(String name, byte[] bytes) throws WasmException {
         return next().callForeignFunction(name, bytes);
     }
+
+    @Override
+    public int defineMetric(MetricType metricType, String name) throws WasmException {
+        return next().defineMetric(metricType, name);
+    }
+
+    @Override
+    public WasmResult removeMetric(int metricId) {
+        return next().removeMetric(metricId);
+    }
+
+    @Override
+    public WasmResult recordMetric(int metricId, long value) {
+        return next().recordMetric(metricId, value);
+    }
+
+    @Override
+    public WasmResult incrementMetric(int metricId, long value) {
+        return next().incrementMetric(metricId, value);
+    }
+
+    @Override
+    public long getMetric(int metricId) throws WasmException {
+        return next().getMetric(metricId);
+    }
 }

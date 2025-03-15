@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import io.roastedroot.proxywasm.v1.Handler;
 import io.roastedroot.proxywasm.v1.Helpers;
 import io.roastedroot.proxywasm.v1.LogLevel;
+import io.roastedroot.proxywasm.v1.MetricType;
 import io.roastedroot.proxywasm.v1.WasmException;
 import io.roastedroot.proxywasm.v1.WasmResult;
 import java.util.ArrayList;
@@ -349,5 +350,75 @@ public class MockHandler implements Handler {
                         timeoutMilliseconds);
         httpCalls.put(id, value);
         return id;
+    }
+
+    public static class Metric {
+
+        public final int id;
+        public final MetricType type;
+        public final String name;
+        public long value;
+
+        public Metric(int id, MetricType type, String name) {
+            this.id = id;
+            this.type = type;
+            this.name = name;
+        }
+    }
+
+    private final AtomicInteger lastMetricId = new AtomicInteger(0);
+    private HashMap<Integer, Metric> metrics = new HashMap<>();
+    private HashMap<String, Metric> metricsByName = new HashMap<>();
+
+    @Override
+    public int defineMetric(MetricType type, String name) throws WasmException {
+        var id = lastMetricId.incrementAndGet();
+        Metric value = new Metric(id, type, name);
+        metrics.put(id, value);
+        metricsByName.put(name, value);
+        return id;
+    }
+
+    @Override
+    public long getMetric(int metricId) throws WasmException {
+        var metric = metrics.get(metricId);
+        if (metric == null) {
+            throw new WasmException(WasmResult.NOT_FOUND);
+        }
+        return metric.value;
+    }
+
+    public Metric getMetric(String name) {
+        return metricsByName.get(name);
+    }
+
+    @Override
+    public WasmResult incrementMetric(int metricId, long value) {
+        var metric = metrics.get(metricId);
+        if (metric == null) {
+            return WasmResult.NOT_FOUND;
+        }
+        metric.value += value;
+        return WasmResult.OK;
+    }
+
+    @Override
+    public WasmResult recordMetric(int metricId, long value) {
+        var metric = metrics.get(metricId);
+        if (metric == null) {
+            return WasmResult.NOT_FOUND;
+        }
+        metric.value = value;
+        return WasmResult.OK;
+    }
+
+    @Override
+    public WasmResult removeMetric(int metricId) {
+        Metric metric = metrics.remove(metricId);
+        if (metric == null) {
+            return WasmResult.NOT_FOUND;
+        }
+        metricsByName.remove(metric.name);
+        return WasmResult.OK;
     }
 }
