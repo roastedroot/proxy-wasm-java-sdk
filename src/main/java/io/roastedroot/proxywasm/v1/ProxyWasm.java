@@ -214,6 +214,12 @@ public final class ProxyWasm implements Closeable {
         return context;
     }
 
+    public NetworkContext createNetworkContext(Handler handler) {
+        NetworkContext context = new NetworkContext(this, handler);
+        registerContext(context, this.pluginContext.id());
+        return context;
+    }
+
     /**
      * Delivers a tick event to the plugin.
      * <p>
