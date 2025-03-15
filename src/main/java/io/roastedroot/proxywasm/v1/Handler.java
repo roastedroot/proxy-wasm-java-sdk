@@ -183,11 +183,11 @@ public interface Handler {
     /**
      * Send an HTTP response.
      *
-     * @param responseCode The HTTP response code
+     * @param responseCode        The HTTP response code
      * @param responseCodeDetails The response code details
-     * @param responseBody The response body
-     * @param additionalHeaders Additional headers to include
-     * @param grpcStatus The gRPC status code (-1 for non-gRPC responses)
+     * @param responseBody        The response body
+     * @param additionalHeaders   Additional headers to include
+     * @param grpcStatus          The gRPC status code (-1 for non-gRPC responses)
      * @return The result of sending the response
      */
     default WasmResult sendHttpResponse(
@@ -273,7 +273,7 @@ public interface Handler {
      * Set a custom buffer.
      *
      * @param bufferType The buffer type
-     * @param buffer The custom buffer as a byte[]
+     * @param buffer     The custom buffer as a byte[]
      * @return WasmResult indicating success or failure
      */
     default WasmResult setCustomBuffer(int bufferType, byte[] buffer) {
@@ -284,7 +284,7 @@ public interface Handler {
      * Set a custom header map.
      *
      * @param mapType The type of map to set
-     * @param map The header map to set
+     * @param map     The header map to set
      * @return WasmResult indicating success or failure
      */
     default WasmResult setCustomHeaders(int mapType, Map<String, String> map) {
@@ -421,5 +421,23 @@ public interface Handler {
 
     default long getMetric(int metricId) throws WasmException {
         throw new WasmException(WasmResult.UNIMPLEMENTED);
+    }
+
+    class SharedData {
+        public byte[] data;
+        public int cas;
+
+        public SharedData(byte[] data, int cas) {
+            this.data = data;
+            this.cas = cas;
+        }
+    }
+
+    default SharedData getSharedData(String key) throws WasmException {
+        throw new WasmException(WasmResult.UNIMPLEMENTED);
+    }
+
+    default WasmResult setSharedData(String key, byte[] value, int cas) {
+        return WasmResult.UNIMPLEMENTED;
     }
 }

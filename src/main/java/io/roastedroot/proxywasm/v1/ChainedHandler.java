@@ -296,4 +296,14 @@ public abstract class ChainedHandler implements Handler {
     public long getMetric(int metricId) throws WasmException {
         return next().getMetric(metricId);
     }
+
+    @Override
+    public SharedData getSharedData(String key) throws WasmException {
+        return next().getSharedData(key);
+    }
+
+    @Override
+    public WasmResult setSharedData(String key, byte[] value, int cas) {
+        return next().setSharedData(key, value, cas);
+    }
 }
