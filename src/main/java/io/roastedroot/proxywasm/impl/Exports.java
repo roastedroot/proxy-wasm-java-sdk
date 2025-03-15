@@ -68,8 +68,10 @@ public class Exports {
         return (int) result;
     }
 
-    public int proxyOnDownstreamData(int arg0, int arg1, int arg2) {
-        long result = exports.function("proxy_on_downstream_data").apply(arg0, arg1, arg2)[0];
+    public int proxyOnDownstreamData(int contextId, int dataSize, int endOfStream) {
+        long result =
+                exports.function("proxy_on_downstream_data")
+                        .apply(contextId, dataSize, endOfStream)[0];
         return (int) result;
     }
 
