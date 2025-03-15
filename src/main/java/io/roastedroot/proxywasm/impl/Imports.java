@@ -962,4 +962,44 @@ public class Imports extends Common {
             return e.result().getValue();
         }
     }
+
+    @WasmExport
+    int proxyGetSharedData(
+            int keyDataPtr, int keySize, int returnValueData, int returnValueSize, int returnCas) {
+        try {
+            // Get key from memory
+            String key = string(readMemory(keyDataPtr, keySize));
+
+            // Get shared data value using handler
+            Handler.SharedData value = handler.getSharedData(key);
+            if (value == null) {
+                return WasmResult.NOT_FOUND.getValue();
+            }
+
+            copyIntoInstance(value.data, returnValueData, returnValueSize);
+            putUint32(returnCas, value.cas);
+            return WasmResult.OK.getValue();
+
+        } catch (WasmException e) {
+            return e.result().getValue();
+        }
+    }
+
+    @WasmExport
+    int proxySetSharedData(int keyDataPtr, int keySize, int valueDataPtr, int valueSize, int cas) {
+        try {
+            // Get key from memory
+            String key = string(readMemory(keyDataPtr, keySize));
+
+            // Get value from memory
+            byte[] value = readMemory(valueDataPtr, valueSize);
+
+            // Set shared data value using handler
+            WasmResult result = handler.setSharedData(key, value, cas);
+            return result.getValue();
+
+        } catch (WasmException e) {
+            return e.result().getValue();
+        }
+    }
 }
