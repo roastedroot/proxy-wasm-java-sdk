@@ -10,6 +10,7 @@ import io.roastedroot.proxywasm.v1.BufferType;
 import io.roastedroot.proxywasm.v1.Handler;
 import io.roastedroot.proxywasm.v1.LogLevel;
 import io.roastedroot.proxywasm.v1.MapType;
+import io.roastedroot.proxywasm.v1.MetricType;
 import io.roastedroot.proxywasm.v1.StreamType;
 import io.roastedroot.proxywasm.v1.WasmException;
 import io.roastedroot.proxywasm.v1.WasmResult;
@@ -885,6 +886,52 @@ public class Imports extends Common {
             putUint32(returnResultsSizePtr, result.length);
             return WasmResult.OK.getValue();
 
+        } catch (WasmException e) {
+            return e.result().getValue();
+        }
+    }
+
+    @WasmExport
+    int proxyDefineMetric(int metricType, int nameDataPtr, int nameSize, int returnMetricId) {
+        try {
+            MetricType type = MetricType.fromInt(metricType);
+            if (type == null) {
+                return WasmResult.BAD_ARGUMENT.getValue();
+            }
+
+            var name = string(readMemory(nameDataPtr, nameSize));
+            int metricId = handler.defineMetric(type, name);
+            putUint32(returnMetricId, metricId);
+            return WasmResult.OK.getValue();
+        } catch (WasmException e) {
+            return e.result().getValue();
+        }
+    }
+
+    @WasmExport
+    int proxyRecordMetric(int metricId, long value) {
+        WasmResult result = handler.recordMetric(metricId, value);
+        return result.getValue();
+    }
+
+    @WasmExport
+    int proxyRemoveMetric(int metricId) {
+        WasmResult result = handler.removeMetric(metricId);
+        return result.getValue();
+    }
+
+    @WasmExport
+    int proxyIncrementMetric(int metricId, long value) {
+        WasmResult result = handler.incrementMetric(metricId, value);
+        return result.getValue();
+    }
+
+    @WasmExport
+    int proxyGetMetric(int metricId, int returnValuePtr) {
+        try {
+            var result = handler.getMetric(metricId);
+            putUint32(returnValuePtr, (int) result);
+            return WasmResult.OK.getValue();
         } catch (WasmException e) {
             return e.result().getValue();
         }
