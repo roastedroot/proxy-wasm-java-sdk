@@ -236,23 +236,13 @@ public abstract class ChainedHandler implements Handler {
     }
 
     @Override
-    public WasmResult continueRequest() {
-        return next().continueRequest();
+    public WasmResult setAction(StreamType streamType, Action action) {
+        return next().setAction(streamType, action);
     }
 
     @Override
-    public WasmResult continueResponse() {
-        return next().continueResponse();
-    }
-
-    @Override
-    public WasmResult continueDownstream() {
-        return next().continueDownstream();
-    }
-
-    @Override
-    public WasmResult continueUpstream() {
-        return next().continueUpstream();
+    public WasmResult clearRouteCache() {
+        return next().clearRouteCache();
     }
 
     @Override

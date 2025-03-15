@@ -371,19 +371,11 @@ public interface Handler {
         return WasmResult.UNIMPLEMENTED;
     }
 
-    default WasmResult continueRequest() {
+    default WasmResult setAction(StreamType streamType, Action action) {
         return WasmResult.UNIMPLEMENTED;
     }
 
-    default WasmResult continueResponse() {
-        return WasmResult.UNIMPLEMENTED;
-    }
-
-    default WasmResult continueDownstream() {
-        return WasmResult.UNIMPLEMENTED;
-    }
-
-    default WasmResult continueUpstream() {
+    default WasmResult clearRouteCache() {
         return WasmResult.UNIMPLEMENTED;
     }
 
