@@ -2,7 +2,6 @@ package io.roastedroot.proxywasm.v1;
 
 /**
  * Represents the type of map in proxy WASM.
- * Converted from Go's MapType type.
  */
 public enum MapType {
     HTTP_REQUEST_HEADERS(0),
