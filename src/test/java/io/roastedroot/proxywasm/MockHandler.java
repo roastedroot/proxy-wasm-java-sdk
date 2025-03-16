@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.roastedroot.proxywasm.v1.Action;
+import io.roastedroot.proxywasm.v1.ChainedHandler;
 import io.roastedroot.proxywasm.v1.Handler;
 import io.roastedroot.proxywasm.v1.Helpers;
 import io.roastedroot.proxywasm.v1.LogLevel;
@@ -20,7 +21,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class MockHandler implements Handler {
+public class MockHandler extends ChainedHandler {
+
+    private Handler next;
 
     public static class HttpResponse {
 
@@ -63,6 +66,19 @@ public class MockHandler implements Handler {
     private byte[] grpcReceiveBuffer = new byte[0];
 
     static final boolean DEBUG = "true".equals(System.getenv("DEBUG"));
+
+    MockHandler() {
+        this(new Handler() {});
+    }
+
+    MockHandler(Handler next) {
+        this.next = next;
+    }
+
+    @Override
+    protected Handler next() {
+        return next;
+    }
 
     @Override
     public void log(LogLevel level, String message) throws WasmException {
@@ -434,32 +450,5 @@ public class MockHandler implements Handler {
 
     public Action getAction() {
         return action;
-    }
-
-    private final HashMap<String, SharedData> sharedData = new HashMap<>();
-
-    @Override
-    public SharedData getSharedData(String key) throws WasmException {
-        return sharedData.get(key);
-    }
-
-    @Override
-    public WasmResult setSharedData(String key, byte[] value, int cas) {
-        SharedData prev = sharedData.get(key);
-        if (prev == null) {
-            if (cas == 0) {
-                sharedData.put(key, new SharedData(value, 0));
-                return WasmResult.OK;
-            } else {
-                return WasmResult.CAS_MISMATCH;
-            }
-        } else {
-            if (cas == 0 || prev.cas == cas) {
-                sharedData.put(key, new SharedData(value, prev.cas + 1));
-                return WasmResult.OK;
-            } else {
-                return WasmResult.CAS_MISMATCH;
-            }
-        }
     }
 }
