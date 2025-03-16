@@ -1,4 +1,4 @@
-package io.roastedroot.proxywasm.v1;
+package io.roastedroot.proxywasm;
 
 /**
  * Represents the type of map in proxy WASM.

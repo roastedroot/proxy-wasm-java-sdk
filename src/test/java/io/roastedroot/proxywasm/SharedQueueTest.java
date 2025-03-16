@@ -4,11 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import com.dylibso.chicory.wasm.Parser;
-import io.roastedroot.proxywasm.v1.Action;
-import io.roastedroot.proxywasm.v1.ProxyWasm;
-import io.roastedroot.proxywasm.v1.QueueName;
-import io.roastedroot.proxywasm.v1.StartException;
-import io.roastedroot.proxywasm.v1.WasmException;
 import java.io.Closeable;
 import java.io.IOException;
 import java.nio.file.Path;

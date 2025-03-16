@@ -1,7 +1,7 @@
-package io.roastedroot.proxywasm.impl;
+package io.roastedroot.proxywasm;
 
-import static io.roastedroot.proxywasm.v1.Helpers.replaceBytes;
-import static io.roastedroot.proxywasm.v1.Helpers.string;
+import static io.roastedroot.proxywasm.Helpers.replaceBytes;
+import static io.roastedroot.proxywasm.Helpers.string;
 
 import com.dylibso.chicory.experimental.hostmodule.annotations.HostModule;
 import com.dylibso.chicory.experimental.hostmodule.annotations.WasmExport;
@@ -9,16 +9,6 @@ import com.dylibso.chicory.runtime.Instance;
 import com.dylibso.chicory.runtime.Memory;
 import com.dylibso.chicory.runtime.WasmRuntimeException;
 import com.dylibso.chicory.wasm.InvalidException;
-import io.roastedroot.proxywasm.v1.Action;
-import io.roastedroot.proxywasm.v1.BufferType;
-import io.roastedroot.proxywasm.v1.Handler;
-import io.roastedroot.proxywasm.v1.LogLevel;
-import io.roastedroot.proxywasm.v1.MapType;
-import io.roastedroot.proxywasm.v1.MetricType;
-import io.roastedroot.proxywasm.v1.QueueName;
-import io.roastedroot.proxywasm.v1.StreamType;
-import io.roastedroot.proxywasm.v1.WasmException;
-import io.roastedroot.proxywasm.v1.WasmResult;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;

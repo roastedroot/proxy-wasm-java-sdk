@@ -4,15 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import io.roastedroot.proxywasm.v1.Action;
-import io.roastedroot.proxywasm.v1.ChainedHandler;
-import io.roastedroot.proxywasm.v1.Handler;
-import io.roastedroot.proxywasm.v1.Helpers;
-import io.roastedroot.proxywasm.v1.LogLevel;
-import io.roastedroot.proxywasm.v1.MetricType;
-import io.roastedroot.proxywasm.v1.StreamType;
-import io.roastedroot.proxywasm.v1.WasmException;
-import io.roastedroot.proxywasm.v1.WasmResult;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
