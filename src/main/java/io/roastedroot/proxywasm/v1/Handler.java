@@ -7,6 +7,10 @@ public interface Handler {
 
     default void log(LogLevel level, String message) throws WasmException {}
 
+    default LogLevel getLogLevel() throws WasmException {
+        return LogLevel.TRACE;
+    }
+
     // TODO: use a better type than Map so that we can support repeated headers
     default Map<String, String> getHttpRequestHeaders() {
         return null;

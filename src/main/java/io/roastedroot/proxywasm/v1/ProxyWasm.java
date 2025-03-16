@@ -9,13 +9,11 @@ import com.dylibso.chicory.runtime.ImportValues;
 import com.dylibso.chicory.runtime.Instance;
 import com.dylibso.chicory.wasi.WasiOptions;
 import com.dylibso.chicory.wasi.WasiPreview1;
-import com.dylibso.chicory.wasm.InvalidException;
 import com.dylibso.chicory.wasm.WasmModule;
 import com.dylibso.chicory.wasm.types.MemoryLimits;
 import com.dylibso.chicory.wasm.types.ValueType;
-import io.roastedroot.proxywasm.impl.Exports;
-import io.roastedroot.proxywasm.impl.Imports;
-import io.roastedroot.proxywasm.impl.Imports_ModuleFactory;
+import io.roastedroot.proxywasm.impl.ABI;
+import io.roastedroot.proxywasm.impl.ABI_ModuleFactory;
 import java.io.Closeable;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
@@ -26,8 +24,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public final class ProxyWasm implements Closeable {
 
-    private final Exports exports;
-    private final Imports imports;
+    private final ABI abi;
     private final Handler pluginHandler;
     private final byte[] pluginConfig;
     private final byte[] vmConfig;
@@ -51,36 +48,35 @@ public final class ProxyWasm implements Closeable {
         this.properties = Objects.requireNonNullElse(other.properties, new HashMap<>());
         this.pluginHandler = Objects.requireNonNullElse(other.pluginHandler, new Handler() {});
         this.wasi = other.wasi;
-        this.exports = other.exports;
-        this.imports = other.imports;
-        this.imports.setHandler(createImportsHandler());
+        this.abi = other.abi;
+        this.abi.setHandler(createImportsHandler());
 
         this.abiVersion = findAbiVersion();
 
         // Since 0_2_0, prefer proxy_on_memory_allocate over malloc
-        if (instanceExportsFunction("proxy_on_memory_allocate")) {
-            this.exports.setMallocFunctionName("proxy_on_memory_allocate");
+        if (this.abi.instanceExportsFunction("proxy_on_memory_allocate")) {
+            this.abi.setMallocFunctionName("proxy_on_memory_allocate");
         }
 
         // initialize/start the vm
-        if (instanceExportsFunction("_initialize")) {
-            this.exports.initialize();
-            if (instanceExportsFunction("main")) {
-                this.exports.main(0, 0);
+        if (this.abi.instanceExportsFunction("_initialize")) {
+            this.abi.initialize();
+            if (this.abi.instanceExportsFunction("main")) {
+                this.abi.main(0, 0);
             }
         } else {
-            if (instanceExportsFunction("_start")) {
-                this.exports.start();
+            if (this.abi.instanceExportsFunction("_start")) {
+                this.abi.start();
             }
         }
 
         // start the vm with the vmHandler, it will receive stuff like log messages.
         this.pluginContext = new PluginContext(this, pluginHandler);
         registerContext(pluginContext, 0);
-        if (!exports.proxyOnVmStart(pluginContext.id(), vmConfig.length)) {
+        if (!this.abi.proxyOnVmStart(pluginContext.id(), vmConfig.length)) {
             throw new StartException("proxy_on_vm_start failed");
         }
-        if (!exports.proxyOnConfigure(pluginContext.id(), pluginConfig.length)) {
+        if (!this.abi.proxyOnConfigure(pluginContext.id(), pluginConfig.length)) {
             throw new StartException("proxy_on_configure failed");
         }
     }
@@ -88,25 +84,16 @@ public final class ProxyWasm implements Closeable {
     private void registerContext(Context context, int parentContextID) {
         contexts.put(context.id(), context);
         activeContext = context;
-        exports.proxyOnContextCreate(context.id(), parentContextID);
+        this.abi.proxyOnContextCreate(context.id(), parentContextID);
     }
 
     private ABIVersion findAbiVersion() throws StartException {
         for (var version : ABIVersion.values()) {
-            if (instanceExportsFunction(version.getAbiMarkerFunction())) {
+            if (this.abi.instanceExportsFunction(version.getAbiMarkerFunction())) {
                 return version;
             }
         }
         throw new StartException("wasm module does nto contain a supported proxy-wasm abi version");
-    }
-
-    private boolean instanceExportsFunction(String name) {
-        try {
-            this.imports.getInstance().exports().function(name);
-            return true;
-        } catch (InvalidException e) {
-            return false;
-        }
     }
 
     // Let's implement some of the handler functions to make life easier for the user.
@@ -186,10 +173,6 @@ public final class ProxyWasm implements Closeable {
         return contexts;
     }
 
-    Exports exports() {
-        return exports;
-    }
-
     Context getActiveContext() {
         return activeContext;
     }
@@ -226,7 +209,7 @@ public final class ProxyWasm implements Closeable {
      * tick() should be called in response to a Handler.setTickPeriodMilliseconds(int tick_period) callback.
      */
     public void tick() {
-        exports.proxyOnTick(pluginContext.id());
+        this.abi.proxyOnTick(pluginContext.id());
     }
 
     public ABIVersion abiVersion() {
@@ -270,7 +253,7 @@ public final class ProxyWasm implements Closeable {
         this.httpCallResponseTrailers = trailers;
         this.httpCallResponseBody = body;
 
-        this.exports.proxyOnHttpCallResponse(
+        this.abi.proxyOnHttpCallResponse(
                 pluginContext.id(), calloutID, len(headers), len(body), len(trailers));
 
         this.httpCallResponseHeaders = null;
@@ -279,7 +262,7 @@ public final class ProxyWasm implements Closeable {
     }
 
     public void sendOnQueueReady(int queueId) {
-        this.exports.proxyOnQueueReady(pluginContext.id(), queueId);
+        this.abi.proxyOnQueueReady(pluginContext.id(), queueId);
     }
 
     public int contextId() {
@@ -290,10 +273,13 @@ public final class ProxyWasm implements Closeable {
         foreignFunctions.put(name, func);
     }
 
+    ABI abi() {
+        return abi;
+    }
+
     public static class Builder implements Cloneable {
 
-        private Exports exports;
-        private final Imports imports = new Imports();
+        private final ABI abi = new ABI();
         private WasiPreview1 wasi;
 
         private byte[] vmConfig = new byte[0];
@@ -314,7 +300,7 @@ public final class ProxyWasm implements Closeable {
         }
 
         public HostFunction[] toHostFunctions() {
-            return Imports_ModuleFactory.toHostFunctions(imports);
+            return ABI_ModuleFactory.toHostFunctions(abi);
         }
 
         public ProxyWasm.Builder withVmConfig(byte[] vmConfig) {
@@ -364,9 +350,7 @@ public final class ProxyWasm implements Closeable {
         Builder() {}
 
         public ProxyWasm build(Instance instance) throws StartException {
-            exports = new Exports(instance.exports());
-            imports.setInstance(instance);
-            imports.setExports(exports);
+            abi.setInstance(instance);
             return new ProxyWasm(this.clone());
         }
 

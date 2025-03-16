@@ -17,8 +17,7 @@ public class HttpContext extends Context {
 
     public Action callOnRequestHeaders(boolean endOfStream) {
         var headers = handler.getHttpRequestHeaders();
-        int result =
-                proxyWasm.exports().proxyOnRequestHeaders(id, len(headers), endOfStream ? 1 : 0);
+        int result = proxyWasm.abi().proxyOnRequestHeaders(id, len(headers), endOfStream ? 1 : 0);
         Action action = Action.fromInt(result);
         handler.setAction(StreamType.REQUEST, action);
         return action;
@@ -26,8 +25,7 @@ public class HttpContext extends Context {
 
     public Action callOnResponseHeaders(boolean endOfStream) {
         var headers = handler.getHttpResponseHeaders();
-        int result =
-                proxyWasm.exports().proxyOnResponseHeaders(id, len(headers), endOfStream ? 1 : 0);
+        int result = proxyWasm.abi().proxyOnResponseHeaders(id, len(headers), endOfStream ? 1 : 0);
         Action action = Action.fromInt(result);
         handler.setAction(StreamType.RESPONSE, action);
         return action;
@@ -37,7 +35,7 @@ public class HttpContext extends Context {
         var requestBody = handler.getHttpRequestBody();
         int result =
                 proxyWasm
-                        .exports()
+                        .abi()
                         .proxyOnRequestBody(id, Helpers.len(requestBody), endOfStream ? 1 : 0);
         Action action = Action.fromInt(result);
         handler.setAction(StreamType.REQUEST, action);
@@ -48,7 +46,7 @@ public class HttpContext extends Context {
         var responseBody = handler.getHttpResponseBody();
         int result =
                 proxyWasm
-                        .exports()
+                        .abi()
                         .proxyOnResponseBody(id, Helpers.len(responseBody), endOfStream ? 1 : 0);
         Action action = Action.fromInt(result);
         handler.setAction(StreamType.RESPONSE, action);
