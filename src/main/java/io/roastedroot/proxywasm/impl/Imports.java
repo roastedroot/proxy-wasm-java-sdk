@@ -12,6 +12,7 @@ import io.roastedroot.proxywasm.v1.Handler;
 import io.roastedroot.proxywasm.v1.LogLevel;
 import io.roastedroot.proxywasm.v1.MapType;
 import io.roastedroot.proxywasm.v1.MetricType;
+import io.roastedroot.proxywasm.v1.QueueName;
 import io.roastedroot.proxywasm.v1.StreamType;
 import io.roastedroot.proxywasm.v1.WasmException;
 import io.roastedroot.proxywasm.v1.WasmResult;
@@ -997,6 +998,79 @@ public class Imports extends Common {
             // Set shared data value using handler
             WasmResult result = handler.setSharedData(key, value, cas);
             return result.getValue();
+
+        } catch (WasmException e) {
+            return e.result().getValue();
+        }
+    }
+
+    @WasmExport
+    int proxyRegisterSharedQueue(int queueNameDataPtr, int queueNameSize, int returnQueueId) {
+        try {
+            // Get queue name from memory
+            String queueName = string(readMemory(queueNameDataPtr, queueNameSize));
+
+            var vmId = handler.getProperty("vm_id");
+
+            // Register shared queue using handler
+            int queueId = handler.registerSharedQueue(new QueueName(vmId, queueName));
+            putUint32(returnQueueId, queueId);
+            return WasmResult.OK.getValue();
+
+        } catch (WasmException e) {
+            return e.result().getValue();
+        }
+    }
+
+    @WasmExport
+    int proxyResolveSharedQueue(
+            int vmIdDataPtr,
+            int vmIdSize,
+            int queueNameDataPtr,
+            int queueNameSize,
+            int returnQueueId) {
+        try {
+            // Get vm id from memory
+            String vmId = string(readMemory(vmIdDataPtr, vmIdSize));
+            // Get queue name from memory
+            String queueName = string(readMemory(queueNameDataPtr, queueNameSize));
+
+            // Resolve shared queue using handler
+            int queueId = handler.resolveSharedQueue(new QueueName(vmId, queueName));
+            putUint32(returnQueueId, queueId);
+            return WasmResult.OK.getValue();
+
+        } catch (WasmException e) {
+            return e.result().getValue();
+        }
+    }
+
+    @WasmExport
+    int proxyEnqueueSharedQueue(int queueId, int valueDataPtr, int valueSize) {
+        try {
+            // Get value from memory
+            byte[] value = readMemory(valueDataPtr, valueSize);
+
+            // Enqueue shared queue using handler
+            WasmResult result = handler.enqueueSharedQueue(queueId, value);
+            return result.getValue();
+
+        } catch (WasmException e) {
+            return e.result().getValue();
+        }
+    }
+
+    @WasmExport
+    int proxyDequeueSharedQueue(int queueId, int returnValueData, int returnValueSize) {
+        try {
+            // Dequeue shared queue using handler
+            byte[] value = handler.dequeueSharedQueue(queueId);
+            if (value == null) {
+                return WasmResult.EMPTY.getValue();
+            }
+
+            copyIntoInstance(value, returnValueData, returnValueSize);
+            return WasmResult.OK.getValue();
 
         } catch (WasmException e) {
             return e.result().getValue();

@@ -278,6 +278,10 @@ public final class ProxyWasm implements Closeable {
         this.httpCallResponseBody = null;
     }
 
+    public void sendOnQueueReady(int queueId) {
+        this.exports.proxyOnQueueReady(pluginContext.id(), queueId);
+    }
+
     public int contextId() {
         return pluginContext.id();
     }
