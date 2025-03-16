@@ -16,13 +16,6 @@ public abstract class Context implements Closeable {
 
     abstract Handler handler();
 
-    void activate() throws WasmException {
-        if (this != proxyWasm.getActiveContext()) {
-            proxyWasm.setActiveContext(this);
-            proxyWasm.exports().proxySetEffectiveContext(id);
-        }
-    }
-
     public int id() {
         return id;
     }
@@ -34,7 +27,7 @@ public abstract class Context implements Closeable {
         closeStarted = true;
         if (!closeDone) {
             // the plugin may want to finish closing later...
-            if (proxyWasm.exports().proxyOnDone(id)) {
+            if (proxyWasm.abi().proxyOnDone(id)) {
                 // close now...
                 finishClose();
             }
@@ -56,7 +49,7 @@ public abstract class Context implements Closeable {
     protected void finishClose() {
         closeDone = true;
 
-        proxyWasm.exports().proxyOnLog(id);
+        proxyWasm.abi().proxyOnLog(id);
 
         proxyWasm.contexts().remove(id);
         // todo: we likely need to callback to user code to allow cleaning up resources like http
@@ -67,6 +60,6 @@ public abstract class Context implements Closeable {
 
         // unset active context so that callbacks don't try to use us.
         proxyWasm.setActiveContext(null);
-        proxyWasm.exports().proxyOnDelete(id);
+        proxyWasm.abi().proxyOnDelete(id);
     }
 }

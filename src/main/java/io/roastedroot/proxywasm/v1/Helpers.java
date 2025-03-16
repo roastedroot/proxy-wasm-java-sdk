@@ -83,4 +83,41 @@ public final class Helpers {
         System.arraycopy(value2, 0, result, value1.length, value2.length);
         return result;
     }
+
+    public static byte[] replaceBytes(
+            byte[] existing, byte[] change, int replaceStart, int replaceLength) {
+
+        if (replaceStart > existing.length) {
+            replaceStart = existing.length;
+        }
+        if (replaceLength > existing.length) {
+            replaceLength = existing.length;
+        }
+
+        // when we are replacing the whole buffer
+        if (replaceStart == 0 && replaceLength == existing.length) {
+            return change;
+        }
+
+        int newLength = change.length + (existing.length - replaceLength);
+        byte[] result = new byte[newLength];
+
+        // Copy the unchanged part before the start position
+        System.arraycopy(existing, 0, result, 0, Math.min(replaceStart, existing.length));
+
+        // Copy the new change bytes
+        System.arraycopy(change, 0, result, replaceStart, change.length);
+
+        // Copy the remaining unchanged part after replacement
+        if (replaceStart + replaceLength < existing.length) {
+            System.arraycopy(
+                    existing,
+                    replaceStart + replaceLength,
+                    result,
+                    replaceStart + change.length,
+                    existing.length - (replaceStart + replaceLength));
+        }
+
+        return result;
+    }
 }
