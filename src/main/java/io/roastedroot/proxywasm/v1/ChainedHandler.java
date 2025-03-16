@@ -306,4 +306,24 @@ public abstract class ChainedHandler implements Handler {
     public WasmResult setSharedData(String key, byte[] value, int cas) {
         return next().setSharedData(key, value, cas);
     }
+
+    @Override
+    public int registerSharedQueue(QueueName queueName) throws WasmException {
+        return next().registerSharedQueue(queueName);
+    }
+
+    @Override
+    public int resolveSharedQueue(QueueName queueName) throws WasmException {
+        return next().resolveSharedQueue(queueName);
+    }
+
+    @Override
+    public byte[] dequeueSharedQueue(int queueId) throws WasmException {
+        return next().dequeueSharedQueue(queueId);
+    }
+
+    @Override
+    public WasmResult enqueueSharedQueue(int queueId, byte[] value) {
+        return next().enqueueSharedQueue(queueId, value);
+    }
 }

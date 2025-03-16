@@ -16,8 +16,8 @@ public class SharedDataTest {
 
     @Test
     public void testSetEffectiveContext() throws StartException {
-
-        var handler = new MockHandler();
+        var sharedData = new MockSharedHandler();
+        var handler = new MockHandler(sharedData);
         // Load the WASM module
         var module = Parser.parse(Path.of("./src/test/go-examples/shared_data/main.wasm"));
 
