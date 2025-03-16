@@ -1,13 +1,18 @@
-package io.roastedroot.proxywasm;
+package io.roastedroot.proxywasm.examples;
 
 import static io.roastedroot.proxywasm.Helpers.bytes;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import com.dylibso.chicory.wasm.Parser;
+import io.roastedroot.proxywasm.Action;
+import io.roastedroot.proxywasm.HttpContext;
+import io.roastedroot.proxywasm.ProxyWasm;
+import io.roastedroot.proxywasm.StartException;
 import java.nio.file.Path;
 import java.util.Map;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -38,7 +43,7 @@ public class HttpBodyChunkTest {
     @Test
     public void pauseUntilEOS() {
         var action = host.callOnRequestBody(false);
-        assertEquals(Action.PAUSE, action);
+        Assertions.assertEquals(Action.PAUSE, action);
     }
 
     @Test
