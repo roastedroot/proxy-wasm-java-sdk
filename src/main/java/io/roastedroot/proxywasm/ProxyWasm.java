@@ -30,7 +30,6 @@ public final class ProxyWasm implements Closeable {
     private final WasiPreview1 wasi;
 
     private final AtomicInteger nextContextID = new AtomicInteger(1);
-    private final ABIVersion abiVersion;
     private Context pluginContext;
     private Context activeContext;
 
@@ -49,23 +48,11 @@ public final class ProxyWasm implements Closeable {
         this.abi = other.abi;
         this.abi.setHandler(createImportsHandler());
 
-        this.abiVersion = findAbiVersion();
-
-        // Since 0_2_0, prefer proxy_on_memory_allocate over malloc
-        if (this.abi.instanceExportsFunction("proxy_on_memory_allocate")) {
-            this.abi.setMallocFunctionName("proxy_on_memory_allocate");
-        }
-
         // initialize/start the vm
-        if (this.abi.instanceExportsFunction("_initialize")) {
-            this.abi.initialize();
-            if (this.abi.instanceExportsFunction("main")) {
-                this.abi.main(0, 0);
-            }
+        if (this.abi.initialize()) {
+            this.abi.main(0, 0);
         } else {
-            if (this.abi.instanceExportsFunction("_start")) {
-                this.abi.start();
-            }
+            this.abi.start();
         }
 
         // start the vm with the vmHandler, it will receive stuff like log messages.
@@ -83,15 +70,6 @@ public final class ProxyWasm implements Closeable {
         contexts.put(context.id(), context);
         activeContext = context;
         this.abi.proxyOnContextCreate(context.id(), parentContextID);
-    }
-
-    private ABIVersion findAbiVersion() throws StartException {
-        for (var version : ABIVersion.values()) {
-            if (this.abi.instanceExportsFunction(version.getAbiMarkerFunction())) {
-                return version;
-            }
-        }
-        throw new StartException("wasm module does nto contain a supported proxy-wasm abi version");
     }
 
     // Let's implement some of the handler functions to make life easier for the user.
@@ -208,10 +186,6 @@ public final class ProxyWasm implements Closeable {
      */
     public void tick() {
         this.abi.proxyOnTick(pluginContext.id());
-    }
-
-    public ABIVersion abiVersion() {
-        return abiVersion;
     }
 
     public void setProperty(String[] path, String data) {
