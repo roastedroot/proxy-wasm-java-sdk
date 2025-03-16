@@ -1,11 +1,17 @@
-package io.roastedroot.proxywasm;
+package io.roastedroot.proxywasm.examples;
 
 import static io.roastedroot.proxywasm.Helpers.bytes;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.dylibso.chicory.wasm.Parser;
+import io.roastedroot.proxywasm.Action;
+import io.roastedroot.proxywasm.MetricType;
+import io.roastedroot.proxywasm.NetworkContext;
+import io.roastedroot.proxywasm.ProxyWasm;
+import io.roastedroot.proxywasm.StartException;
 import java.nio.file.Path;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -97,7 +103,7 @@ public class NetworkTest {
         // Check counter metric
         String metricName = "proxy_wasm_go.connection_counter";
         MockHandler.Metric metric = handler.getMetric(metricName);
-        assertEquals(MetricType.COUNTER, metric.type, "Expected metric to be a counter");
+        Assertions.assertEquals(MetricType.COUNTER, metric.type, "Expected metric to be a counter");
         assertEquals(1, metric.value, "Expected connection counter to be 1");
     }
 }

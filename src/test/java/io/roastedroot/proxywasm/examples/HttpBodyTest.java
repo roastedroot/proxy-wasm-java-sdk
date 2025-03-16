@@ -1,4 +1,4 @@
-package io.roastedroot.proxywasm;
+package io.roastedroot.proxywasm.examples;
 
 import static io.roastedroot.proxywasm.Helpers.bytes;
 import static io.roastedroot.proxywasm.Helpers.string;
@@ -6,10 +6,15 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import com.dylibso.chicory.wasm.Parser;
+import io.roastedroot.proxywasm.Action;
+import io.roastedroot.proxywasm.HttpContext;
+import io.roastedroot.proxywasm.ProxyWasm;
+import io.roastedroot.proxywasm.StartException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Map;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -48,7 +53,7 @@ public class HttpBodyTest {
         var action = httpContext.callOnRequestHeaders(false);
 
         // Must be continued.
-        assertEquals(Action.CONTINUE, action);
+        Assertions.assertEquals(Action.CONTINUE, action);
 
         var headers = handler.getHttpRequestHeaders();
         assertEquals(Map.of("buffer-operation", "replace"), headers);

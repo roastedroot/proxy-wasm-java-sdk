@@ -1,4 +1,4 @@
-package io.roastedroot.proxywasm;
+package io.roastedroot.proxywasm.examples;
 
 import static io.roastedroot.proxywasm.Helpers.append;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
@@ -6,9 +6,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import com.dylibso.chicory.wasm.Parser;
+import io.roastedroot.proxywasm.Action;
+import io.roastedroot.proxywasm.ProxyWasm;
+import io.roastedroot.proxywasm.StartException;
 import java.nio.file.Path;
 import java.util.Map;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -42,7 +46,7 @@ public class PropertiesTest {
         try (var host = proxyWasm.createHttpContext(handler)) {
             id = host.id();
             var action = host.callOnRequestHeaders(false);
-            assertEquals(Action.CONTINUE, action);
+            Assertions.assertEquals(Action.CONTINUE, action);
         }
 
         handler.assertLogsEqual("no auth header for route", String.format("%d finished", id));

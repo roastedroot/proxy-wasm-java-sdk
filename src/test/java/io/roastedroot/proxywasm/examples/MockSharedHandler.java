@@ -1,5 +1,9 @@
-package io.roastedroot.proxywasm;
+package io.roastedroot.proxywasm.examples;
 
+import io.roastedroot.proxywasm.Handler;
+import io.roastedroot.proxywasm.QueueName;
+import io.roastedroot.proxywasm.WasmException;
+import io.roastedroot.proxywasm.WasmResult;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.concurrent.atomic.AtomicInteger;
