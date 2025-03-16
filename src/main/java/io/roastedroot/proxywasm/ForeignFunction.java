@@ -1,4 +1,4 @@
-package io.roastedroot.proxywasm.v1;
+package io.roastedroot.proxywasm;
 
 public interface ForeignFunction {
     byte[] apply(byte[] data);

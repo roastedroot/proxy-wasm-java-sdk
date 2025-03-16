@@ -1,4 +1,4 @@
-package io.roastedroot.proxywasm.v1;
+package io.roastedroot.proxywasm;
 
 /**
  * Action represents the action which Wasm contexts expects hosts to take.

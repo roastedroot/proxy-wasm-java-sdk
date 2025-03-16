@@ -1,6 +1,6 @@
-package io.roastedroot.proxywasm.v1;
+package io.roastedroot.proxywasm;
 
-import static io.roastedroot.proxywasm.v1.Helpers.len;
+import static io.roastedroot.proxywasm.Helpers.len;
 
 import com.dylibso.chicory.runtime.ByteBufferMemory;
 import com.dylibso.chicory.runtime.HostFunction;
@@ -12,8 +12,6 @@ import com.dylibso.chicory.wasi.WasiPreview1;
 import com.dylibso.chicory.wasm.WasmModule;
 import com.dylibso.chicory.wasm.types.MemoryLimits;
 import com.dylibso.chicory.wasm.types.ValueType;
-import io.roastedroot.proxywasm.impl.ABI;
-import io.roastedroot.proxywasm.impl.ABI_ModuleFactory;
 import java.io.Closeable;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
