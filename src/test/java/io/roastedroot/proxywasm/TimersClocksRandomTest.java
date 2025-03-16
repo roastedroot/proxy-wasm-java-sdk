@@ -4,9 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.dylibso.chicory.wasm.Parser;
-import io.roastedroot.proxywasm.v1.ProxyWasm;
-import io.roastedroot.proxywasm.v1.StartException;
-import io.roastedroot.proxywasm.v1.WasmResult;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;

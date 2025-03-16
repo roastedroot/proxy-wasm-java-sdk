@@ -1,6 +1,6 @@
-package io.roastedroot.proxywasm.v1;
+package io.roastedroot.proxywasm;
 
-import static io.roastedroot.proxywasm.v1.Helpers.len;
+import static io.roastedroot.proxywasm.Helpers.len;
 
 public class NetworkContext extends Context {
 

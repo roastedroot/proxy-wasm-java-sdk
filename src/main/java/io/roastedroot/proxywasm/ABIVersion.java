@@ -1,4 +1,4 @@
-package io.roastedroot.proxywasm.v1;
+package io.roastedroot.proxywasm;
 
 public enum ABIVersion {
     // The values follow the same order as in the Go code using iota (0-based incrementing)

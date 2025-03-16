@@ -1,4 +1,4 @@
-package io.roastedroot.proxywasm.v1;
+package io.roastedroot.proxywasm;
 
 import com.dylibso.chicory.runtime.HostFunction;
 import java.nio.charset.StandardCharsets;
