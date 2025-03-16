@@ -15,28 +15,28 @@ import java.util.HashMap;
 import java.util.Map;
 
 @HostModule("env")
-public class ABI {
+class ABI {
 
     private Handler handler;
     private Instance instance;
 
-    public Handler getHandler() {
+    Handler getHandler() {
         return handler;
     }
 
-    public void setHandler(Handler handler) {
+    void setHandler(Handler handler) {
         this.handler = handler;
     }
 
-    public void setInstance(Instance instance) {
+    void setInstance(Instance instance) {
         this.instance = instance;
     }
 
-    public Instance.Exports exports() {
+    Instance.Exports exports() {
         return instance.exports();
     }
 
-    public Memory memory() {
+    Memory memory() {
         return instance.memory();
     }
 
@@ -47,7 +47,7 @@ public class ABI {
     // Size of a 32-bit integer in bytes
     static final int U32_LEN = 4;
 
-    public boolean instanceExportsFunction(String name) {
+    boolean instanceExportsFunction(String name) {
         try {
             this.exports().function(name);
             return true;
@@ -109,7 +109,6 @@ public class ABI {
      */
     void putMemory(int address, byte[] data) throws WasmException {
         try {
-            // TODO: do we need a better writeU32 method?
             memory().write(address, data);
         } catch (RuntimeException e) {
             throw new WasmException(WasmResult.INVALID_MEMORY_ACCESS);
@@ -141,7 +140,7 @@ public class ABI {
     }
 
     /**
-     * Read bytes from memory().
+     * Read bytes from memory.
      *
      * @param address The address to read from
      * @param len     The number of bytes to read
@@ -187,14 +186,14 @@ public class ABI {
     /**
      * implements: https://github.com/proxy-wasm/spec/tree/main/abi-versions/vNEXT#_initialize
      */
-    public void initialize() {
+    void initialize() {
         exports().function("_initialize").apply();
     }
 
     /**
      * implements: https://github.com/proxy-wasm/spec/tree/main/abi-versions/vNEXT#main
      */
-    public int main(int arg0, int arg1) {
+    int main(int arg0, int arg1) {
         long result = exports().function("main").apply(arg0, arg1)[0];
         return (int) result;
     }
@@ -202,7 +201,7 @@ public class ABI {
     /**
      * implements: https://github.com/proxy-wasm/spec/tree/main/abi-versions/vNEXT#_start
      */
-    public void start() {
+    void start() {
         exports().function("_start").apply();
     }
 
@@ -212,11 +211,11 @@ public class ABI {
 
     String mallocFunctionName = "malloc";
 
-    public String getMallocFunctionName() {
+    String getMallocFunctionName() {
         return mallocFunctionName;
     }
 
-    public void setMallocFunctionName(String mallocFunctionName) {
+    void setMallocFunctionName(String mallocFunctionName) {
         this.mallocFunctionName = mallocFunctionName;
     }
 
@@ -242,14 +241,14 @@ public class ABI {
     /**
      * implements: https://github.com/proxy-wasm/spec/tree/main/abi-versions/vNEXT#proxy_on_context_create
      */
-    public void proxyOnContextCreate(int contextID, int parentContextID) {
+    void proxyOnContextCreate(int contextID, int parentContextID) {
         exports().function("proxy_on_context_create").apply(contextID, parentContextID);
     }
 
     /**
      * implements: https://github.com/proxy-wasm/spec/tree/main/abi-versions/vNEXT#proxy_on_done
      */
-    public boolean proxyOnDone(int context_id) {
+    boolean proxyOnDone(int context_id) {
         long result = exports().function("proxy_on_done").apply(context_id)[0];
         return result != 0;
     }
@@ -257,14 +256,14 @@ public class ABI {
     /**
      * implements: https://github.com/proxy-wasm/spec/tree/main/abi-versions/vNEXT#proxy_on_log
      */
-    public void proxyOnLog(int context_id) {
+    void proxyOnLog(int context_id) {
         exports().function("proxy_on_log").apply(context_id);
     }
 
     /**
      * implements: https://github.com/proxy-wasm/spec/tree/main/abi-versions/vNEXT#proxy_on_delete
      */
-    public void proxyOnDelete(int context_id) {
+    void proxyOnDelete(int context_id) {
         exports().function("proxy_on_delete").apply(context_id);
     }
 
@@ -291,7 +290,7 @@ public class ABI {
     /**
      * implements: https://github.com/proxy-wasm/spec/tree/main/abi-versions/vNEXT#proxy_on_vm_start
      */
-    public boolean proxyOnVmStart(int arg0, int arg1) {
+    boolean proxyOnVmStart(int arg0, int arg1) {
         long result = exports().function("proxy_on_vm_start").apply(arg0, arg1)[0];
         return result != 0;
     }
@@ -299,7 +298,7 @@ public class ABI {
     /**
      * implements: https://github.com/proxy-wasm/spec/tree/main/abi-versions/vNEXT#proxy_on_configure
      */
-    public boolean proxyOnConfigure(int arg0, int arg1) {
+    boolean proxyOnConfigure(int arg0, int arg1) {
         long result = exports().function("proxy_on_configure").apply(arg0, arg1)[0];
         return result != 0;
     }
@@ -315,7 +314,7 @@ public class ABI {
      * implements: https://github.com/proxy-wasm/spec/tree/main/abi-versions/vNEXT#proxy_log
      */
     @WasmExport
-    public int proxyLog(int logLevel, int messageData, int messageSize) {
+    int proxyLog(int logLevel, int messageData, int messageSize) {
         try {
             var msg = memory().readBytes(messageData, messageSize);
             handler.log(LogLevel.fromInt(logLevel), new String(msg));
@@ -329,7 +328,7 @@ public class ABI {
      * implements: https://github.com/proxy-wasm/spec/tree/main/abi-versions/vNEXT#proxy_get_log_level
      */
     @WasmExport
-    public int proxyGetLogLevel(int returnLogLevel) {
+    int proxyGetLogLevel(int returnLogLevel) {
         try {
             LogLevel level = handler.getLogLevel();
             putUint32(returnLogLevel, level.value());
@@ -374,7 +373,7 @@ public class ABI {
     /**
      * implements: https://github.com/proxy-wasm/spec/tree/main/abi-versions/vNEXT#proxy_on_tick
      */
-    public void proxyOnTick(int arg0) {
+    void proxyOnTick(int arg0) {
         exports().function("proxy_on_tick").apply(arg0);
     }
 
@@ -406,7 +405,7 @@ public class ABI {
      * @return WasmResult status code
      */
     @WasmExport
-    public int proxyGetBufferBytes(
+    int proxyGetBufferBytes(
             int bufferType, int start, int length, int returnBufferData, int returnBufferSize) {
 
         try {
@@ -457,8 +456,7 @@ public class ABI {
      * @return WasmResult status code
      */
     @WasmExport
-    public int proxySetBufferBytes(
-            int bufferType, int start, int length, int dataPtr, int dataSize) {
+    int proxySetBufferBytes(int bufferType, int start, int length, int dataPtr, int dataSize) {
         try {
 
             // Get the buffer based on the buffer type
@@ -485,7 +483,7 @@ public class ABI {
      * implements: https://github.com/proxy-wasm/spec/tree/main/abi-versions/vNEXT#proxy_get_buffer_status
      */
     @WasmExport
-    public int proxyGetBufferStatus(int bufferType, int returnBufferSize, int returnUnused) {
+    int proxyGetBufferStatus(int bufferType, int returnBufferSize, int returnUnused) {
         try {
             // Get the buffer based on the buffer type
             byte[] b = getBuffer(bufferType);
@@ -584,7 +582,7 @@ public class ABI {
      * @return WasmResult status code
      */
     @WasmExport
-    public int proxyGetHeaderMapSize(int mapType, int returnSize) {
+    int proxyGetHeaderMapSize(int mapType, int returnSize) {
         try {
 
             // Get the header map based on the map type
@@ -626,7 +624,7 @@ public class ABI {
      * @return WasmResult status code
      */
     @WasmExport
-    public int proxyGetHeaderMapPairs(int mapType, int returnDataPtr, int returnDataSize) {
+    int proxyGetHeaderMapPairs(int mapType, int returnDataPtr, int returnDataSize) {
         try {
 
             // Get the header map based on the map type
@@ -711,7 +709,7 @@ public class ABI {
      * @return WasmResult status code
      */
     @WasmExport
-    public int proxySetHeaderMapPairs(int mapType, int ptr, int size) {
+    int proxySetHeaderMapPairs(int mapType, int ptr, int size) {
 
         try {
             // Get the header map based on the map type
@@ -746,7 +744,7 @@ public class ABI {
      * @return WasmResult status code
      */
     @WasmExport
-    public int proxyGetHeaderMapValue(
+    int proxyGetHeaderMapValue(
             int mapType, int keyDataPtr, int keySize, int valueDataPtr, int valueSize) {
         try {
             // Get the header map based on the map type
@@ -787,7 +785,7 @@ public class ABI {
      * @return WasmResult status code
      */
     @WasmExport
-    public int proxyAddHeaderMapValue(
+    int proxyAddHeaderMapValue(
             int mapType, int keyDataPtr, int keySize, int valueDataPtr, int valueSize) {
         return proxyReplaceHeaderMapValue(mapType, keyDataPtr, keySize, valueDataPtr, valueSize);
     }
@@ -804,7 +802,7 @@ public class ABI {
      * @return WasmResult status code
      */
     @WasmExport
-    public int proxyReplaceHeaderMapValue(
+    int proxyReplaceHeaderMapValue(
             int mapType, int keyDataPtr, int keySize, int valueDataPtr, int valueSize) {
         try {
             // Get the header map based on the map type
@@ -843,7 +841,7 @@ public class ABI {
      * @return WasmResult status code
      */
     @WasmExport
-    public int proxyRemoveHeaderMapValue(int mapType, int keyDataPtr, int keySize) {
+    int proxyRemoveHeaderMapValue(int mapType, int keyDataPtr, int keySize) {
         try {
             // Get the header map based on the map type
             Map<String, String> headerMap = getMap(mapType);
@@ -1035,7 +1033,7 @@ public class ABI {
     /**
      * implements: https://github.com/proxy-wasm/spec/tree/main/abi-versions/vNEXT#proxy_on_new_connection
      */
-    public int proxyOnNewConnection(int arg0) {
+    int proxyOnNewConnection(int arg0) {
         long result = exports().function("proxy_on_new_connection").apply(arg0)[0];
         return (int) result;
     }
@@ -1043,7 +1041,7 @@ public class ABI {
     /**
      * implements: https://github.com/proxy-wasm/spec/tree/main/abi-versions/vNEXT#proxy_on_downstream_data
      */
-    public int proxyOnDownstreamData(int contextId, int dataSize, int endOfStream) {
+    int proxyOnDownstreamData(int contextId, int dataSize, int endOfStream) {
         long result =
                 exports()
                         .function("proxy_on_downstream_data")
@@ -1054,14 +1052,14 @@ public class ABI {
     /**
      * implements: https://github.com/proxy-wasm/spec/tree/main/abi-versions/vNEXT#proxy_on_downstream_connection_close
      */
-    public void proxyOnDownstreamConnectionClose(int arg0, int arg1) {
+    void proxyOnDownstreamConnectionClose(int arg0, int arg1) {
         exports().function("proxy_on_downstream_connection_close").apply(arg0, arg1);
     }
 
     /**
      * implements: https://github.com/proxy-wasm/spec/tree/main/abi-versions/vNEXT#proxy_on_upstream_data
      */
-    public int proxyOnUpstreamData(int arg0, int arg1, int arg2) {
+    int proxyOnUpstreamData(int arg0, int arg1, int arg2) {
         long result = exports().function("proxy_on_upstream_data").apply(arg0, arg1, arg2)[0];
         return (int) result;
     }
@@ -1069,7 +1067,7 @@ public class ABI {
     /**
      * implements: https://github.com/proxy-wasm/spec/tree/main/abi-versions/vNEXT#proxy_on_upstream_connection_close
      */
-    public void proxyOnUpstreamConnectionClose(int arg0, int arg1) {
+    void proxyOnUpstreamConnectionClose(int arg0, int arg1) {
         exports().function("proxy_on_upstream_connection_close").apply(arg0, arg1);
     }
 
@@ -1080,7 +1078,7 @@ public class ABI {
     /**
      * implements: https://github.com/proxy-wasm/spec/tree/main/abi-versions/vNEXT#proxy_on_request_headers
      */
-    public int proxyOnRequestHeaders(int contextID, int headers, int endOfStream) {
+    int proxyOnRequestHeaders(int contextID, int headers, int endOfStream) {
         long result =
                 exports()
                         .function("proxy_on_request_headers")
@@ -1091,7 +1089,7 @@ public class ABI {
     /**
      * implements: https://github.com/proxy-wasm/spec/tree/main/abi-versions/vNEXT#proxy_on_request_body
      */
-    public int proxyOnRequestBody(int contextId, int bodySize, int arg2) {
+    int proxyOnRequestBody(int contextId, int bodySize, int arg2) {
         long result =
                 exports().function("proxy_on_request_body").apply(contextId, bodySize, arg2)[0];
         return (int) result;
@@ -1100,7 +1098,7 @@ public class ABI {
     /**
      * implements: https://github.com/proxy-wasm/spec/tree/main/abi-versions/vNEXT#proxy_on_request_trailers
      */
-    public int proxyOnRequestTrailers(int arg0, int arg1) {
+    int proxyOnRequestTrailers(int arg0, int arg1) {
         long result = exports().function("proxy_on_request_trailers").apply(arg0, arg1)[0];
         return (int) result;
     }
@@ -1108,7 +1106,7 @@ public class ABI {
     /**
      * implements: https://github.com/proxy-wasm/spec/tree/main/abi-versions/vNEXT#proxy_on_response_headers
      */
-    public int proxyOnResponseHeaders(int arg0, int arg1, int arg2) {
+    int proxyOnResponseHeaders(int arg0, int arg1, int arg2) {
         long result = exports().function("proxy_on_response_headers").apply(arg0, arg1, arg2)[0];
         return (int) result;
     }
@@ -1116,7 +1114,7 @@ public class ABI {
     /**
      * implements: https://github.com/proxy-wasm/spec/tree/main/abi-versions/vNEXT#proxy_on_response_body
      */
-    public int proxyOnResponseBody(int arg0, int arg1, int arg2) {
+    int proxyOnResponseBody(int arg0, int arg1, int arg2) {
         long result = exports().function("proxy_on_response_body").apply(arg0, arg1, arg2)[0];
         return (int) result;
     }
@@ -1124,7 +1122,7 @@ public class ABI {
     /**
      * implements: https://github.com/proxy-wasm/spec/tree/main/abi-versions/vNEXT#proxy_on_response_trailers
      */
-    public int proxyOnResponseTrailers(int arg0, int arg1) {
+    int proxyOnResponseTrailers(int arg0, int arg1) {
         long result = exports().function("proxy_on_response_trailers").apply(arg0, arg1)[0];
         return (int) result;
     }
@@ -1144,7 +1142,7 @@ public class ABI {
      * @return WasmResult status code
      */
     @WasmExport
-    public int proxySendLocalResponse(
+    int proxySendLocalResponse(
             int responseCode,
             int responseCodeDetailsData,
             int responseCodeDetailsSize,
@@ -1301,7 +1299,7 @@ public class ABI {
     /**
      * implements https://github.com/proxy-wasm/spec/tree/main/abi-versions/vNEXT#proxy_on_http_call_response
      */
-    public void proxyOnHttpCallResponse(int arg0, int arg1, int arg2, int arg3, int arg4) {
+    void proxyOnHttpCallResponse(int arg0, int arg1, int arg2, int arg3, int arg4) {
         exports().function("proxy_on_http_call_response").apply(arg0, arg1, arg2, arg3, arg4);
     }
 
@@ -1323,7 +1321,7 @@ public class ABI {
     /**
      * implements https://github.com/proxy-wasm/spec/tree/main/abi-versions/vNEXT#proxy_on_grpc_receive_initial_metadata
      */
-    public void proxyOnGrpcReceiveInitialMetadata(int contextId, int callId, int numElements) {
+    void proxyOnGrpcReceiveInitialMetadata(int contextId, int callId, int numElements) {
         exports()
                 .function("proxy_on_grpc_receive_initial_metadata")
                 .apply(contextId, callId, numElements);
@@ -1332,21 +1330,21 @@ public class ABI {
     /**
      * implements https://github.com/proxy-wasm/spec/tree/main/abi-versions/vNEXT#proxy_on_grpc_receive
      */
-    public void proxyOnGrpcReceive(int contextId, int callId, int messageSize) {
+    void proxyOnGrpcReceive(int contextId, int callId, int messageSize) {
         exports().function("proxy_on_grpc_receive").apply(contextId, callId, messageSize);
     }
 
     /**
      * implements https://github.com/proxy-wasm/spec/tree/main/abi-versions/vNEXT#proxy_on_grpc_receive_trailing_metadata
      */
-    public void proxyOnGrpcReceiveTrailingMetadata(int arg0, int arg1, int arg2) {
+    void proxyOnGrpcReceiveTrailingMetadata(int arg0, int arg1, int arg2) {
         exports().function("proxy_on_grpc_receive_trailing_metadata").apply(arg0, arg1, arg2);
     }
 
     /**
      * implements https://github.com/proxy-wasm/spec/tree/main/abi-versions/vNEXT#proxy_on_grpc_close
      */
-    public void proxyOnGrpcClose(int arg0, int arg1, int arg2) {
+    void proxyOnGrpcClose(int arg0, int arg1, int arg2) {
         exports().function("proxy_on_grpc_close").apply(arg0, arg1, arg2);
     }
 
@@ -1492,7 +1490,7 @@ public class ABI {
     /**
      * implements https://github.com/proxy-wasm/spec/tree/main/abi-versions/vNEXT#proxy_on_queue_ready
      */
-    public void proxyOnQueueReady(int arg0, int arg1) {
+    void proxyOnQueueReady(int arg0, int arg1) {
         exports().function("proxy_on_queue_ready").apply(arg0, arg1);
     }
 
@@ -1571,7 +1569,7 @@ public class ABI {
      * implements https://github.com/proxy-wasm/spec/tree/main/abi-versions/vNEXT#proxy_get_property
      */
     @WasmExport
-    public int proxyGetProperty(int keyPtr, int keySize, int returnValueData, int returnValueSize) {
+    int proxyGetProperty(int keyPtr, int keySize, int returnValueData, int returnValueSize) {
         try {
             // Get key from memory
             byte[] keyBytes = readMemory(keyPtr, keySize);
@@ -1635,7 +1633,7 @@ public class ABI {
     /**
      * implements https://github.com/proxy-wasm/spec/tree/main/abi-versions/vNEXT#proxy_call_foreign_function
      */
-    public void proxyOnForeignFunction(int contextId, int functionId, int argumentsSize) {
+    void proxyOnForeignFunction(int contextId, int functionId, int argumentsSize) {
         exports().function("proxy_on_foreign_function").apply(contextId, functionId, argumentsSize);
     }
 
