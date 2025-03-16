@@ -1,9 +1,18 @@
-package io.roastedroot.proxywasm;
+package io.roastedroot.proxywasm.examples;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import io.roastedroot.proxywasm.Action;
+import io.roastedroot.proxywasm.ChainedHandler;
+import io.roastedroot.proxywasm.Handler;
+import io.roastedroot.proxywasm.Helpers;
+import io.roastedroot.proxywasm.LogLevel;
+import io.roastedroot.proxywasm.MetricType;
+import io.roastedroot.proxywasm.StreamType;
+import io.roastedroot.proxywasm.WasmException;
+import io.roastedroot.proxywasm.WasmResult;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;

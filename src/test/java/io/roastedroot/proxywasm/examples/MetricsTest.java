@@ -1,11 +1,16 @@
-package io.roastedroot.proxywasm;
+package io.roastedroot.proxywasm.examples;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import com.dylibso.chicory.wasm.Parser;
+import io.roastedroot.proxywasm.Action;
+import io.roastedroot.proxywasm.MetricType;
+import io.roastedroot.proxywasm.ProxyWasm;
+import io.roastedroot.proxywasm.StartException;
 import java.nio.file.Path;
 import java.util.Map;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -37,7 +42,7 @@ public class MetricsTest {
                         handler.getMetric(
                                 "custom_header_value_counts_value=foo_reporter=wasmgosdk");
                 assertNotNull(metric);
-                assertEquals(MetricType.COUNTER, metric.type);
+                Assertions.assertEquals(MetricType.COUNTER, metric.type);
                 assertEquals(expectedCount, metric.value);
             }
         }

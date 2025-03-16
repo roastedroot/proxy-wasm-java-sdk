@@ -1,11 +1,15 @@
-package io.roastedroot.proxywasm;
+package io.roastedroot.proxywasm.examples;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import com.dylibso.chicory.wasm.Parser;
+import io.roastedroot.proxywasm.Action;
+import io.roastedroot.proxywasm.ProxyWasm;
+import io.roastedroot.proxywasm.StartException;
 import java.nio.file.Path;
 import java.util.Map;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -28,7 +32,7 @@ public class HttpHeadersTest {
                                 "key1", "value1",
                                 "key2", "value2"));
                 var action = host.callOnRequestHeaders(false);
-                assertEquals(Action.CONTINUE, action);
+                Assertions.assertEquals(Action.CONTINUE, action);
 
                 // Check headers
                 var httpRequestHeaders = handler.getHttpRequestHeaders();
