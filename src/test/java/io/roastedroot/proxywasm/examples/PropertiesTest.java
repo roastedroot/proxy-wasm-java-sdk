@@ -1,6 +1,8 @@
 package io.roastedroot.proxywasm.examples;
 
 import static io.roastedroot.proxywasm.Helpers.append;
+import static io.roastedroot.proxywasm.Helpers.bytes;
+import static io.roastedroot.proxywasm.Helpers.string;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -10,7 +12,10 @@ import com.dylibso.chicory.wasm.WasmModule;
 import io.roastedroot.proxywasm.Action;
 import io.roastedroot.proxywasm.ProxyWasm;
 import io.roastedroot.proxywasm.StartException;
+import io.roastedroot.proxywasm.WasmException;
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
@@ -33,7 +38,7 @@ public class PropertiesTest {
     @BeforeEach
     void setUp() throws StartException {
         this.handler = new MockHandler();
-        ProxyWasm.Builder builder = ProxyWasm.builder();
+        ProxyWasm.Builder builder = ProxyWasm.builder().withPluginHandler(this.handler);
         this.proxyWasm = builder.build(module);
     }
 
@@ -55,12 +60,14 @@ public class PropertiesTest {
     }
 
     @Test
-    public void userIsAuthenticated() {
+    public void userIsAuthenticated() throws WasmException {
 
         var path = "auth";
-        var data = "cookie";
-        proxyWasm.setProperty(append(propertyPrefix, path), data);
-        var actualData = proxyWasm.getProperty(append(propertyPrefix, path));
+        var data = bytes("cookie");
+
+        List<String> key = Arrays.asList(append(propertyPrefix, path));
+        handler.setProperty(key, data);
+        var actualData = handler.getProperty(key);
         assertEquals(data, actualData);
 
         int id = 0;
@@ -72,16 +79,20 @@ public class PropertiesTest {
         }
 
         handler.assertLogsEqual(
-                String.format("auth header is \"%s\"", data), String.format("%d finished", id));
+                String.format("auth header is \"%s\"", string(data)),
+                String.format("%d finished", id));
     }
 
     @Test
-    public void userIsUnauthenticated() {
+    public void userIsUnauthenticated() throws WasmException {
 
         var path = "auth";
-        var data = "cookie";
-        proxyWasm.setProperty(append(propertyPrefix, path), data);
-        var actualData = proxyWasm.getProperty(append(propertyPrefix, path));
+        var data = bytes("cookie");
+
+        List<String> key = Arrays.asList(append(propertyPrefix, path));
+
+        handler.setProperty(key, data);
+        var actualData = handler.getProperty(key);
         assertEquals(data, actualData);
 
         try (var host = proxyWasm.createHttpContext(handler)) {

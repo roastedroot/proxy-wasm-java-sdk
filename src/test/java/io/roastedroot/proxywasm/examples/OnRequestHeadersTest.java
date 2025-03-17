@@ -1,5 +1,6 @@
 package io.roastedroot.proxywasm.examples;
 
+import static io.roastedroot.proxywasm.Helpers.bytes;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.dylibso.chicory.wasm.Parser;
@@ -22,10 +23,9 @@ public class OnRequestHeadersTest {
     public void test() throws StartException {
         // This module uses the 0_1_0 ABI
         var handler = new MockHandler();
-        ProxyWasm.Builder builder =
-                ProxyWasm.builder()
-                        .withProperties(Map.of("plugin_root_id", ""))
-                        .withPluginHandler(handler);
+        handler.setProperty(List.of("plugin_root_id"), bytes(""));
+
+        ProxyWasm.Builder builder = ProxyWasm.builder().withPluginHandler(handler);
 
         try (var proxyWasm = builder.build(module)) {
 

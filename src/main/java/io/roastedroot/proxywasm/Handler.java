@@ -1,5 +1,7 @@
 package io.roastedroot.proxywasm;
 
+import java.util.List;
+
 public interface Handler {
 
     default void log(LogLevel level, String message) throws WasmException {}
@@ -45,11 +47,11 @@ public interface Handler {
         return null;
     }
 
-    default String getProperty(String key) throws WasmException {
+    default byte[] getProperty(List<String> key) throws WasmException {
         return null;
     }
 
-    default WasmResult setProperty(String path, String value) {
+    default WasmResult setProperty(List<String> path, byte[] value) {
         return WasmResult.UNIMPLEMENTED;
     }
 

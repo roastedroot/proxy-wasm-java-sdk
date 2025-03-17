@@ -1,6 +1,8 @@
 package io.roastedroot.proxywasm;
 
+import static io.roastedroot.proxywasm.Helpers.bytes;
 import static io.roastedroot.proxywasm.Helpers.replaceBytes;
+import static io.roastedroot.proxywasm.Helpers.split;
 import static io.roastedroot.proxywasm.Helpers.string;
 
 import com.dylibso.chicory.experimental.hostmodule.annotations.HostModule;
@@ -11,7 +13,7 @@ import com.dylibso.chicory.runtime.Memory;
 import com.dylibso.chicory.runtime.WasmRuntimeException;
 import com.dylibso.chicory.wasm.InvalidException;
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Map;
 
 @HostModule("env")
@@ -221,15 +223,6 @@ class ABI {
         }
     }
 
-    private String readString(int address, int len) throws WasmException {
-        var data = readMemory(address, len);
-        return new String(data, StandardCharsets.UTF_8);
-    }
-
-    private void copyIntoInstance(String value, int retPtr, int retSize) throws WasmException {
-        copyIntoInstance(value.getBytes(), retPtr, retSize);
-    }
-
     private void copyIntoInstance(byte[] value, int retPtr, int retSize) throws WasmException {
         try {
             if (value.length != 0) {
@@ -402,7 +395,7 @@ class ABI {
     int proxyLog(int logLevel, int messageData, int messageSize) {
         try {
             var msg = memory.readBytes(messageData, messageSize);
-            handler.log(LogLevel.fromInt(logLevel), new String(msg));
+            handler.log(LogLevel.fromInt(logLevel), string(msg));
             return WasmResult.OK.getValue();
         } catch (WasmException e) {
             return e.result().getValue();
@@ -840,7 +833,7 @@ class ABI {
             }
 
             // Get key from memory
-            String key = readString(keyDataPtr, keySize);
+            String key = string(readMemory(keyDataPtr, keySize));
 
             // Get value from map
             String value = headerMap.get(key);
@@ -849,7 +842,7 @@ class ABI {
             }
 
             // Copy value into WebAssembly memory
-            copyIntoInstance(value, valueDataPtr, valueSize);
+            copyIntoInstance(bytes(value), valueDataPtr, valueSize);
             return WasmResult.OK.getValue();
 
         } catch (WasmRuntimeException e) {
@@ -898,10 +891,10 @@ class ABI {
             }
 
             // Get key from memory
-            String key = readString(keyDataPtr, keySize);
+            String key = string(readMemory(keyDataPtr, keySize));
 
             // Get value from memory
-            String value = readString(valueDataPtr, valueSize);
+            String value = string(readMemory(valueDataPtr, valueSize));
 
             // Replace value in map
             var copy = new ArrayProxyMap(headerMap);
@@ -936,7 +929,7 @@ class ABI {
             }
 
             // Get key from memory
-            String key = readString(keyDataPtr, keySize);
+            String key = string(readMemory(keyDataPtr, keySize));
             if (key.isEmpty()) {
                 return WasmResult.BAD_ARGUMENT.getValue();
             }
@@ -1075,11 +1068,11 @@ class ABI {
             }
 
             // Extract key
-            String key = readString((int) (addr + dataOffset), (int) keySize);
+            String key = string(readMemory((int) (addr + dataOffset), (int) keySize));
             dataOffset += keySize + 1; // Skip null terminator
 
             // Extract value
-            String value = readString((int) (addr + dataOffset), (int) valueSize);
+            String value = string(readMemory((int) (addr + dataOffset), (int) valueSize));
             dataOffset += valueSize + 1;
 
             // Add to result map
@@ -1620,7 +1613,18 @@ class ABI {
                 return WasmResult.NOT_FOUND.getValue();
             }
 
-            copyIntoInstance(value.data, returnValueData, returnValueSize);
+            try {
+                if (value.data.length != 0) {
+                    int addr = malloc(value.data.length);
+                    putMemory(addr, value.data);
+                    putUint32(returnValueData, addr);
+                } else {
+                    putUint32(returnValueData, 0);
+                }
+                putUint32(returnValueSize, value.data.length);
+            } catch (WasmException e) {
+                throw new WasmException(WasmResult.INVALID_MEMORY_ACCESS);
+            }
             putUint32(returnCas, value.cas);
             return WasmResult.OK.getValue();
 
@@ -1642,10 +1646,13 @@ class ABI {
             // Get queue name from memory
             String queueName = string(readMemory(queueNameDataPtr, queueNameSize));
 
-            var vmId = handler.getProperty("vm_id");
+            var vmId = handler.getProperty(List.of("vm_id"));
+            if (vmId == null) {
+                return WasmResult.INTERNAL_FAILURE.getValue();
+            }
 
             // Register shared queue using handler
-            int queueId = handler.registerSharedQueue(new QueueName(vmId, queueName));
+            int queueId = handler.registerSharedQueue(new QueueName(string(vmId), queueName));
             putUint32(returnQueueId, queueId);
             return WasmResult.OK.getValue();
 
@@ -1710,7 +1717,18 @@ class ABI {
                 return WasmResult.EMPTY.getValue();
             }
 
-            copyIntoInstance(value, returnValueData, returnValueSize);
+            try {
+                if (value.length != 0) {
+                    int addr = malloc(value.length);
+                    putMemory(addr, value);
+                    putUint32(returnValueData, addr);
+                } else {
+                    putUint32(returnValueData, 0);
+                }
+                putUint32(returnValueSize, value.length);
+            } catch (WasmException e) {
+                throw new WasmException(WasmResult.INVALID_MEMORY_ACCESS);
+            }
             return WasmResult.OK.getValue();
 
         } catch (WasmException e) {
@@ -1811,10 +1829,10 @@ class ABI {
                 return WasmResult.BAD_ARGUMENT.getValue();
             }
 
-            String key = new String(keyBytes);
+            var path = split(string(keyBytes), '\u0000');
 
             // Get property value using handler
-            String value = handler.getProperty(key);
+            byte[] value = handler.getProperty(path);
             if (value == null) {
                 return WasmResult.NOT_FOUND.getValue();
             }
@@ -1834,10 +1852,10 @@ class ABI {
     int proxySetProperty(int pathDataPtr, int pathSize, int valueDataPtr, int valueSize) {
         try {
             // Get key from memory
-            String path = string(readMemory(pathDataPtr, pathSize));
+            var path = split(string(readMemory(pathDataPtr, pathSize)), '\u0000');
 
             // Get value from memory
-            String value = string(readMemory(valueDataPtr, valueSize));
+            var value = readMemory(valueDataPtr, valueSize);
 
             // Set property value using handler
             WasmResult result = handler.setProperty(path, value);
