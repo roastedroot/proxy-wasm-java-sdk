@@ -21,6 +21,7 @@
 
   <modules>
     <module>proxy-wasm-java-host</module>
+    <module>proxy-wasm-jaxrs</module>
   </modules>
 
   <properties>
@@ -32,18 +33,24 @@
     <maven.compiler.failOnWarning>true</maven.compiler.failOnWarning>
     <maven.dependency.failOnWarning>true</maven.dependency.failOnWarning>
     <project.build.outputTimestamp>2023-01-01T00:00:00Z</project.build.outputTimestamp>
+    <skipITs>true</skipITs>
 
     <!-- build tool versions -->
     <checkstyle.version>10.21.4</checkstyle.version>
     <maven-checkstyle-plugin.version>3.6.0</maven-checkstyle-plugin.version>
     <spotless-maven-plugin.version>2.44.3</spotless-maven-plugin.version>
     <maven.compiler.version>3.14.0</maven.compiler.version>
+    <surefire-plugin.version>3.5.2</surefire-plugin.version>
 
     <!-- test time versions -->
     <junit.version>5.12.0</junit.version>
 
     <!-- runtime versions -->
     <chicory.version>1.1.0</chicory.version>
+    <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
+    <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
+    <quarkus.platform.version>3.19.3</quarkus.platform.version>
+
   </properties>
 
   <build>
@@ -188,6 +195,7 @@
           <artifactId>maven-compiler-plugin</artifactId>
           <version>${maven.compiler.version}</version>
           <configuration>
+            <parameters>true</parameters>
             <source>11</source>
             <target>11</target>
             <annotationProcessorPathsUseDepMgmt>true</annotationProcessorPathsUseDepMgmt>
