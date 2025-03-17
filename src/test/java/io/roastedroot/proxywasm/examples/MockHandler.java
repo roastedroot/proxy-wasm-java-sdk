@@ -461,4 +461,17 @@ public class MockHandler extends ChainedHandler {
     public Action getAction() {
         return action;
     }
+
+    final HashMap<List<String>, byte[]> properties = new HashMap<>();
+
+    @Override
+    public byte[] getProperty(List<String> path) throws WasmException {
+        return properties.get(path);
+    }
+
+    @Override
+    public WasmResult setProperty(List<String> path, byte[] value) {
+        properties.put(path, value);
+        return WasmResult.OK;
+    }
 }

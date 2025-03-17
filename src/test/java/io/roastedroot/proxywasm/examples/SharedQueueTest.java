@@ -1,5 +1,6 @@
 package io.roastedroot.proxywasm.examples;
 
+import static io.roastedroot.proxywasm.Helpers.bytes;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -15,6 +16,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -55,11 +57,11 @@ public class SharedQueueTest {
 
         // Create and configure the http_request_headers receiver instance
         var receiverHandler1 = new MockHandler(sharedData);
+        receiverHandler1.setProperty(List.of("vm_id"), bytes(receiverVmId));
         var receiverHost1 =
                 deferClose(
                         ProxyWasm.builder()
                                 .withPluginHandler(receiverHandler1)
-                                .withProperties(Map.of("vm_id", receiverVmId))
                                 .withPluginConfig("http_request_headers")
                                 .build(receiverModule));
 
@@ -74,11 +76,11 @@ public class SharedQueueTest {
 
         // Create and configure the http_response_headers receiver instance
         var receiverHandler2 = new MockHandler(sharedData);
+        receiverHandler2.setProperty(List.of("vm_id"), bytes(receiverVmId));
         var receiverHost2 =
                 deferClose(
                         ProxyWasm.builder()
                                 .withPluginHandler(receiverHandler2)
-                                .withProperties(Map.of("vm_id", receiverVmId))
                                 .withPluginConfig("http_response_headers")
                                 .build(receiverModule));
 
@@ -96,11 +98,11 @@ public class SharedQueueTest {
         // Create and configure the sender instance
         var senderHandler = new MockHandler(sharedData);
         var senderVmId = "sender";
+        senderHandler.setProperty(List.of("vm_id"), bytes(senderVmId));
         var senderHost =
                 deferClose(
                         ProxyWasm.builder()
                                 .withPluginHandler(senderHandler)
-                                .withProperties(Map.of("vm_id", senderVmId))
                                 .withPluginConfig("http")
                                 .build(senderModule));
         senderHandler.assertLogsContain(

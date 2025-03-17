@@ -26,7 +26,6 @@ public final class ProxyWasm implements Closeable {
     private final Handler pluginHandler;
     private final byte[] pluginConfig;
     private final byte[] vmConfig;
-    private final HashMap<String, String> properties;
     private final WasiPreview1 wasi;
 
     private final AtomicInteger nextContextID = new AtomicInteger(1);
@@ -42,7 +41,6 @@ public final class ProxyWasm implements Closeable {
     private ProxyWasm(Builder other) throws StartException {
         this.vmConfig = other.vmConfig;
         this.pluginConfig = other.pluginConfig;
-        this.properties = Objects.requireNonNullElse(other.properties, new HashMap<>());
         this.pluginHandler = Objects.requireNonNullElse(other.pluginHandler, new Handler() {});
         this.wasi = other.wasi;
         this.abi = other.abi;
@@ -89,19 +87,6 @@ public final class ProxyWasm implements Closeable {
             @Override
             public byte[] getPluginConfig() {
                 return pluginConfig;
-            }
-
-            @Override
-            public String getProperty(String key) throws WasmException {
-                if (properties.containsKey(key)) {
-                    return properties.get(key);
-                }
-
-                var handler = activeContext.handler();
-                if (handler != null) {
-                    return handler.getProperty(key);
-                }
-                return null;
             }
 
             @Override
@@ -188,24 +173,6 @@ public final class ProxyWasm implements Closeable {
         this.abi.proxyOnTick(pluginContext.id());
     }
 
-    public void setProperty(String[] path, String data) {
-        if (len(path) == 0) {
-            throw new IllegalArgumentException("path must not be empty");
-        }
-        if (len(data) == 0) {
-            throw new IllegalArgumentException("data must not be empty");
-        }
-
-        this.properties.put(String.join("\u0000", path), data);
-    }
-
-    public String getProperty(String[] path) {
-        if (len(path) == 0) {
-            throw new IllegalArgumentException("path must not be empty");
-        }
-        return this.properties.get(String.join("\u0000", path));
-    }
-
     @Override
     public void close() {
         this.pluginContext.close();
@@ -262,7 +229,6 @@ public final class ProxyWasm implements Closeable {
 
         private byte[] vmConfig = new byte[0];
         private byte[] pluginConfig = new byte[0];
-        private HashMap<String, String> properties;
         private Handler pluginHandler;
         private ImportMemory memory;
         private WasiOptions wasiOptions;
@@ -298,15 +264,6 @@ public final class ProxyWasm implements Closeable {
 
         public ProxyWasm.Builder withPluginConfig(String pluginConfig) {
             this.pluginConfig = pluginConfig.getBytes(StandardCharsets.UTF_8);
-            return this;
-        }
-
-        public ProxyWasm.Builder withProperties(Map<String, String> properties) {
-            if (properties != null) {
-                this.properties = new HashMap<>(properties);
-            } else {
-                this.properties = null;
-            }
             return this;
         }
 
