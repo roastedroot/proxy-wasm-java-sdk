@@ -342,8 +342,4 @@ public final class ProxyWasm implements Closeable {
             return WasiOptions.builder().inheritSystem().build();
         }
     }
-
-    public static void start(int abi_version_ignored) {
-        // ... existing code ...
-    }
 }
