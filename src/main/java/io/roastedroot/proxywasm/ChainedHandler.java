@@ -318,4 +318,49 @@ public abstract class ChainedHandler implements Handler {
     public WasmResult enqueueSharedQueue(int queueId, byte[] value) {
         return next().enqueueSharedQueue(queueId, value);
     }
+
+    @Override
+    public LogLevel getLogLevel() throws WasmException {
+        return next().getLogLevel();
+    }
+
+    @Override
+    public WasmResult setProperty(String path, String value) {
+        return next().setProperty(path, value);
+    }
+
+    @Override
+    public int grpcCall(
+            String upstreamName,
+            String serviceName,
+            String methodName,
+            ProxyMap initialMetadata,
+            byte[] message,
+            int timeout)
+            throws WasmException {
+        return next().grpcCall(
+                        upstreamName, serviceName, methodName, initialMetadata, message, timeout);
+    }
+
+    @Override
+    public int grpcStream(
+            String upstreamName, String serviceName, String methodName, ProxyMap initialMetadata)
+            throws WasmException {
+        return next().grpcStream(upstreamName, serviceName, methodName, initialMetadata);
+    }
+
+    @Override
+    public WasmResult grpcSend(int streamId, byte[] message, int endStream) {
+        return next().grpcSend(streamId, message, endStream);
+    }
+
+    @Override
+    public WasmResult grpcCancel(int callOrstreamId) {
+        return next().grpcCancel(callOrstreamId);
+    }
+
+    @Override
+    public WasmResult grpcClose(int callOrstreamId) {
+        return next().grpcClose(callOrstreamId);
+    }
 }
