@@ -2,7 +2,9 @@ package io.roastedroot.proxywasm;
 
 import com.dylibso.chicory.runtime.HostFunction;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 public final class Helpers {
@@ -28,6 +30,20 @@ public final class Helpers {
 
     public static String string(byte[] value) {
         return new String(value, StandardCharsets.UTF_8);
+    }
+
+    public static List<String> split(String str, char separator) {
+        ArrayList<String> parts = new ArrayList<>();
+        int start = 0;
+        int len = str.length();
+        for (int i = 0; i < len; i++) {
+            if (str.charAt(i) == separator) {
+                parts.add(str.substring(start, i));
+                start = i + 1;
+            }
+        }
+        parts.add(str.substring(start)); // Add the last part
+        return List.copyOf(parts);
     }
 
     public static int len(byte[] value) {

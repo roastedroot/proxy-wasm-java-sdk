@@ -1,5 +1,7 @@
 package io.roastedroot.proxywasm;
 
+import java.util.List;
+
 /**
  * A Handler implementation that chains to another handler if it can't handle the request.
  */
@@ -103,8 +105,13 @@ public abstract class ChainedHandler implements Handler {
     }
 
     @Override
-    public String getProperty(String key) throws WasmException {
+    public byte[] getProperty(List<String> key) throws WasmException {
         return next().getProperty(key);
+    }
+
+    @Override
+    public WasmResult setProperty(List<String> path, byte[] value) {
+        return next().setProperty(path, value);
     }
 
     @Override
@@ -322,11 +329,6 @@ public abstract class ChainedHandler implements Handler {
     @Override
     public LogLevel getLogLevel() throws WasmException {
         return next().getLogLevel();
-    }
-
-    @Override
-    public WasmResult setProperty(String path, String value) {
-        return next().setProperty(path, value);
     }
 
     @Override

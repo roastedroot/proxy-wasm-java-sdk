@@ -1,5 +1,6 @@
 package io.roastedroot.proxywasm.examples;
 
+import static io.roastedroot.proxywasm.Helpers.bytes;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.dylibso.chicory.wasm.Parser;
@@ -8,7 +9,6 @@ import io.roastedroot.proxywasm.ProxyWasm;
 import io.roastedroot.proxywasm.StartException;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -22,11 +22,11 @@ public class VmPluginConfigurationTest {
     @Test
     public void test() throws StartException {
         var handler = new MockHandler();
+        handler.setProperty(List.of("plugin_name"), bytes("vm_plugin_configuration"));
         ProxyWasm.Builder builder =
                 ProxyWasm.builder()
                         .withPluginConfig("plugin_config")
                         .withVmConfig("vm_config")
-                        .withProperties(Map.of("plugin_name", "vm_plugin_configuration"))
                         .withPluginHandler(handler);
         try (var ignored = builder.build(module)) {
 
