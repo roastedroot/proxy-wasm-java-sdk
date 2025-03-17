@@ -2,7 +2,7 @@ package io.roastedroot.proxywasm;
 
 import static io.roastedroot.proxywasm.Helpers.len;
 
-import com.dylibso.chicory.runtime.ByteBufferMemory;
+import com.dylibso.chicory.runtime.ByteArrayMemory;
 import com.dylibso.chicory.runtime.HostFunction;
 import com.dylibso.chicory.runtime.ImportMemory;
 import com.dylibso.chicory.runtime.ImportValues;
@@ -333,6 +333,10 @@ public final class ProxyWasm implements Closeable {
         }
 
         public ProxyWasm build(WasmModule module) throws StartException {
+            return this.build(Instance.builder(module));
+        }
+
+        public ProxyWasm build(Instance.Builder instanceBuilder) throws StartException {
             var imports = ImportValues.builder();
 
             imports.addMemory(Objects.requireNonNullElseGet(memory, this::defaultImportMemory));
@@ -357,7 +361,7 @@ public final class ProxyWasm implements Closeable {
             imports.addFunction(Helpers.withModuleName(wasi.toHostFunctions(), "wasi_unstable"));
 
             var instance =
-                    Instance.builder(module)
+                    instanceBuilder
                             .withStart(false) // we will start it manually
                             .withImportValues(imports.build())
                             .build();
@@ -369,7 +373,7 @@ public final class ProxyWasm implements Closeable {
             return new ImportMemory(
                     "env",
                     "memory",
-                    new ByteBufferMemory(new MemoryLimits(2, MemoryLimits.MAX_PAGES)));
+                    new ByteArrayMemory(new MemoryLimits(2, MemoryLimits.MAX_PAGES)));
         }
 
         WasiOptions defaultWasiOptions() {

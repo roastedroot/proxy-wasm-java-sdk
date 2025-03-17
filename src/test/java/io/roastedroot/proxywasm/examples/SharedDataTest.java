@@ -3,6 +3,7 @@ package io.roastedroot.proxywasm.examples;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.dylibso.chicory.wasm.Parser;
+import com.dylibso.chicory.wasm.WasmModule;
 import io.roastedroot.proxywasm.Action;
 import io.roastedroot.proxywasm.ProxyWasm;
 import io.roastedroot.proxywasm.StartException;
@@ -13,13 +14,13 @@ import org.junit.jupiter.api.Test;
  * Java port of https://github.com/proxy-wasm/proxy-wasm-go-sdk/blob/master/examples/shared_data/main_test.go
  */
 public class SharedDataTest {
+    private static final WasmModule module =
+            Parser.parse(Path.of("./src/test/go-examples/shared_data/main.wasm"));
 
     @Test
     public void testSetEffectiveContext() throws StartException {
         var sharedData = new MockSharedHandler();
         var handler = new MockHandler(sharedData);
-        // Load the WASM module
-        var module = Parser.parse(Path.of("./src/test/go-examples/shared_data/main.wasm"));
 
         // Create and configure the ProxyWasm instance
         try (var host = ProxyWasm.builder().withPluginHandler(handler).build(module)) {

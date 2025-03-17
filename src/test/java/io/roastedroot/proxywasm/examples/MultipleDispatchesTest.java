@@ -3,6 +3,7 @@ package io.roastedroot.proxywasm.examples;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.dylibso.chicory.wasm.Parser;
+import com.dylibso.chicory.wasm.WasmModule;
 import io.roastedroot.proxywasm.Action;
 import io.roastedroot.proxywasm.ProxyWasm;
 import io.roastedroot.proxywasm.StartException;
@@ -15,13 +16,12 @@ import org.junit.jupiter.api.Test;
  * Java port of https://github.com/proxy-wasm/proxy-wasm-go-sdk/blob/master/examples/multiple_dispatches/main_test.go
  */
 public class MultipleDispatchesTest {
+    private static final WasmModule module =
+            Parser.parse(Path.of("./src/test/go-examples/multiple_dispatches/main.wasm"));
     private final MockHandler handler = new MockHandler();
 
     @Test
     public void testHttpContextOnHttpRequestHeaders() throws StartException {
-        // Load the WASM module
-        var module = Parser.parse(Path.of("./src/test/go-examples/multiple_dispatches/main.wasm"));
-
         // Create and configure the ProxyWasm instance
         try (var host = ProxyWasm.builder().withPluginHandler(handler).build(module)) {
 

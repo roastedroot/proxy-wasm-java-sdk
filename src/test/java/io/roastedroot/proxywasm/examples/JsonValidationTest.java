@@ -4,6 +4,7 @@ import static io.roastedroot.proxywasm.Helpers.bytes;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.dylibso.chicory.wasm.Parser;
+import com.dylibso.chicory.wasm.WasmModule;
 import io.roastedroot.proxywasm.Action;
 import io.roastedroot.proxywasm.HttpContext;
 import io.roastedroot.proxywasm.ProxyWasm;
@@ -97,6 +98,8 @@ import org.junit.jupiter.api.Test;
  */
 public class JsonValidationTest {
     private final MockHandler handler = new MockHandler();
+    private static final WasmModule module =
+            Parser.parse(Path.of("./src/test/go-examples/json_validation/main.wasm"));
 
     @Nested
     class OnHttpRequestHeaders {
@@ -105,7 +108,6 @@ public class JsonValidationTest {
 
         @BeforeEach
         void setUp() throws StartException {
-            var module = Parser.parse(Path.of("./src/test/go-examples/json_validation/main.wasm"));
             this.host = ProxyWasm.builder().build(module);
             this.context = host.createHttpContext(handler);
         }
@@ -145,7 +147,6 @@ public class JsonValidationTest {
         @BeforeEach
         void setUp() throws StartException {
             var config = "{\"requiredKeys\": [\"my_key\"]}";
-            var module = Parser.parse(Path.of("./src/test/go-examples/json_validation/main.wasm"));
             this.host = ProxyWasm.builder().withPluginConfig(config).build(module);
             this.context = host.createHttpContext(handler);
         }
