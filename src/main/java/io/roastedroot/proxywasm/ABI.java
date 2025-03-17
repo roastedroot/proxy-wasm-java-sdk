@@ -1107,10 +1107,24 @@ class ABI {
         return result.getValue();
     }
 
-    // TODO: implement
-    // https://github.com/proxy-wasm/spec/tree/main/abi-versions/v0.2.1#proxy_close_stream
-    // TODO: implement
-    // https://github.com/proxy-wasm/spec/tree/main/abi-versions/v0.2.1#proxy_get_status
+    /**
+     * implements: https://github.com/proxy-wasm/spec/tree/main/abi-versions/v0.2.1#proxy_close_stream
+     */
+    @WasmExport
+    int proxyCloseStream(int proxyStreamType) {
+        // TODO: implement
+        return WasmResult.UNIMPLEMENTED.getValue();
+    }
+
+    /**
+     * implements: https://github.com/proxy-wasm/spec/tree/main/abi-versions/v0.2.1#proxy_get_status
+     */
+    @WasmExport
+    int proxyGetStatus(
+            int returnStatusCode, int returnStatusMessageData, int returnStatusMessageSize) {
+        // TODO: implement
+        return WasmResult.UNIMPLEMENTED.getValue();
+    }
 
     // //////////////////////////////////////////////////////////////////////
     // TCP streams
@@ -1421,16 +1435,109 @@ class ABI {
     // gRPC calls
     // //////////////////////////////////////////////////////////////////////
 
-    // TODO: implement
-    // https://github.com/proxy-wasm/spec/tree/main/abi-versions/vNEXT#proxy_grpc_call
-    // TODO: implement
-    // https://github.com/proxy-wasm/spec/tree/main/abi-versions/vNEXT#proxy_grpc_stream
-    // TODO: implement
-    // https://github.com/proxy-wasm/spec/tree/main/abi-versions/vNEXT#proxy_grpc_send
-    // TODO: implement
-    // https://github.com/proxy-wasm/spec/tree/main/abi-versions/vNEXT#proxy_grpc_cancel
-    // TODO: implement
-    // https://github.com/proxy-wasm/spec/tree/main/abi-versions/vNEXT#proxy_grpc_close
+    /**
+     * implements https://github.com/proxy-wasm/spec/tree/main/abi-versions/vNEXT#proxy_grpc_call
+     */
+    @WasmExport
+    int proxyGrpcCall(
+            int upstreamNameData,
+            int upstreamNameSize,
+            int serviceNameData,
+            int serviceNameSize,
+            int methodNameData,
+            int methodNameSize,
+            int serialized_initial_metadataData,
+            int serialized_initial_metadataSize,
+            int messageData,
+            int messageSize,
+            int timeout,
+            int returnCalloutID) {
+
+        try {
+            var upstreamName = string(readMemory(upstreamNameData, upstreamNameSize));
+            var serviceName = string(readMemory(serviceNameData, serviceNameSize));
+            var methodName = string(readMemory(methodNameData, methodNameSize));
+            var initialMetadata =
+                    decodeMap(serialized_initial_metadataData, serialized_initial_metadataSize);
+            var message = readMemory(messageData, messageSize);
+
+            int callId =
+                    handler.grpcCall(
+                            upstreamName,
+                            serviceName,
+                            methodName,
+                            initialMetadata,
+                            message,
+                            timeout);
+            putUint32(returnCalloutID, callId);
+            return callId;
+        } catch (WasmException e) {
+            return e.result().getValue();
+        }
+    }
+
+    /**
+     * implements https://github.com/proxy-wasm/spec/tree/main/abi-versions/vNEXT#proxy_grpc_stream
+     */
+    @WasmExport
+    int proxyGrpcStream(
+            int upstreamNameData,
+            int upstreamNameSize,
+            int serviceNameData,
+            int serviceNameSize,
+            int methodNameData,
+            int methodNameSize,
+            int serialized_initial_metadataData,
+            int serialized_initial_metadataSize,
+            int returnStreamId) {
+
+        try {
+            var upstreamName = string(readMemory(upstreamNameData, upstreamNameSize));
+            var serviceName = string(readMemory(serviceNameData, serviceNameSize));
+            var methodName = string(readMemory(methodNameData, methodNameSize));
+            var initialMetadata =
+                    decodeMap(serialized_initial_metadataData, serialized_initial_metadataSize);
+
+            int streamId =
+                    handler.grpcStream(upstreamName, serviceName, methodName, initialMetadata);
+            putUint32(returnStreamId, streamId);
+            return streamId;
+        } catch (WasmException e) {
+            return e.result().getValue();
+        }
+    }
+
+    /**
+     * https://github.com/proxy-wasm/spec/tree/main/abi-versions/vNEXT#proxy_grpc_send
+     */
+    @WasmExport
+    int proxyGrpcSend(int streamId, int messageData, int messageSize, int endStream) {
+        try {
+            byte[] message = readMemory(messageData, messageSize);
+            WasmResult result = handler.grpcSend(streamId, message, endStream);
+            return result.getValue();
+        } catch (WasmException e) {
+            return e.result().getValue();
+        }
+    }
+
+    /**
+     * https://github.com/proxy-wasm/spec/tree/main/abi-versions/vNEXT#proxy_grpc_cancel
+     */
+    @WasmExport
+    int proxyGrpcCancel(int callOrstreamId) {
+        WasmResult result = handler.grpcCancel(callOrstreamId);
+        return result.getValue();
+    }
+
+    /**
+     * https://github.com/proxy-wasm/spec/tree/main/abi-versions/vNEXT#proxy_grpc_close
+     */
+    @WasmExport
+    int proxyGrpcClose(int callOrstreamId) {
+        WasmResult result = handler.grpcClose(callOrstreamId);
+        return result.getValue();
+    }
 
     /**
      * implements https://github.com/proxy-wasm/spec/tree/main/abi-versions/vNEXT#proxy_on_grpc_receive_initial_metadata
@@ -1720,8 +1827,26 @@ class ABI {
         }
     }
 
-    // TODO: implement
-    // https://github.com/proxy-wasm/spec/tree/main/abi-versions/vNEXT#proxy_set_property
+    /**
+     * https://github.com/proxy-wasm/spec/tree/main/abi-versions/vNEXT#proxy_set_property
+     */
+    @WasmExport
+    int proxySetProperty(int pathDataPtr, int pathSize, int valueDataPtr, int valueSize) {
+        try {
+            // Get key from memory
+            String path = string(readMemory(pathDataPtr, pathSize));
+
+            // Get value from memory
+            String value = string(readMemory(valueDataPtr, valueSize));
+
+            // Set property value using handler
+            WasmResult result = handler.setProperty(path, value);
+            return result.getValue();
+
+        } catch (WasmException e) {
+            return e.result().getValue();
+        }
+    }
 
     // //////////////////////////////////////////////////////////////////////
     // Foreign function interface (FFI)
