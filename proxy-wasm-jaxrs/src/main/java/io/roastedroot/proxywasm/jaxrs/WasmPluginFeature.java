@@ -1,5 +1,6 @@
 package io.roastedroot.proxywasm.jaxrs;
 
+import io.roastedroot.proxywasm.StartException;
 import jakarta.enterprise.inject.Any;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
@@ -12,15 +13,16 @@ import java.util.HashMap;
 @Provider
 public class WasmPluginFeature implements DynamicFeature {
 
-    private HashMap<String, WasmPlugin> plugins = new HashMap<>();
+    private HashMap<String, WasmPluginFactory> plugins = new HashMap<>();
 
     @Inject
-    public WasmPluginFeature(@Any Instance<WasmPlugin> plugins) {
-        for (WasmPlugin plugin : plugins) {
+    public WasmPluginFeature(@Any Instance<WasmPluginFactory> factories) throws StartException {
+        for (var factory : factories) {
+            var plugin = factory.create();
             if (this.plugins.containsKey(plugin.name())) {
                 throw new IllegalArgumentException("Duplicate wasm plugin name: " + plugin.name());
             }
-            this.plugins.put(plugin.name(), plugin);
+            this.plugins.put(plugin.name(), factory);
         }
     }
 
@@ -37,9 +39,9 @@ public class WasmPluginFeature implements DynamicFeature {
                         resourceInfo.getResourceClass().getAnnotation(NamedWasmPlugin.class);
             }
             if (pluignNameAnnotation != null) {
-                WasmPlugin plugin = plugins.get(pluignNameAnnotation.value());
-                if (plugin != null) {
-                    context.register(new ProxyWasmFilter(plugin));
+                WasmPluginFactory factory = plugins.get(pluignNameAnnotation.value());
+                if (factory != null) {
+                    context.register(new ProxyWasmFilter(factory));
                 }
             }
         }
