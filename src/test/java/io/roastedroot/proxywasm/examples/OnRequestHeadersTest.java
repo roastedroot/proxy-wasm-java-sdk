@@ -3,6 +3,7 @@ package io.roastedroot.proxywasm.examples;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.dylibso.chicory.wasm.Parser;
+import com.dylibso.chicory.wasm.WasmModule;
 import io.roastedroot.proxywasm.ProxyWasm;
 import io.roastedroot.proxywasm.StartException;
 import java.nio.file.Path;
@@ -14,12 +15,12 @@ import org.junit.jupiter.api.Test;
  * Java port of https://github.com/mosn/proxy-wasm-go-host/blob/25a9e133320ed52aee6ef87f6dcbed77f526550e/example/main_test.go
  */
 public class OnRequestHeadersTest {
+    private static final WasmModule module =
+            Parser.parse(Path.of("./src/test/cc-examples/on_request_headers/http.wasm"));
 
     @Test
     public void test() throws StartException {
-
         // This module uses the 0_1_0 ABI
-        var module = Parser.parse(Path.of("./src/test/cc-examples/on_request_headers/http.wasm"));
         var handler = new MockHandler();
         ProxyWasm.Builder builder =
                 ProxyWasm.builder()

@@ -4,6 +4,7 @@ import static io.roastedroot.proxywasm.Helpers.bytes;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.dylibso.chicory.wasm.Parser;
+import com.dylibso.chicory.wasm.WasmModule;
 import io.roastedroot.proxywasm.Action;
 import io.roastedroot.proxywasm.MetricType;
 import io.roastedroot.proxywasm.NetworkContext;
@@ -19,13 +20,14 @@ import org.junit.jupiter.api.Test;
  * Java port of https://github.com/proxy-wasm/proxy-wasm-go-sdk/blob/ab4161dcf9246a828008b539a82a1556cf0f2e24/examples/network/main_test.go
  */
 public class NetworkTest {
+    private static final WasmModule module =
+            Parser.parse(Path.of("./src/test/go-examples/network/main.wasm"));
     private final MockHandler handler = new MockHandler();
     private ProxyWasm host;
     private NetworkContext context;
 
     @BeforeEach
     void setUp() throws StartException {
-        var module = Parser.parse(Path.of("./src/test/go-examples/network/main.wasm"));
         this.host = ProxyWasm.builder().withPluginHandler(handler).build(module);
         this.context = host.createNetworkContext(handler);
     }

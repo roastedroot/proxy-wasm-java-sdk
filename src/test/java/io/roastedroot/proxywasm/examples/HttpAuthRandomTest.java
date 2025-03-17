@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 import com.dylibso.chicory.wasm.Parser;
+import com.dylibso.chicory.wasm.WasmModule;
 import io.roastedroot.proxywasm.Action;
 import io.roastedroot.proxywasm.ProxyWasm;
 import io.roastedroot.proxywasm.StartException;
@@ -21,6 +22,8 @@ import org.junit.jupiter.api.Test;
  * Java port of https://github.com/proxy-wasm/proxy-wasm-go-sdk/blob/ab4161dcf9246a828008b539a82a1556cf0f2e24/examples/http_auth_random/main_test.go
  */
 public class HttpAuthRandomTest {
+    private static WasmModule module =
+            Parser.parse(Path.of("./src/test/go-examples/http_auth_random/main.wasm"));
 
     private static String clusterName = "httpbin";
 
@@ -31,7 +34,6 @@ public class HttpAuthRandomTest {
     void setUp() throws StartException {
         this.handler = new MockHandler();
         ProxyWasm.Builder builder = ProxyWasm.builder();
-        var module = Parser.parse(Path.of("./src/test/go-examples/http_auth_random/main.wasm"));
         this.host = builder.build(module);
     }
 

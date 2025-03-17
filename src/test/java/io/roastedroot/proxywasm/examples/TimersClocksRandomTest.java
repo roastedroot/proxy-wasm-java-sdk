@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.dylibso.chicory.wasm.Parser;
+import com.dylibso.chicory.wasm.WasmModule;
 import io.roastedroot.proxywasm.ProxyWasm;
 import io.roastedroot.proxywasm.StartException;
 import io.roastedroot.proxywasm.WasmResult;
@@ -16,6 +17,8 @@ import org.junit.jupiter.api.Test;
  * Java port of https://github.com/proxy-wasm/proxy-wasm-go-sdk/blob/ab4161dcf9246a828008b539a82a1556cf0f2e24/examples/helloworld/main_test.go
  */
 public class TimersClocksRandomTest {
+    private static final WasmModule module =
+            Parser.parse(Path.of("./src/test/go-examples/helloworld/main.wasm"));
 
     @Test
     public void test() throws StartException {
@@ -33,9 +36,7 @@ public class TimersClocksRandomTest {
 
         ProxyWasm.Builder builder = ProxyWasm.builder().withPluginHandler(handler);
 
-        var module = Parser.parse(Path.of("./src/test/go-examples/helloworld/main.wasm"));
         try (var proxyWasm = builder.build(module)) {
-
             var loggedMessages = handler.loggedMessages();
             assertEquals(List.of("OnPluginStart from Go!"), loggedMessages);
             loggedMessages.clear();
