@@ -15,12 +15,12 @@ public class App {
                     Path.of("../proxy-wasm-java-host/src/test/go-examples/http_headers/main.wasm"));
 
     @Produces
-    public WasmPlugin createFoo() throws StartException {
-        return WasmPlugin.builder().withName("foo").build(httpHeadersModule);
+    public WasmPluginFactory createFoo() throws StartException {
+        return () -> WasmPlugin.builder().withName("foo").build(httpHeadersModule);
     }
 
     @Produces
-    public WasmPlugin createBar() throws StartException {
-        return WasmPlugin.builder().withName("bar").build(httpHeadersModule);
+    public WasmPluginFactory createBar() throws StartException {
+        return () -> WasmPlugin.builder().withName("bar").build(httpHeadersModule);
     }
 }
