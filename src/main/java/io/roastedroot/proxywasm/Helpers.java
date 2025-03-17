@@ -37,6 +37,13 @@ public final class Helpers {
         return value.length;
     }
 
+    public static int len(ProxyMap value) {
+        if (value == null) {
+            return 0;
+        }
+        return value.size();
+    }
+
     public static <T> int len(String value) {
         if (value == null) {
             return 0;

@@ -5,10 +5,10 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import com.dylibso.chicory.wasm.Parser;
 import io.roastedroot.proxywasm.Action;
+import io.roastedroot.proxywasm.ProxyMap;
 import io.roastedroot.proxywasm.ProxyWasm;
 import io.roastedroot.proxywasm.StartException;
 import java.nio.file.Path;
-import java.util.Map;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -28,7 +28,7 @@ public class HttpHeadersTest {
             try (var host = proxyWasm.createHttpContext(handler)) {
                 id = host.id();
                 handler.setHttpRequestHeaders(
-                        Map.of(
+                        ProxyMap.of(
                                 "key1", "value1",
                                 "key2", "value2"));
                 var action = host.callOnRequestHeaders(false);
@@ -60,7 +60,7 @@ public class HttpHeadersTest {
             try (var host = proxyWasm.createHttpContext(handler)) {
                 id = host.id();
                 handler.setHttpResponseHeaders(
-                        Map.of(
+                        ProxyMap.of(
                                 "key1", "value1",
                                 "key2", "value2"));
                 var action = host.callOnResponseHeaders(false);
@@ -69,11 +69,11 @@ public class HttpHeadersTest {
 
             // Check headers
             assertEquals(
-                    Map.of(
+                    ProxyMap.of(
                             "key1", "value1",
                             "key2", "value2",
-                            "x-wasm-header", "x-value",
-                            "x-proxy-wasm-go-sdk-example", "http_headers"),
+                            "x-proxy-wasm-go-sdk-example", "http_headers",
+                            "x-wasm-header", "x-value"),
                     handler.getHttpResponseHeaders());
 
             // Check logs

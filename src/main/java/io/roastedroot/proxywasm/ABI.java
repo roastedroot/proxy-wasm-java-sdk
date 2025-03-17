@@ -12,7 +12,6 @@ import com.dylibso.chicory.runtime.WasmRuntimeException;
 import com.dylibso.chicory.wasm.InvalidException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
 import java.util.Map;
 
 @HostModule("env")
@@ -675,19 +674,18 @@ class ABI {
         try {
 
             // Get the header map based on the map type
-            Map<String, String> header = getMap(mapType);
+            ProxyMap header = getMap(mapType);
             if (header == null) {
                 return WasmResult.BAD_ARGUMENT.getValue();
             }
 
             // to clone the headers so that they don't change on while we process them in the loop
-            final Map<String, String> cloneMap = new HashMap<>();
+            var cloneMap = new ArrayProxyMap(header);
             int totalBytesLen = U32_LEN; // Start with space for the count
 
-            for (Map.Entry<String, String> entry : header.entrySet()) {
+            for (Map.Entry<String, String> entry : cloneMap.entries()) {
                 String key = entry.getKey();
                 String value = entry.getValue();
-                cloneMap.put(key, value);
                 totalBytesLen += U32_LEN + U32_LEN; // keyLen + valueLen
                 totalBytesLen += key.length() + 1 + value.length() + 1; // key + \0 + value + \0
             }
@@ -717,19 +715,18 @@ class ABI {
         try {
 
             // Get the header map based on the map type
-            Map<String, String> header = getMap(mapType);
+            ProxyMap header = getMap(mapType);
             if (header == null) {
                 return WasmResult.NOT_FOUND.getValue();
             }
 
             // to clone the headers so that they don't change on while we process them in the loop
-            final Map<String, String> cloneMap = new HashMap<>();
+            var cloneMap = new ArrayProxyMap(header);
             int totalBytesLen = U32_LEN; // Start with space for the count
 
-            for (Map.Entry<String, String> entry : header.entrySet()) {
+            for (Map.Entry<String, String> entry : cloneMap.entries()) {
                 String key = entry.getKey();
                 String value = entry.getValue();
-                cloneMap.put(key, value);
                 totalBytesLen += U32_LEN + U32_LEN; // keyLen + valueLen
                 totalBytesLen += key.length() + 1 + value.length() + 1; // key + \0 + value + \0
             }
@@ -745,7 +742,7 @@ class ABI {
             int dataPtr = lenPtr + ((U32_LEN + U32_LEN) * cloneMap.size());
 
             // Write each key-value pair to memory
-            for (Map.Entry<String, String> entry : cloneMap.entrySet()) {
+            for (Map.Entry<String, String> entry : cloneMap.entries()) {
                 String key = entry.getKey();
                 String value = entry.getValue();
 
@@ -802,14 +799,14 @@ class ABI {
 
         try {
             // Get the header map based on the map type
-            Map<String, String> headerMap = getMap(mapType);
+            ProxyMap headerMap = getMap(mapType);
             if (headerMap == null) {
                 return WasmResult.BAD_ARGUMENT.getValue();
             }
 
             // Decode the map content and set each key-value pair
-            Map<String, String> newMap = decodeMap(ptr, size);
-            for (Map.Entry<String, String> entry : newMap.entrySet()) {
+            ProxyMap newMap = decodeMap(ptr, size);
+            for (Map.Entry<String, String> entry : newMap.entries()) {
                 headerMap.put(entry.getKey(), entry.getValue());
             }
 
@@ -837,7 +834,7 @@ class ABI {
             int mapType, int keyDataPtr, int keySize, int valueDataPtr, int valueSize) {
         try {
             // Get the header map based on the map type
-            Map<String, String> headerMap = getMap(mapType);
+            ProxyMap headerMap = getMap(mapType);
             if (headerMap == null) {
                 return WasmResult.BAD_ARGUMENT.getValue();
             }
@@ -895,7 +892,7 @@ class ABI {
             int mapType, int keyDataPtr, int keySize, int valueDataPtr, int valueSize) {
         try {
             // Get the header map based on the map type
-            Map<String, String> headerMap = getMap(mapType);
+            ProxyMap headerMap = getMap(mapType);
             if (headerMap == null) {
                 return WasmResult.BAD_ARGUMENT.getValue();
             }
@@ -907,7 +904,7 @@ class ABI {
             String value = readString(valueDataPtr, valueSize);
 
             // Replace value in map
-            var copy = new HashMap<>(headerMap);
+            var copy = new ArrayProxyMap(headerMap);
             copy.put(key, value);
             setMap(mapType, copy);
 
@@ -933,7 +930,7 @@ class ABI {
     int proxyRemoveHeaderMapValue(int mapType, int keyDataPtr, int keySize) {
         try {
             // Get the header map based on the map type
-            Map<String, String> headerMap = getMap(mapType);
+            ProxyMap headerMap = getMap(mapType);
             if (headerMap == null) {
                 return WasmResult.NOT_FOUND.getValue();
             }
@@ -945,7 +942,7 @@ class ABI {
             }
 
             // Remove key from map
-            var copy = new HashMap<>(headerMap);
+            var copy = new ArrayProxyMap(headerMap);
             copy.remove(key);
             setMap(mapType, copy);
 
@@ -964,7 +961,7 @@ class ABI {
      * @param mapType The type of map to get
      * @return The header map
      */
-    private Map<String, String> getMap(int mapType) {
+    private ProxyMap getMap(int mapType) {
 
         var knownType = MapType.fromInt(mapType);
         if (knownType == null) {
@@ -999,7 +996,7 @@ class ABI {
      * @param map     The header map to set
      * @return WasmResult indicating success or failure
      */
-    private WasmResult setMap(int mapType, Map<String, String> map) {
+    private WasmResult setMap(int mapType, ProxyMap map) {
         var knownType = MapType.fromInt(mapType);
         if (knownType == null) {
             return handler.setCustomHeaders(mapType, map);
@@ -1043,9 +1040,9 @@ class ABI {
      * @return The decoded map containing string keys and values
      * @throws WasmException if there is an error accessing memory
      */
-    private HashMap<String, String> decodeMap(int addr, int mem_size) throws WasmException {
+    private ProxyMap decodeMap(int addr, int mem_size) throws WasmException {
         if (mem_size < U32_LEN) {
-            return new HashMap<>();
+            return new ArrayProxyMap();
         }
 
         // Read header size (number of entries)
@@ -1055,11 +1052,11 @@ class ABI {
         // mapSize + (key1_size + value1_size) * mapSize
         long dataOffset = U32_LEN + (U32_LEN + U32_LEN) * mapSize;
         if (dataOffset >= mem_size) {
-            return new HashMap<>();
+            return new ArrayProxyMap();
         }
 
         // Create result map with initial capacity
-        var result = new HashMap<String, String>((int) mapSize);
+        var result = new ArrayProxyMap((int) mapSize);
 
         // Process each entry
         for (int i = 0; i < mapSize; i++) {
@@ -1086,7 +1083,7 @@ class ABI {
             dataOffset += valueSize + 1;
 
             // Add to result map
-            result.put(key, value);
+            result.add(key, value);
         }
 
         return result;
@@ -1282,8 +1279,7 @@ class ABI {
             }
 
             // Get and decode additional headers from memory
-            HashMap<String, String> additionalHeaders =
-                    decodeMap(additionalHeadersMapData, additionalHeadersSize);
+            ProxyMap additionalHeaders = decodeMap(additionalHeadersMapData, additionalHeadersSize);
 
             // Send the response through the handler
             WasmResult result =

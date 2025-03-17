@@ -34,8 +34,8 @@ public final class ProxyWasm implements Closeable {
     private Context activeContext;
 
     private HashMap<Integer, Context> contexts = new HashMap<>();
-    private Map<String, String> httpCallResponseHeaders;
-    private Map<String, String> httpCallResponseTrailers;
+    private ProxyMap httpCallResponseHeaders;
+    private ProxyMap httpCallResponseTrailers;
     private byte[] httpCallResponseBody;
     private HashMap<String, ForeignFunction> foreignFunctions = new HashMap<>();
 
@@ -120,12 +120,12 @@ public final class ProxyWasm implements Closeable {
             }
 
             @Override
-            public Map<String, String> getHttpCallResponseHeaders() {
+            public ProxyMap getHttpCallResponseHeaders() {
                 return httpCallResponseHeaders;
             }
 
             @Override
-            public Map<String, String> getHttpCallResponseTrailers() {
+            public ProxyMap getHttpCallResponseTrailers() {
                 return httpCallResponseTrailers;
             }
 
@@ -220,6 +220,12 @@ public final class ProxyWasm implements Closeable {
 
     public void sendHttpCallResponse(
             int calloutID, Map<String, String> headers, Map<String, String> trailers, byte[] body) {
+        this.sendHttpCallResponse(
+                calloutID, ProxyMap.copyOf(headers), ProxyMap.copyOf(trailers), body);
+    }
+
+    public void sendHttpCallResponse(
+            int calloutID, ProxyMap headers, ProxyMap trailers, byte[] body) {
 
         this.httpCallResponseHeaders = headers;
         this.httpCallResponseTrailers = trailers;

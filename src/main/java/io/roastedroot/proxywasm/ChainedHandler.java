@@ -1,8 +1,5 @@
 package io.roastedroot.proxywasm;
 
-import java.util.HashMap;
-import java.util.Map;
-
 /**
  * A Handler implementation that chains to another handler if it can't handle the request.
  */
@@ -16,92 +13,92 @@ public abstract class ChainedHandler implements Handler {
     }
 
     @Override
-    public Map<String, String> getHttpRequestHeaders() {
+    public ProxyMap getHttpRequestHeaders() {
         return next().getHttpRequestHeaders();
     }
 
     @Override
-    public Map<String, String> getHttpRequestTrailers() {
+    public ProxyMap getHttpRequestTrailers() {
         return next().getHttpRequestTrailers();
     }
 
     @Override
-    public Map<String, String> getHttpResponseHeaders() {
+    public ProxyMap getHttpResponseHeaders() {
         return next().getHttpResponseHeaders();
     }
 
     @Override
-    public Map<String, String> getHttpResponseTrailers() {
+    public ProxyMap getHttpResponseTrailers() {
         return next().getHttpResponseTrailers();
     }
 
     @Override
-    public Map<String, String> getHttpCallResponseHeaders() {
+    public ProxyMap getHttpCallResponseHeaders() {
         return next().getHttpCallResponseHeaders();
     }
 
     @Override
-    public Map<String, String> getHttpCallResponseTrailers() {
+    public ProxyMap getHttpCallResponseTrailers() {
         return next().getHttpCallResponseTrailers();
     }
 
     @Override
-    public Map<String, String> getGrpcReceiveInitialMetaData() {
+    public ProxyMap getGrpcReceiveInitialMetaData() {
         return next().getGrpcReceiveInitialMetaData();
     }
 
     @Override
-    public Map<String, String> getGrpcReceiveTrailerMetaData() {
+    public ProxyMap getGrpcReceiveTrailerMetaData() {
         return next().getGrpcReceiveTrailerMetaData();
     }
 
     @Override
-    public Map<String, String> getCustomHeaders(int mapType) {
+    public ProxyMap getCustomHeaders(int mapType) {
         return next().getCustomHeaders(mapType);
     }
 
     @Override
-    public WasmResult setCustomHeaders(int mapType, Map<String, String> map) {
+    public WasmResult setCustomHeaders(int mapType, ProxyMap map) {
         return next().setCustomHeaders(mapType, map);
     }
 
     @Override
-    public WasmResult setHttpRequestHeaders(Map<String, String> headers) {
+    public WasmResult setHttpRequestHeaders(ProxyMap headers) {
         return next().setHttpRequestHeaders(headers);
     }
 
     @Override
-    public WasmResult setHttpRequestTrailers(Map<String, String> trailers) {
+    public WasmResult setHttpRequestTrailers(ProxyMap trailers) {
         return next().setHttpRequestTrailers(trailers);
     }
 
     @Override
-    public WasmResult setHttpResponseHeaders(Map<String, String> headers) {
+    public WasmResult setHttpResponseHeaders(ProxyMap headers) {
         return next().setHttpResponseHeaders(headers);
     }
 
     @Override
-    public WasmResult setHttpResponseTrailers(Map<String, String> trailers) {
+    public WasmResult setHttpResponseTrailers(ProxyMap trailers) {
         return next().setHttpResponseTrailers(trailers);
     }
 
     @Override
-    public WasmResult setHttpCallResponseHeaders(Map<String, String> headers) {
+    public WasmResult setHttpCallResponseHeaders(ProxyMap headers) {
         return next().setHttpCallResponseHeaders(headers);
     }
 
     @Override
-    public WasmResult setHttpCallResponseTrailers(Map<String, String> trailers) {
+    public WasmResult setHttpCallResponseTrailers(ProxyMap trailers) {
         return next().setHttpCallResponseTrailers(trailers);
     }
 
     @Override
-    public WasmResult setGrpcReceiveInitialMetaData(Map<String, String> metadata) {
+    public WasmResult setGrpcReceiveInitialMetaData(ProxyMap metadata) {
         return next().setGrpcReceiveInitialMetaData(metadata);
     }
 
     @Override
-    public WasmResult setGrpcReceiveTrailerMetaData(Map<String, String> metadata) {
+    public WasmResult setGrpcReceiveTrailerMetaData(ProxyMap metadata) {
         return next().setGrpcReceiveTrailerMetaData(metadata);
     }
 
@@ -185,7 +182,7 @@ public abstract class ChainedHandler implements Handler {
             int responseCode,
             byte[] responseCodeDetails,
             byte[] responseBody,
-            Map<String, String> additionalHeaders,
+            ProxyMap additionalHeaders,
             int grpcStatus) {
         return next().sendHttpResponse(
                         responseCode,
@@ -246,12 +243,7 @@ public abstract class ChainedHandler implements Handler {
     }
 
     @Override
-    public int httpCall(
-            String uri,
-            HashMap<String, String> headers,
-            byte[] body,
-            HashMap<String, String> trailers,
-            int timeout)
+    public int httpCall(String uri, ProxyMap headers, byte[] body, ProxyMap trailers, int timeout)
             throws WasmException {
         return next().httpCall(uri, headers, body, trailers, timeout);
     }
@@ -259,9 +251,9 @@ public abstract class ChainedHandler implements Handler {
     @Override
     public int dispatchHttpCall(
             String upstreamName,
-            HashMap<String, String> headers,
+            ProxyMap headers,
             byte[] body,
-            HashMap<String, String> trailers,
+            ProxyMap trailers,
             int timeoutMilliseconds)
             throws WasmException {
         return next().dispatchHttpCall(upstreamName, headers, body, trailers, timeoutMilliseconds);
