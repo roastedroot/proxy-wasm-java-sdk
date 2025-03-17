@@ -35,7 +35,7 @@ public class HttpRoutingTest {
                 assertEquals(Action.CONTINUE, action);
 
                 // Get and verify modified headers
-                Map<String, String> resultHeaders = handler.getHttpRequestHeaders();
+                var resultHeaders = handler.getHttpRequestHeaders();
                 assertEquals(1, resultHeaders.size());
                 assertEquals("my-host.com-canary", resultHeaders.get(":authority"));
             }
@@ -62,7 +62,7 @@ public class HttpRoutingTest {
                 assertEquals(Action.CONTINUE, action);
 
                 // Get and verify modified headers
-                Map<String, String> resultHeaders = handler.getHttpRequestHeaders();
+                var resultHeaders = handler.getHttpRequestHeaders();
                 assertEquals(1, resultHeaders.size());
                 assertEquals("my-host.com", resultHeaders.get(":authority"));
             }

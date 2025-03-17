@@ -8,10 +8,10 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 
 import com.dylibso.chicory.wasm.Parser;
 import io.roastedroot.proxywasm.Action;
+import io.roastedroot.proxywasm.ProxyMap;
 import io.roastedroot.proxywasm.ProxyWasm;
 import io.roastedroot.proxywasm.StartException;
 import java.nio.file.Path;
-import java.util.Map;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -45,7 +45,7 @@ public class HttpAuthRandomTest {
         try (var context = host.createHttpContext(handler)) {
 
             // Call OnRequestHeaders.
-            handler.setHttpRequestHeaders(Map.of("key", "value"));
+            handler.setHttpRequestHeaders(ProxyMap.of("key", "value"));
             var action = context.callOnRequestHeaders(false);
             Assertions.assertEquals(Action.PAUSE, action);
 
@@ -64,7 +64,7 @@ public class HttpAuthRandomTest {
     @Test
     public void onHttpCallResponse() throws StartException {
         var headers =
-                Map.of(
+                ProxyMap.of(
                         "HTTP/1.1", "200 OK",
                         "Date:", "Thu, 17 Sep 2020 02:47:07 GMT",
                         "Content-Type", "application/json",
@@ -78,7 +78,7 @@ public class HttpAuthRandomTest {
         try (var context = host.createHttpContext(handler)) {
 
             // Call OnRequestHeaders.
-            handler.setHttpRequestHeaders(Map.of());
+            handler.setHttpRequestHeaders(ProxyMap.of());
             var action = context.callOnRequestHeaders(false);
             assertEquals(Action.PAUSE, action);
 
@@ -101,7 +101,7 @@ public class HttpAuthRandomTest {
         try (var context = host.createHttpContext(handler)) {
 
             // Call OnRequestHeaders.
-            handler.setHttpRequestHeaders(Map.of());
+            handler.setHttpRequestHeaders(ProxyMap.of());
             var action = context.callOnRequestHeaders(false);
             assertEquals(Action.PAUSE, action);
 
@@ -116,7 +116,7 @@ public class HttpAuthRandomTest {
             assertNotNull(localResponse);
             assertEquals(403, localResponse.statusCode);
             assertEquals("access forbidden", string(localResponse.body));
-            assertEquals(Map.of("powered-by", "proxy-wasm-go-sdk!!"), localResponse.headers);
+            assertEquals(ProxyMap.of("powered-by", "proxy-wasm-go-sdk!!"), localResponse.headers);
 
             // CHeck Envoy logs.
             handler.assertLogsContain("access forbidden");
