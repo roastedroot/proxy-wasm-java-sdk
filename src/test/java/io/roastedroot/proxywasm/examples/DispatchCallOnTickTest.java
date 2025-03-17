@@ -2,7 +2,10 @@ package io.roastedroot.proxywasm.examples;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import com.dylibso.chicory.experimental.aot.AotMachine;
+import com.dylibso.chicory.runtime.Instance;
 import com.dylibso.chicory.wasm.Parser;
+import com.dylibso.chicory.wasm.WasmModule;
 import io.roastedroot.proxywasm.ProxyWasm;
 import io.roastedroot.proxywasm.StartException;
 import java.nio.file.Path;
@@ -13,17 +16,17 @@ import org.junit.jupiter.api.Test;
  * Java port of https://github.com/proxy-wasm/proxy-wasm-go-sdk/blob/ab4161dcf9246a828008b539a82a1556cf0f2e24/examples/dispatch_call_on_tick/main_test.go
  */
 public class DispatchCallOnTickTest {
+    private static final WasmModule module =
+            Parser.parse(Path.of("./src/test/go-examples/dispatch_call_on_tick/main.wasm"));
 
     static int tickMilliseconds = 100;
 
     @Test
     public void testOnTick() throws StartException {
-
         var handler = new MockHandler();
-        var module =
-                Parser.parse(Path.of("./src/test/go-examples/dispatch_call_on_tick/main.wasm"));
         ProxyWasm.Builder builder = ProxyWasm.builder().withPluginHandler(handler);
-        try (var host = builder.build(module)) {
+        var instanceBuilder = Instance.builder(module).withMachineFactory(AotMachine::new);
+        try (var host = builder.build(instanceBuilder)) {
             assertEquals(tickMilliseconds, handler.getTickPeriodMilliseconds());
 
             for (int i = 1; i <= 10; i++) {

@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import com.dylibso.chicory.wasm.Parser;
+import com.dylibso.chicory.wasm.WasmModule;
 import io.roastedroot.proxywasm.Action;
 import io.roastedroot.proxywasm.ProxyWasm;
 import io.roastedroot.proxywasm.QueueName;
@@ -22,6 +23,10 @@ import org.junit.jupiter.api.Test;
  * Test case to verify src/test/go-examples/shared_queue example.
  */
 public class SharedQueueTest {
+    private static final WasmModule receiverModule =
+            Parser.parse(Path.of("./src/test/go-examples/shared_queue/receiver/main.wasm"));
+    private static final WasmModule senderModule =
+            Parser.parse(Path.of("./src/test/go-examples/shared_queue/sender/main.wasm"));
 
     ArrayList<Closeable> closeList = new ArrayList<>();
 
@@ -44,9 +49,6 @@ public class SharedQueueTest {
 
     @Test
     public void testOnPluginStart() throws StartException, WasmException {
-        // Load the WASM module
-        var receiverModule =
-                Parser.parse(Path.of("./src/test/go-examples/shared_queue/receiver/main.wasm"));
         var sharedData = new MockSharedHandler();
 
         var receiverVmId = "receiver";
@@ -90,10 +92,6 @@ public class SharedQueueTest {
                         receiverHost2.contextId()));
         var responseHeadersQueue = sharedData.getSharedQueue(responseHeadersQueueId);
         assertNotNull(responseHeadersQueue);
-
-        // Load the WASM module
-        var senderModule =
-                Parser.parse(Path.of("./src/test/go-examples/shared_queue/sender/main.wasm"));
 
         // Create and configure the sender instance
         var senderHandler = new MockHandler(sharedData);

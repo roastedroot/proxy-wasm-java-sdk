@@ -3,6 +3,7 @@ package io.roastedroot.proxywasm.examples;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.dylibso.chicory.wasm.Parser;
+import com.dylibso.chicory.wasm.WasmModule;
 import io.roastedroot.proxywasm.Action;
 import io.roastedroot.proxywasm.ProxyWasm;
 import io.roastedroot.proxywasm.StartException;
@@ -14,11 +15,12 @@ import org.junit.jupiter.api.Test;
  * Java port of https://github.com/proxy-wasm/proxy-wasm-go-sdk/blob/ab4161dcf9246a828008b539a82a1556cf0f2e24/examples/http_routing/main_test.go
  */
 public class HttpRoutingTest {
+    private static final WasmModule module =
+            Parser.parse(Path.of("./src/test/go-examples/http_routing/main.wasm"));
 
     @Test
     public void canary() throws StartException {
         var handler = new MockHandler();
-        var module = Parser.parse(Path.of("./src/test/go-examples/http_routing/main.wasm"));
         ProxyWasm.Builder builder =
                 ProxyWasm.builder().withPluginHandler(handler).withPluginConfig(new byte[] {2});
         try (var host = builder.build(module)) {

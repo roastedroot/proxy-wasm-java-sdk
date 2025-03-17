@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import com.dylibso.chicory.wasm.Parser;
+import com.dylibso.chicory.wasm.WasmModule;
 import io.roastedroot.proxywasm.Action;
 import io.roastedroot.proxywasm.ProxyWasm;
 import io.roastedroot.proxywasm.StartException;
@@ -20,6 +21,8 @@ import org.junit.jupiter.api.Test;
  * Java port of https://github.com/proxy-wasm/proxy-wasm-go-sdk/blob/ab4161dcf9246a828008b539a82a1556cf0f2e24/examples/properties/main_test.go
  */
 public class PropertiesTest {
+    private static final WasmModule module =
+            Parser.parse(Path.of("./src/test/go-examples/properties/main.wasm"));
 
     static String[] propertyPrefix =
             new String[] {"route_metadata", "filter_metadata", "envoy.filters.http.wasm"};
@@ -31,7 +34,6 @@ public class PropertiesTest {
     void setUp() throws StartException {
         this.handler = new MockHandler();
         ProxyWasm.Builder builder = ProxyWasm.builder();
-        var module = Parser.parse(Path.of("./src/test/go-examples/properties/main.wasm"));
         this.proxyWasm = builder.build(module);
     }
 
