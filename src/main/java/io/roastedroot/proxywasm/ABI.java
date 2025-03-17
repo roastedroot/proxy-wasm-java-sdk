@@ -1891,16 +1891,4 @@ class ABI {
         }
         proxyOnForeignFunctionFn.apply(contextId, functionId, argumentsSize);
     }
-
-    // //////////////////////////////////////////////////////////////////////
-    // Unimplemented WASI functions
-    // //////////////////////////////////////////////////////////////////////
-
-    // wasi_snapshot_preview1.args_sizes_get :
-    // https://github.com/proxy-wasm/spec/tree/main/abi-versions/vNEXT#wasi_snapshot_preview1args_sizes_get
-    // wasi_snapshot_preview1.args_get :
-    // https://github.com/proxy-wasm/spec/tree/main/abi-versions/vNEXT#wasi_snapshot_preview1args_get
-    // wasi_snapshot_preview1.proc_exit :
-    // https://github.com/proxy-wasm/spec/tree/main/abi-versions/vNEXT#wasi_snapshot_preview1proc_exit
-
 }
