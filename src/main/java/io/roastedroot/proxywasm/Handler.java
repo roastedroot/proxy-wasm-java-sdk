@@ -49,6 +49,10 @@ public interface Handler {
         return null;
     }
 
+    default WasmResult setProperty(String path, String value) {
+        return WasmResult.UNIMPLEMENTED;
+    }
+
     /**
      * Get the HTTP request body.
      *
@@ -418,6 +422,35 @@ public interface Handler {
 
     default long getMetric(int metricId) throws WasmException {
         throw new WasmException(WasmResult.UNIMPLEMENTED);
+    }
+
+    default int grpcCall(
+            String upstreamName,
+            String serviceName,
+            String methodName,
+            ProxyMap initialMetadata,
+            byte[] message,
+            int timeout)
+            throws WasmException {
+        throw new WasmException(WasmResult.UNIMPLEMENTED);
+    }
+
+    default int grpcStream(
+            String upstreamName, String serviceName, String methodName, ProxyMap initialMetadata)
+            throws WasmException {
+        throw new WasmException(WasmResult.UNIMPLEMENTED);
+    }
+
+    default WasmResult grpcSend(int streamId, byte[] message, int endStream) {
+        return WasmResult.UNIMPLEMENTED;
+    }
+
+    default WasmResult grpcCancel(int callOrstreamId) {
+        return WasmResult.UNIMPLEMENTED;
+    }
+
+    default WasmResult grpcClose(int callOrstreamId) {
+        return WasmResult.UNIMPLEMENTED;
     }
 
     class SharedData {
