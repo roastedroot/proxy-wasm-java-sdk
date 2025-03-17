@@ -3,12 +3,12 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>io.roastedroot</groupId>
-  <artifactId>proxy-wasm-java-sdk</artifactId>
+  <artifactId>proxy-wasm-java-host</artifactId>
   <version>1.0-SNAPSHOT</version>
   <packaging>jar</packaging>
 
-  <name>proxy-wasm-java-sdk</name>
-  <url>http://maven.apache.org</url>
+  <name>proxy-wasm-java-host</name>
+  <url>https://github.com/roastedroot/proxy-wasm-java-host/</url>
 
   <licenses>
     <license>
