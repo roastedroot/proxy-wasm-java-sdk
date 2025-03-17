@@ -1,8 +1,5 @@
 package io.roastedroot.proxywasm;
 
-import java.util.HashMap;
-import java.util.Map;
-
 public interface Handler {
 
     default void log(LogLevel level, String message) throws WasmException {}
@@ -12,39 +9,39 @@ public interface Handler {
     }
 
     // TODO: use a better type than Map so that we can support repeated headers
-    default Map<String, String> getHttpRequestHeaders() {
+    default ProxyMap getHttpRequestHeaders() {
         return null;
     }
 
-    default Map<String, String> getHttpRequestTrailers() {
+    default ProxyMap getHttpRequestTrailers() {
         return null;
     }
 
-    default Map<String, String> getHttpResponseHeaders() {
+    default ProxyMap getHttpResponseHeaders() {
         return null;
     }
 
-    default Map<String, String> getHttpResponseTrailers() {
+    default ProxyMap getHttpResponseTrailers() {
         return null;
     }
 
-    default Map<String, String> getHttpCallResponseHeaders() {
+    default ProxyMap getHttpCallResponseHeaders() {
         return null;
     }
 
-    default Map<String, String> getHttpCallResponseTrailers() {
+    default ProxyMap getHttpCallResponseTrailers() {
         return null;
     }
 
-    default Map<String, String> getGrpcReceiveInitialMetaData() {
+    default ProxyMap getGrpcReceiveInitialMetaData() {
         return null;
     }
 
-    default Map<String, String> getGrpcReceiveTrailerMetaData() {
+    default ProxyMap getGrpcReceiveTrailerMetaData() {
         return null;
     }
 
-    default Map<String, String> getCustomHeaders(int mapType) {
+    default ProxyMap getCustomHeaders(int mapType) {
         return null;
     }
 
@@ -198,7 +195,7 @@ public interface Handler {
             int responseCode,
             byte[] responseCodeDetails,
             byte[] responseBody,
-            Map<String, String> additionalHeaders,
+            ProxyMap additionalHeaders,
             int grpcStatus) {
         return WasmResult.UNIMPLEMENTED;
     }
@@ -291,7 +288,7 @@ public interface Handler {
      * @param map     The header map to set
      * @return WasmResult indicating success or failure
      */
-    default WasmResult setCustomHeaders(int mapType, Map<String, String> map) {
+    default WasmResult setCustomHeaders(int mapType, ProxyMap map) {
         return WasmResult.UNIMPLEMENTED;
     }
 
@@ -301,7 +298,7 @@ public interface Handler {
      * @param headers The headers to set
      * @return WasmResult indicating success or failure
      */
-    default WasmResult setHttpRequestHeaders(Map<String, String> headers) {
+    default WasmResult setHttpRequestHeaders(ProxyMap headers) {
         return WasmResult.UNIMPLEMENTED;
     }
 
@@ -311,7 +308,7 @@ public interface Handler {
      * @param trailers The trailers to set
      * @return WasmResult indicating success or failure
      */
-    default WasmResult setHttpRequestTrailers(Map<String, String> trailers) {
+    default WasmResult setHttpRequestTrailers(ProxyMap trailers) {
         return WasmResult.UNIMPLEMENTED;
     }
 
@@ -321,7 +318,7 @@ public interface Handler {
      * @param headers The headers to set
      * @return WasmResult indicating success or failure
      */
-    default WasmResult setHttpResponseHeaders(Map<String, String> headers) {
+    default WasmResult setHttpResponseHeaders(ProxyMap headers) {
         return WasmResult.UNIMPLEMENTED;
     }
 
@@ -331,7 +328,7 @@ public interface Handler {
      * @param trailers The trailers to set
      * @return WasmResult indicating success or failure
      */
-    default WasmResult setHttpResponseTrailers(Map<String, String> trailers) {
+    default WasmResult setHttpResponseTrailers(ProxyMap trailers) {
         return WasmResult.UNIMPLEMENTED;
     }
 
@@ -341,7 +338,7 @@ public interface Handler {
      * @param headers The headers to set
      * @return WasmResult indicating success or failure
      */
-    default WasmResult setHttpCallResponseHeaders(Map<String, String> headers) {
+    default WasmResult setHttpCallResponseHeaders(ProxyMap headers) {
         return WasmResult.UNIMPLEMENTED;
     }
 
@@ -351,7 +348,7 @@ public interface Handler {
      * @param trailers The trailers to set
      * @return WasmResult indicating success or failure
      */
-    default WasmResult setHttpCallResponseTrailers(Map<String, String> trailers) {
+    default WasmResult setHttpCallResponseTrailers(ProxyMap trailers) {
         return WasmResult.UNIMPLEMENTED;
     }
 
@@ -361,7 +358,7 @@ public interface Handler {
      * @param metadata The metadata to set
      * @return WasmResult indicating success or failure
      */
-    default WasmResult setGrpcReceiveInitialMetaData(Map<String, String> metadata) {
+    default WasmResult setGrpcReceiveInitialMetaData(ProxyMap metadata) {
         return WasmResult.UNIMPLEMENTED;
     }
 
@@ -371,7 +368,7 @@ public interface Handler {
      * @param metadata The metadata to set
      * @return WasmResult indicating success or failure
      */
-    default WasmResult setGrpcReceiveTrailerMetaData(Map<String, String> metadata) {
+    default WasmResult setGrpcReceiveTrailerMetaData(ProxyMap metadata) {
         return WasmResult.UNIMPLEMENTED;
     }
 
@@ -384,20 +381,16 @@ public interface Handler {
     }
 
     default int httpCall(
-            String uri,
-            HashMap<String, String> headers,
-            byte[] body,
-            HashMap<String, String> trailers,
-            int timeoutMilliseconds)
+            String uri, ProxyMap headers, byte[] body, ProxyMap trailers, int timeoutMilliseconds)
             throws WasmException {
         throw new WasmException(WasmResult.UNIMPLEMENTED);
     }
 
     default int dispatchHttpCall(
             String upstreamName,
-            HashMap<String, String> headers,
+            ProxyMap headers,
             byte[] body,
-            HashMap<String, String> trailers,
+            ProxyMap trailers,
             int timeoutMilliseconds)
             throws WasmException {
         throw new WasmException(WasmResult.UNIMPLEMENTED);

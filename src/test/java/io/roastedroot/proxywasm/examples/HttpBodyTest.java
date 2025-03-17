@@ -8,11 +8,11 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import com.dylibso.chicory.wasm.Parser;
 import io.roastedroot.proxywasm.Action;
 import io.roastedroot.proxywasm.HttpContext;
+import io.roastedroot.proxywasm.ProxyMap;
 import io.roastedroot.proxywasm.ProxyWasm;
 import io.roastedroot.proxywasm.StartException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.util.Map;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -47,7 +47,7 @@ public class HttpBodyTest {
 
         // Call OnRequestHeaders.
         handler.setHttpRequestHeaders(
-                Map.of(
+                ProxyMap.of(
                         "content-length", "10",
                         "buffer-operation", "replace"));
         var action = httpContext.callOnRequestHeaders(false);
@@ -56,7 +56,7 @@ public class HttpBodyTest {
         Assertions.assertEquals(Action.CONTINUE, action);
 
         var headers = handler.getHttpRequestHeaders();
-        assertEquals(Map.of("buffer-operation", "replace"), headers);
+        assertEquals(ProxyMap.of("buffer-operation", "replace"), headers);
     }
 
     @Test
@@ -88,7 +88,7 @@ public class HttpBodyTest {
     public void testOnHttpRequestBodyAppend() throws StartException {
         // Call callOnRequestBody
         handler.setHttpRequestHeaders(
-                Map.of(
+                ProxyMap.of(
                         "content-length", "10",
                         "buffer-operation", "append"));
 
@@ -111,7 +111,7 @@ public class HttpBodyTest {
     public void testOnHttpRequestBodyPrepend() throws StartException {
         // Call callOnRequestBody
         handler.setHttpRequestHeaders(
-                Map.of(
+                ProxyMap.of(
                         "content-length", "10",
                         "buffer-operation", "prepend"));
 
@@ -134,7 +134,7 @@ public class HttpBodyTest {
     public void testOnHttpRequestBodyReplace() throws StartException {
         // Call callOnRequestBody
         handler.setHttpRequestHeaders(
-                Map.of(
+                ProxyMap.of(
                         "content-length", "10",
                         "buffer-operation", "replace"));
 
@@ -157,7 +157,7 @@ public class HttpBodyTest {
 
         // Call OnRequestHeaders
         handler.setHttpRequestHeaders(
-                Map.of(
+                ProxyMap.of(
                         "buffer-replace-at", "response",
                         "content-length", "10",
                         "buffer-operation", "append"));
@@ -178,7 +178,7 @@ public class HttpBodyTest {
 
         // Call OnRequestHeaders
         handler.setHttpRequestHeaders(
-                Map.of(
+                ProxyMap.of(
                         "buffer-replace-at", "response",
                         "content-length", "10",
                         "buffer-operation", "prepend"));
@@ -199,7 +199,7 @@ public class HttpBodyTest {
 
         // Call OnRequestHeaders
         handler.setHttpRequestHeaders(
-                Map.of(
+                ProxyMap.of(
                         "buffer-replace-at", "response",
                         "content-length", "10",
                         "buffer-operation", "replace"));

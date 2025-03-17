@@ -5,11 +5,13 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.roastedroot.proxywasm.Action;
+import io.roastedroot.proxywasm.ArrayProxyMap;
 import io.roastedroot.proxywasm.ChainedHandler;
 import io.roastedroot.proxywasm.Handler;
 import io.roastedroot.proxywasm.Helpers;
 import io.roastedroot.proxywasm.LogLevel;
 import io.roastedroot.proxywasm.MetricType;
+import io.roastedroot.proxywasm.ProxyMap;
 import io.roastedroot.proxywasm.StreamType;
 import io.roastedroot.proxywasm.WasmException;
 import io.roastedroot.proxywasm.WasmResult;
@@ -30,14 +32,14 @@ public class MockHandler extends ChainedHandler {
         public final int statusCode;
         public final byte[] statusCodeDetails;
         public final byte[] body;
-        public final Map<String, String> headers;
+        public final ProxyMap headers;
         public final int grpcStatus;
 
         public HttpResponse(
                 int responseCode,
                 byte[] responseCodeDetails,
                 byte[] responseBody,
-                Map<String, String> additionalHeaders,
+                ProxyMap additionalHeaders,
                 int grpcStatus) {
             this.statusCode = responseCode;
             this.statusCodeDetails = responseCodeDetails;
@@ -50,12 +52,12 @@ public class MockHandler extends ChainedHandler {
     final ArrayList<String> loggedMessages = new ArrayList<>();
 
     private int tickPeriodMilliseconds;
-    private Map<String, String> httpRequestHeaders = new HashMap<>();
-    private Map<String, String> httpRequestTrailers = new HashMap<>();
-    private Map<String, String> httpResponseHeaders = new HashMap<>();
-    private Map<String, String> httpResponseTrailers = new HashMap<>();
-    private Map<String, String> grpcReceiveInitialMetadata = new HashMap<>();
-    private Map<String, String> grpcReceiveTrailerMetadata = new HashMap<>();
+    private ProxyMap httpRequestHeaders = new ArrayProxyMap();
+    private ProxyMap httpRequestTrailers = new ArrayProxyMap();
+    private ProxyMap httpResponseHeaders = new ArrayProxyMap();
+    private ProxyMap httpResponseTrailers = new ArrayProxyMap();
+    private ProxyMap grpcReceiveInitialMetadata = new ArrayProxyMap();
+    private ProxyMap grpcReceiveTrailerMetadata = new ArrayProxyMap();
     private HttpResponse senthttpResponse;
 
     private byte[] funcCallData = new byte[0];
@@ -127,67 +129,79 @@ public class MockHandler extends ChainedHandler {
     }
 
     @Override
-    public Map<String, String> getHttpRequestHeaders() {
+    public ProxyMap getHttpRequestHeaders() {
         return httpRequestHeaders;
     }
 
     @Override
-    public Map<String, String> getHttpRequestTrailers() {
+    public ProxyMap getHttpRequestTrailers() {
         return httpRequestTrailers;
     }
 
     @Override
-    public Map<String, String> getHttpResponseHeaders() {
+    public ProxyMap getHttpResponseHeaders() {
         return httpResponseHeaders;
     }
 
     @Override
-    public Map<String, String> getHttpResponseTrailers() {
+    public ProxyMap getHttpResponseTrailers() {
         return httpResponseTrailers;
     }
 
     @Override
-    public Map<String, String> getGrpcReceiveInitialMetaData() {
+    public ProxyMap getGrpcReceiveInitialMetaData() {
         return grpcReceiveInitialMetadata;
     }
 
     @Override
-    public Map<String, String> getGrpcReceiveTrailerMetaData() {
+    public ProxyMap getGrpcReceiveTrailerMetaData() {
         return grpcReceiveTrailerMetadata;
     }
 
     @Override
-    public WasmResult setHttpRequestHeaders(Map<String, String> headers) {
+    public WasmResult setHttpRequestHeaders(ProxyMap headers) {
         this.httpRequestHeaders = headers;
         return WasmResult.OK;
     }
 
+    public WasmResult setHttpRequestHeaders(Map<String, String> headers) {
+        return this.setHttpRequestHeaders(new ArrayProxyMap(headers));
+    }
+
     @Override
-    public WasmResult setHttpRequestTrailers(Map<String, String> trailers) {
+    public WasmResult setHttpRequestTrailers(ProxyMap trailers) {
         this.httpRequestTrailers = trailers;
         return WasmResult.OK;
     }
 
+    public WasmResult setHttpRequestTrailers(Map<String, String> headers) {
+        return this.setHttpRequestTrailers(new ArrayProxyMap(headers));
+    }
+
     @Override
-    public WasmResult setHttpResponseHeaders(Map<String, String> headers) {
+    public WasmResult setHttpResponseHeaders(ProxyMap headers) {
         this.httpResponseHeaders = headers;
         return WasmResult.OK;
     }
 
+    public WasmResult setHttpResponseHeaders(Map<String, String> headers) {
+        return this.setHttpResponseHeaders(new ArrayProxyMap(headers));
+    }
+
     @Override
-    public WasmResult setHttpResponseTrailers(Map<String, String> trailers) {
+    public WasmResult setHttpResponseTrailers(ProxyMap trailers) {
         this.httpResponseTrailers = trailers;
         return WasmResult.OK;
     }
 
     @Override
-    public WasmResult setGrpcReceiveInitialMetaData(Map<String, String> metadata) {
+    public WasmResult setGrpcReceiveInitialMetaData(ProxyMap metadata) {
         this.grpcReceiveInitialMetadata = metadata;
         return WasmResult.OK;
     }
 
     @Override
-    public WasmResult setGrpcReceiveTrailerMetaData(Map<String, String> metadata) {
+    public WasmResult setGrpcReceiveTrailerMetaData(ProxyMap metadata) {
         this.grpcReceiveTrailerMetadata = metadata;
         return WasmResult.OK;
     }
@@ -271,7 +285,7 @@ public class MockHandler extends ChainedHandler {
             int responseCode,
             byte[] responseCodeDetails,
             byte[] responseBody,
-            Map<String, String> additionalHeaders,
+            ProxyMap additionalHeaders,
             int grpcStatus) {
         this.senthttpResponse =
                 new HttpResponse(
@@ -298,16 +312,16 @@ public class MockHandler extends ChainedHandler {
         public final String uri;
         public final Object headers;
         public final byte[] body;
-        public final HashMap<String, String> trailers;
+        public final ProxyMap trailers;
         public final int timeoutMilliseconds;
 
         public HttpCall(
                 int id,
                 Type callType,
                 String uri,
-                HashMap<String, String> headers,
+                ProxyMap headers,
                 byte[] body,
-                HashMap<String, String> trailers,
+                ProxyMap trailers,
                 int timeoutMilliseconds) {
             this.id = id;
             this.callType = callType;
@@ -320,7 +334,7 @@ public class MockHandler extends ChainedHandler {
     }
 
     private final AtomicInteger lastCallId = new AtomicInteger(0);
-    private final HashMap<Integer, HttpCall> httpCalls = new HashMap<>();
+    private final HashMap<Integer, HttpCall> httpCalls = new HashMap();
 
     public HashMap<Integer, HttpCall> getHttpCalls() {
         return httpCalls;
@@ -328,11 +342,7 @@ public class MockHandler extends ChainedHandler {
 
     @Override
     public int httpCall(
-            String uri,
-            HashMap<String, String> headers,
-            byte[] body,
-            HashMap<String, String> trailers,
-            int timeoutMilliseconds)
+            String uri, ProxyMap headers, byte[] body, ProxyMap trailers, int timeoutMilliseconds)
             throws WasmException {
         var id = lastCallId.incrementAndGet();
         HttpCall value =
@@ -351,9 +361,9 @@ public class MockHandler extends ChainedHandler {
     @Override
     public int dispatchHttpCall(
             String upstreamName,
-            HashMap<String, String> headers,
+            ProxyMap headers,
             byte[] body,
-            HashMap<String, String> trailers,
+            ProxyMap trailers,
             int timeoutMilliseconds)
             throws WasmException {
         var id = lastCallId.incrementAndGet();
@@ -385,8 +395,8 @@ public class MockHandler extends ChainedHandler {
     }
 
     private final AtomicInteger lastMetricId = new AtomicInteger(0);
-    private HashMap<Integer, Metric> metrics = new HashMap<>();
-    private HashMap<String, Metric> metricsByName = new HashMap<>();
+    private HashMap<Integer, Metric> metrics = new HashMap();
+    private HashMap<String, Metric> metricsByName = new HashMap();
 
     @Override
     public int defineMetric(MetricType type, String name) throws WasmException {
