@@ -355,7 +355,12 @@ public final class ProxyWasm implements Closeable {
                     WasiPreview1.builder()
                             .withOptions(
                                     Objects.requireNonNullElseGet(
-                                            wasiOptions, this::defaultWasiOptions))
+                                            wasiOptions,
+                                            () ->
+                                                    WasiOptions.builder()
+                                                            .inheritSystem()
+                                                            .withArguments(List.of())
+                                                            .build()))
                             .build();
             imports.addFunction(wasi.toHostFunctions());
             imports.addFunction(Helpers.withModuleName(wasi.toHostFunctions(), "wasi_unstable"));
