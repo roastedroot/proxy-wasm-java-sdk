@@ -71,60 +71,79 @@
       <artifactId>rest-assured</artifactId>
       <scope>test</scope>
     </dependency>
-
   </dependencies>
 
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>${quarkus.platform.group-id}</groupId>
-        <artifactId>quarkus-maven-plugin</artifactId>
-        <version>${quarkus.platform.version}</version>
-        <extensions>true</extensions>
-        <executions>
-          <execution>
-            <goals>
-              <goal>build</goal>
-              <goal>generate-code</goal>
-              <goal>generate-code-tests</goal>
-              <goal>native-image-agent</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <artifactId>maven-failsafe-plugin</artifactId>
-        <version>${surefire-plugin.version}</version>
-        <configuration>
-          <systemPropertyVariables>
-            <native.image.path>${project.build.directory}/${project.build.finalName}-runner</native.image.path>
-            <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
-            <maven.home>${maven.home}</maven.home>
-          </systemPropertyVariables>
-        </configuration>
-        <executions>
-          <execution>
-            <goals>
-              <goal>integration-test</goal>
-              <goal>verify</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <artifactId>maven-surefire-plugin</artifactId>
-        <version>${surefire-plugin.version}</version>
-        <configuration>
-          <systemPropertyVariables>
-            <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
-            <maven.home>${maven.home}</maven.home>
-          </systemPropertyVariables>
-        </configuration>
-      </plugin>
-    </plugins>
-  </build>
-
   <profiles>
+
+    <!-- Skip tests for JDK lower than 17, Quarkus is not supported there -->
+    <profile>
+      <id>jdk-lower-than-17</id>
+      <activation>
+        <jdk>(,17]</jdk>
+      </activation>
+      <properties>
+        <maven.test.skip>true</maven.test.skip>
+        <skipTests>true</skipTests>
+      </properties>
+    </profile>
+
+    <!-- Run tests for JDK 17 and newer since Quarkus is supported there -->
+    <profile>
+      <id>jdk-17-and-newer</id>
+      <activation>
+        <jdk>[17,)</jdk>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>${quarkus.platform.group-id}</groupId>
+            <artifactId>quarkus-maven-plugin</artifactId>
+            <version>${quarkus.platform.version}</version>
+            <extensions>true</extensions>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>build</goal>
+                  <goal>generate-code</goal>
+                  <goal>generate-code-tests</goal>
+                  <goal>native-image-agent</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <artifactId>maven-failsafe-plugin</artifactId>
+            <version>${surefire-plugin.version}</version>
+            <configuration>
+              <systemPropertyVariables>
+                <native.image.path>${project.build.directory}/${project.build.finalName}-runner</native.image.path>
+                <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
+                <maven.home>${maven.home}</maven.home>
+              </systemPropertyVariables>
+            </configuration>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>integration-test</goal>
+                  <goal>verify</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <version>${surefire-plugin.version}</version>
+            <configuration>
+              <systemPropertyVariables>
+                <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
+                <maven.home>${maven.home}</maven.home>
+              </systemPropertyVariables>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
     <profile>
       <id>native</id>
       <activation>
@@ -138,4 +157,5 @@
       </properties>
     </profile>
   </profiles>
+
 </project>
