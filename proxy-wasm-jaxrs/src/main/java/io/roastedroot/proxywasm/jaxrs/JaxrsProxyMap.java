@@ -8,9 +8,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Stream;
 
-public class JaxrsProxyMap implements ProxyMap {
+public class JaxrsProxyMap<T> implements ProxyMap {
 
-    final MultivaluedMap<String, String> entries;
+    final MultivaluedMap<String, T> entries;
 
     public JaxrsProxyMap() {
         this.entries = new MultivaluedHashMap<>();
@@ -27,7 +27,7 @@ public class JaxrsProxyMap implements ProxyMap {
         }
     }
 
-    public JaxrsProxyMap(MultivaluedMap<String, String> other) {
+    public JaxrsProxyMap(MultivaluedMap<String, T> other) {
         this.entries = other;
     }
 
@@ -38,12 +38,12 @@ public class JaxrsProxyMap implements ProxyMap {
 
     @Override
     public void add(String key, String value) {
-        entries.add(key, value);
+        entries.add(key, (T) value);
     }
 
     @Override
     public void put(String key, String value) {
-        entries.put(key, List.of(value));
+        entries.put(key, List.of((T) value));
     }
 
     static <T> Iterable<T> toIterable(Stream<T> stream) {
@@ -54,12 +54,29 @@ public class JaxrsProxyMap implements ProxyMap {
     public Iterable<? extends Map.Entry<String, String>> entries() {
         return toIterable(
                 entries.entrySet().stream()
-                        .flatMap(x -> x.getValue().stream().map(y -> Map.entry(x.getKey(), y))));
+                        .flatMap(
+                                entry ->
+                                        entry.getValue().stream()
+                                                .map(
+                                                        value ->
+                                                                Map.entry(
+                                                                        entry.getKey(),
+                                                                        asString(value)))));
     }
 
     @Override
     public String get(String key) {
-        return entries.get(key).stream().findFirst().orElse(null);
+        return entries.get(key).stream().findFirst().map(JaxrsProxyMap::asString).orElse(null);
+    }
+
+    private static String asString(Object x) {
+        if (x == null) {
+            return null;
+        }
+        if (x.getClass() == String.class) {
+            return (String) x;
+        }
+        return x.toString();
     }
 
     @Override

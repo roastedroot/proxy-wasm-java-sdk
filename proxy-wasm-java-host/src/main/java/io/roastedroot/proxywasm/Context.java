@@ -20,6 +20,14 @@ public abstract class Context implements Closeable {
         return id;
     }
 
+    public ProxyWasm getProxyWasm() {
+        return proxyWasm;
+    }
+
+    ProxyWasm proxyWasm() {
+        return proxyWasm;
+    }
+
     public void close() {
         if (closeStarted) {
             return;

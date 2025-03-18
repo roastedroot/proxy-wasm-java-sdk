@@ -158,7 +158,6 @@ public class MockHandler extends ChainedHandler {
         return grpcReceiveTrailerMetadata;
     }
 
-    @Override
     public WasmResult setHttpRequestHeaders(ProxyMap headers) {
         this.httpRequestHeaders = headers;
         return WasmResult.OK;
@@ -168,7 +167,6 @@ public class MockHandler extends ChainedHandler {
         return this.setHttpRequestHeaders(new ArrayProxyMap(headers));
     }
 
-    @Override
     public WasmResult setHttpRequestTrailers(ProxyMap trailers) {
         this.httpRequestTrailers = trailers;
         return WasmResult.OK;
@@ -178,7 +176,6 @@ public class MockHandler extends ChainedHandler {
         return this.setHttpRequestTrailers(new ArrayProxyMap(headers));
     }
 
-    @Override
     public WasmResult setHttpResponseHeaders(ProxyMap headers) {
         this.httpResponseHeaders = headers;
         return WasmResult.OK;
@@ -188,19 +185,16 @@ public class MockHandler extends ChainedHandler {
         return this.setHttpResponseHeaders(new ArrayProxyMap(headers));
     }
 
-    @Override
     public WasmResult setHttpResponseTrailers(ProxyMap trailers) {
         this.httpResponseTrailers = trailers;
         return WasmResult.OK;
     }
 
-    @Override
     public WasmResult setGrpcReceiveInitialMetaData(ProxyMap metadata) {
         this.grpcReceiveInitialMetadata = metadata;
         return WasmResult.OK;
     }
 
-    @Override
     public WasmResult setGrpcReceiveTrailerMetaData(ProxyMap metadata) {
         this.grpcReceiveTrailerMetadata = metadata;
         return WasmResult.OK;

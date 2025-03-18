@@ -65,46 +65,6 @@ public abstract class ChainedHandler implements Handler {
     }
 
     @Override
-    public WasmResult setHttpRequestHeaders(ProxyMap headers) {
-        return next().setHttpRequestHeaders(headers);
-    }
-
-    @Override
-    public WasmResult setHttpRequestTrailers(ProxyMap trailers) {
-        return next().setHttpRequestTrailers(trailers);
-    }
-
-    @Override
-    public WasmResult setHttpResponseHeaders(ProxyMap headers) {
-        return next().setHttpResponseHeaders(headers);
-    }
-
-    @Override
-    public WasmResult setHttpResponseTrailers(ProxyMap trailers) {
-        return next().setHttpResponseTrailers(trailers);
-    }
-
-    @Override
-    public WasmResult setHttpCallResponseHeaders(ProxyMap headers) {
-        return next().setHttpCallResponseHeaders(headers);
-    }
-
-    @Override
-    public WasmResult setHttpCallResponseTrailers(ProxyMap trailers) {
-        return next().setHttpCallResponseTrailers(trailers);
-    }
-
-    @Override
-    public WasmResult setGrpcReceiveInitialMetaData(ProxyMap metadata) {
-        return next().setGrpcReceiveInitialMetaData(metadata);
-    }
-
-    @Override
-    public WasmResult setGrpcReceiveTrailerMetaData(ProxyMap metadata) {
-        return next().setGrpcReceiveTrailerMetaData(metadata);
-    }
-
-    @Override
     public byte[] getProperty(List<String> key) throws WasmException {
         return next().getProperty(key);
     }
