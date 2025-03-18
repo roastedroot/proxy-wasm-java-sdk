@@ -15,6 +15,10 @@ public class HttpContext extends Context {
         return handler;
     }
 
+    public boolean hasOnRequestHeaders() {
+        return proxyWasm.abi().proxyOnRequestHeadersFn != null;
+    }
+
     public Action callOnRequestHeaders(boolean endOfStream) {
         var headers = handler.getHttpRequestHeaders();
         int result = proxyWasm.abi().proxyOnRequestHeaders(id, len(headers), endOfStream ? 1 : 0);
@@ -23,12 +27,20 @@ public class HttpContext extends Context {
         return action;
     }
 
+    public boolean hasOnResponseHeaders() {
+        return proxyWasm.abi().proxyOnResponseHeadersFn != null;
+    }
+
     public Action callOnResponseHeaders(boolean endOfStream) {
         var headers = handler.getHttpResponseHeaders();
         int result = proxyWasm.abi().proxyOnResponseHeaders(id, len(headers), endOfStream ? 1 : 0);
         Action action = Action.fromInt(result);
         handler.setAction(StreamType.RESPONSE, action);
         return action;
+    }
+
+    public boolean hasOnRequestBody() {
+        return proxyWasm.abi().proxyOnRequestBodyFn != null;
     }
 
     public Action callOnRequestBody(boolean endOfStream) {
@@ -40,6 +52,10 @@ public class HttpContext extends Context {
         Action action = Action.fromInt(result);
         handler.setAction(StreamType.REQUEST, action);
         return action;
+    }
+
+    public boolean hasOnResponseBody() {
+        return proxyWasm.abi().proxyOnResponseBodyFn != null;
     }
 
     public Action callOnResponseBody(boolean endOfStream) {

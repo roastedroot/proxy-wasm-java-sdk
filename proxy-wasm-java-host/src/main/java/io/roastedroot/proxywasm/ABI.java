@@ -21,35 +21,35 @@ class ABI {
 
     private Handler handler;
     private Memory memory;
-    private ExportFunction initializeFn;
-    private ExportFunction mainFn;
-    private ExportFunction startFn;
-    private ExportFunction proxyOnContextCreateFn;
-    private ExportFunction proxyOnDoneFn;
-    private ExportFunction mallocFn;
-    private ExportFunction proxyOnLogFn;
-    private ExportFunction proxyOnDeleteFn;
-    private ExportFunction proxyOnVmStartFn;
-    private ExportFunction proxyOnConfigureFn;
-    private ExportFunction proxyOnTickFn;
-    private ExportFunction proxyOnNewConnectionFn;
-    private ExportFunction proxyOnDownstreamDataFn;
-    private ExportFunction proxyOnDownstreamConnectionCloseFn;
-    private ExportFunction proxyOnUpstreamDataFn;
-    private ExportFunction proxyOnUpstreamConnectionCloseFn;
-    private ExportFunction proxyOnRequestHeadersFn;
-    private ExportFunction proxyOnRequestBodyFn;
-    private ExportFunction proxyOnRequestTrailersFn;
-    private ExportFunction proxyOnResponseHeadersFn;
-    private ExportFunction proxyOnResponseBodyFn;
-    private ExportFunction proxyOnResponseTrailersFn;
-    private ExportFunction proxyOnHttpCallResponseFn;
-    private ExportFunction proxyOnGrpcReceiveInitialMetadataFn;
-    private ExportFunction proxyOnGrpcReceiveFn;
-    private ExportFunction proxyOnGrpcReceiveTrailingMetadataFn;
-    private ExportFunction proxyOnGrpcCloseFn;
-    private ExportFunction proxyOnQueueReadyFn;
-    private ExportFunction proxyOnForeignFunctionFn;
+    ExportFunction initializeFn;
+    ExportFunction mainFn;
+    ExportFunction startFn;
+    ExportFunction proxyOnContextCreateFn;
+    ExportFunction proxyOnDoneFn;
+    ExportFunction mallocFn;
+    ExportFunction proxyOnLogFn;
+    ExportFunction proxyOnDeleteFn;
+    ExportFunction proxyOnVmStartFn;
+    ExportFunction proxyOnConfigureFn;
+    ExportFunction proxyOnTickFn;
+    ExportFunction proxyOnNewConnectionFn;
+    ExportFunction proxyOnDownstreamDataFn;
+    ExportFunction proxyOnDownstreamConnectionCloseFn;
+    ExportFunction proxyOnUpstreamDataFn;
+    ExportFunction proxyOnUpstreamConnectionCloseFn;
+    ExportFunction proxyOnRequestHeadersFn;
+    ExportFunction proxyOnRequestBodyFn;
+    ExportFunction proxyOnRequestTrailersFn;
+    ExportFunction proxyOnResponseHeadersFn;
+    ExportFunction proxyOnResponseBodyFn;
+    ExportFunction proxyOnResponseTrailersFn;
+    ExportFunction proxyOnHttpCallResponseFn;
+    ExportFunction proxyOnGrpcReceiveInitialMetadataFn;
+    ExportFunction proxyOnGrpcReceiveFn;
+    ExportFunction proxyOnGrpcReceiveTrailingMetadataFn;
+    ExportFunction proxyOnGrpcCloseFn;
+    ExportFunction proxyOnQueueReadyFn;
+    ExportFunction proxyOnForeignFunctionFn;
 
     Handler getHandler() {
         return handler;
@@ -866,7 +866,29 @@ class ABI {
     @WasmExport
     int proxyAddHeaderMapValue(
             int mapType, int keyDataPtr, int keySize, int valueDataPtr, int valueSize) {
-        return proxyReplaceHeaderMapValue(mapType, keyDataPtr, keySize, valueDataPtr, valueSize);
+        try {
+            // Get the header map based on the map type
+            ProxyMap headerMap = getMap(mapType);
+            if (headerMap == null) {
+                return WasmResult.BAD_ARGUMENT.getValue();
+            }
+
+            // Get key from memory
+            String key = string(readMemory(keyDataPtr, keySize));
+
+            // Get value from memory
+            String value = string(readMemory(valueDataPtr, valueSize));
+
+            // Add value in map
+            headerMap.add(key, value);
+
+            return WasmResult.OK.getValue();
+
+        } catch (WasmRuntimeException e) {
+            return WasmResult.INVALID_MEMORY_ACCESS.getValue();
+        } catch (WasmException e) {
+            return e.result().getValue();
+        }
     }
 
     /**
@@ -897,9 +919,7 @@ class ABI {
             String value = string(readMemory(valueDataPtr, valueSize));
 
             // Replace value in map
-            var copy = new ArrayProxyMap(headerMap);
-            copy.put(key, value);
-            setMap(mapType, copy);
+            headerMap.put(key, value);
 
             return WasmResult.OK.getValue();
 
@@ -935,9 +955,7 @@ class ABI {
             }
 
             // Remove key from map
-            var copy = new ArrayProxyMap(headerMap);
-            copy.remove(key);
-            setMap(mapType, copy);
+            headerMap.remove(key);
 
             return WasmResult.OK.getValue();
 
@@ -980,40 +998,6 @@ class ABI {
                 return handler.getGrpcReceiveTrailerMetaData();
         }
         return null;
-    }
-
-    /**
-     * Set a header map based on the map type.
-     *
-     * @param mapType The type of map to set
-     * @param map     The header map to set
-     * @return WasmResult indicating success or failure
-     */
-    private WasmResult setMap(int mapType, ProxyMap map) {
-        var knownType = MapType.fromInt(mapType);
-        if (knownType == null) {
-            return handler.setCustomHeaders(mapType, map);
-        }
-
-        switch (knownType) {
-            case HTTP_REQUEST_HEADERS:
-                return handler.setHttpRequestHeaders(map);
-            case HTTP_REQUEST_TRAILERS:
-                return handler.setHttpRequestTrailers(map);
-            case HTTP_RESPONSE_HEADERS:
-                return handler.setHttpResponseHeaders(map);
-            case HTTP_RESPONSE_TRAILERS:
-                return handler.setHttpResponseTrailers(map);
-            case HTTP_CALL_RESPONSE_HEADERS:
-                return handler.setHttpCallResponseHeaders(map);
-            case HTTP_CALL_RESPONSE_TRAILERS:
-                return handler.setHttpCallResponseTrailers(map);
-            case GRPC_RECEIVE_INITIAL_METADATA:
-                return handler.setGrpcReceiveInitialMetaData(map);
-            case GRPC_RECEIVE_TRAILING_METADATA:
-                return handler.setGrpcReceiveTrailerMetaData(map);
-        }
-        return WasmResult.NOT_FOUND;
     }
 
     /**

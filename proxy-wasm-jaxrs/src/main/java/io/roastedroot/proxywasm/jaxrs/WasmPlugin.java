@@ -3,39 +3,31 @@ package io.roastedroot.proxywasm.jaxrs;
 import com.dylibso.chicory.runtime.ImportMemory;
 import com.dylibso.chicory.runtime.Instance;
 import com.dylibso.chicory.wasm.WasmModule;
-import io.roastedroot.proxywasm.HttpContext;
 import io.roastedroot.proxywasm.ProxyWasm;
 import io.roastedroot.proxywasm.StartException;
 import java.util.Objects;
 
 public class WasmPlugin {
 
-    private final String name;
     private final ProxyWasm proxyWasm;
-    private final JaxrsHandler handler;
+    private final PluginHandler handler;
 
-    public WasmPlugin(String name, ProxyWasm proxyWasm, JaxrsHandler handler) {
-        Objects.requireNonNull(name);
+    public WasmPlugin(ProxyWasm proxyWasm, PluginHandler handler) {
         Objects.requireNonNull(proxyWasm);
         Objects.requireNonNull(handler);
-        this.name = name;
         this.proxyWasm = proxyWasm;
         this.handler = handler;
     }
 
     public String name() {
-        return name;
+        return handler.getName();
     }
 
     ProxyWasm proxyWasm() {
         return proxyWasm;
     }
 
-    HttpContext createHttpContext() {
-        return proxyWasm.createHttpContext(this.handler);
-    }
-
-    JaxrsHandler handler() {
+    PluginHandler pluginHandler() {
         return handler;
     }
 
@@ -45,12 +37,11 @@ public class WasmPlugin {
 
     public static class Builder implements Cloneable {
 
-        JaxrsHandler handler = new JaxrsHandler();
-        String name = "default";
+        PluginHandler handler = new PluginHandler();
         ProxyWasm.Builder proxyWasmBuilder = ProxyWasm.builder().withPluginHandler(handler);
 
         public WasmPlugin.Builder withName(String name) {
-            this.name = name;
+            this.handler.name = name;
             return this;
         }
 
@@ -92,7 +83,7 @@ public class WasmPlugin {
         }
 
         public WasmPlugin build(ProxyWasm proxyWasm) throws StartException {
-            return new WasmPlugin(name, proxyWasm, handler);
+            return new WasmPlugin(proxyWasm, handler);
         }
     }
 }
