@@ -16,11 +16,19 @@ public class App {
 
     @Produces
     public WasmPluginFactory createFoo() throws StartException {
-        return () -> WasmPlugin.builder().withName("foo").build(httpHeadersModule);
+        return () ->
+                WasmPlugin.builder()
+                        .withName("foo")
+                        .withPluginConfig("{\"header\": \"x-wasm-header\", \"value\": \"foo\"}")
+                        .build(httpHeadersModule);
     }
 
     @Produces
     public WasmPluginFactory createBar() throws StartException {
-        return () -> WasmPlugin.builder().withName("bar").build(httpHeadersModule);
+        return () ->
+                WasmPlugin.builder()
+                        .withName("bar")
+                        .withPluginConfig("{\"header\": \"x-wasm-header\", \"value\": \"bar\"}")
+                        .build(httpHeadersModule);
     }
 }
