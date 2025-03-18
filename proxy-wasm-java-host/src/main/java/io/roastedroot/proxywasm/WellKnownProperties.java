@@ -2,6 +2,11 @@ package io.roastedroot.proxywasm;
 
 import java.util.List;
 
+/**
+ * Holds constants for the well-known properties defined by the Proxy-Wasm ABI.
+ *
+ * see: <a href="https://github.com/proxy-wasm/spec/tree/main/abi-versions/v0.1.0#well-known-properties">spec</a>
+ */
 public final class WellKnownProperties {
     private WellKnownProperties() {}
 

@@ -26,12 +26,30 @@
   </dependencyManagement>
 
   <dependencies>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-arc</artifactId>
+      <optional>true</optional>
+    </dependency>
 
     <dependency>
       <groupId>io.roastedroot</groupId>
       <artifactId>proxy-wasm-java-host</artifactId>
       <version>1.0-SNAPSHOT</version>
     </dependency>
+
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-core</artifactId>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>jakarta.servlet</groupId>
+      <artifactId>jakarta.servlet-api</artifactId>
+      <optional>true</optional>
+    </dependency>
+
+    <!-- Depend on a minimal set of jakarta/jaxrs apis -->
     <dependency>
       <groupId>jakarta.enterprise</groupId>
       <artifactId>jakarta.enterprise.cdi-api</artifactId>
@@ -42,8 +60,6 @@
       <artifactId>jakarta.inject-api</artifactId>
       <scope>provided</scope>
     </dependency>
-
-    <!-- Depend on a minimal set of jakarta/jaxrs apis -->
     <dependency>
       <groupId>jakarta.ws.rs</groupId>
       <artifactId>jakarta.ws.rs-api</artifactId>
@@ -51,11 +67,6 @@
     </dependency>
 
     <!-- Let's test with Quarkus -->
-    <dependency>
-      <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-arc</artifactId>
-      <scope>test</scope>
-    </dependency>
     <dependency>
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-junit5</artifactId>

@@ -1,6 +1,7 @@
 package io.roastedroot.proxywasm.jaxrs;
 
 import io.roastedroot.proxywasm.StartException;
+import io.roastedroot.proxywasm.jaxrs.spi.HttpServer;
 import jakarta.enterprise.inject.Any;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
@@ -14,6 +15,8 @@ import java.util.HashMap;
 public class WasmPluginFeature implements DynamicFeature {
 
     private HashMap<String, WasmPluginFactory> plugins = new HashMap<>();
+
+    @Inject @Any Instance<HttpServer> requestAdaptor;
 
     @Inject
     public WasmPluginFeature(@Any Instance<WasmPluginFactory> factories) throws StartException {
@@ -41,7 +44,7 @@ public class WasmPluginFeature implements DynamicFeature {
             if (pluignNameAnnotation != null) {
                 WasmPluginFactory factory = plugins.get(pluignNameAnnotation.value());
                 if (factory != null) {
-                    context.register(new ProxyWasmFilter(factory));
+                    context.register(new ProxyWasmFilter(factory, requestAdaptor));
                 }
             }
         }

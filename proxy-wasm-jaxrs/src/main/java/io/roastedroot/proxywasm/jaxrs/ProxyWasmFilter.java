@@ -3,6 +3,8 @@ package io.roastedroot.proxywasm.jaxrs;
 import io.roastedroot.proxywasm.Action;
 import io.roastedroot.proxywasm.HttpContext;
 import io.roastedroot.proxywasm.StartException;
+import io.roastedroot.proxywasm.jaxrs.spi.HttpServer;
+import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.container.ContainerRequestContext;
@@ -28,9 +30,12 @@ public class ProxyWasmFilter
 
     private final WasmPluginFactory pluginFactory;
 
+    Instance<HttpServer> httpServer;
+
     @Inject
-    public ProxyWasmFilter(WasmPluginFactory pluginFactory) {
+    public ProxyWasmFilter(WasmPluginFactory pluginFactory, Instance<HttpServer> httpServer) {
         this.pluginFactory = pluginFactory;
+        this.httpServer = httpServer;
     }
 
     // TODO: the HttpContext and ProxyWasm object's should be closed once the request is done.
@@ -40,9 +45,9 @@ public class ProxyWasmFilter
         final HttpHandler handler;
         final HttpContext wasm;
 
-        public WasmHttpFilterContext(WasmPlugin plugin) {
+        public WasmHttpFilterContext(WasmPlugin plugin, HttpServer httpServer) {
             this.pluginHandler = plugin.pluginHandler();
-            this.handler = new HttpHandler(plugin.pluginHandler());
+            this.handler = new HttpHandler(plugin.pluginHandler(), httpServer);
             this.wasm = plugin.proxyWasm().createHttpContext(this.handler);
         }
     }
@@ -58,7 +63,7 @@ public class ProxyWasmFilter
                     Response.status(Response.Status.INTERNAL_SERVER_ERROR).build());
         }
 
-        var wasmHttpFilterContext = new WasmHttpFilterContext(plugin);
+        var wasmHttpFilterContext = new WasmHttpFilterContext(plugin, this.httpServer.get());
         requestContext.setProperty(FILTER_CONTEXT_PROPERTY_NAME, wasmHttpFilterContext);
 
         // the plugin may not be interested in the request headers.
