@@ -6,17 +6,20 @@ import com.dylibso.chicory.wasm.WasmModule;
 import io.roastedroot.proxywasm.ProxyWasm;
 import io.roastedroot.proxywasm.StartException;
 import java.util.Objects;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class WasmPlugin {
 
     private final ProxyWasm proxyWasm;
     private final PluginHandler handler;
+    private final ReentrantLock lock;
 
-    public WasmPlugin(ProxyWasm proxyWasm, PluginHandler handler) {
+    private WasmPlugin(ProxyWasm proxyWasm, PluginHandler handler, boolean shared) {
         Objects.requireNonNull(proxyWasm);
         Objects.requireNonNull(handler);
         this.proxyWasm = proxyWasm;
         this.handler = handler;
+        this.lock = shared ? new ReentrantLock() : null;
     }
 
     public String name() {
@@ -35,13 +38,37 @@ public class WasmPlugin {
         return new WasmPlugin.Builder();
     }
 
+    public void lock() {
+        if (lock == null) {
+            return;
+        }
+        lock.lock();
+    }
+
+    public void unlock() {
+        if (lock == null) {
+            return;
+        }
+        lock.unlock();
+    }
+
+    public boolean isShared() {
+        return lock != null;
+    }
+
     public static class Builder implements Cloneable {
 
-        PluginHandler handler = new PluginHandler();
-        ProxyWasm.Builder proxyWasmBuilder = ProxyWasm.builder().withPluginHandler(handler);
+        private PluginHandler handler = new PluginHandler();
+        private ProxyWasm.Builder proxyWasmBuilder = ProxyWasm.builder().withPluginHandler(handler);
+        private boolean shared;
 
         public WasmPlugin.Builder withName(String name) {
             this.handler.name = name;
+            return this;
+        }
+
+        public WasmPlugin.Builder withVmConfig(boolean shared) {
+            this.shared = shared;
             return this;
         }
 
@@ -83,7 +110,7 @@ public class WasmPlugin {
         }
 
         public WasmPlugin build(ProxyWasm proxyWasm) throws StartException {
-            return new WasmPlugin(proxyWasm, handler);
+            return new WasmPlugin(proxyWasm, handler, shared);
         }
     }
 }
