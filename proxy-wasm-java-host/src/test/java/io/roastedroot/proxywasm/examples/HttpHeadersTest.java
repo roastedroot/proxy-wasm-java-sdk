@@ -75,6 +75,7 @@ public class HttpHeadersTest {
                             "key1", "value1",
                             "key2", "value2",
                             "x-proxy-wasm-go-sdk-example", "http_headers",
+                            "x-proxy-wasm-counter", "1",
                             "x-wasm-header", "x-value"),
                     handler.getHttpResponseHeaders());
 
@@ -85,6 +86,7 @@ public class HttpHeadersTest {
                     "response header <-- key1: value1",
                     "adding header: x-wasm-header=x-value",
                     "response header <-- x-wasm-header: x-value",
+                    "response header <-- x-proxy-wasm-counter: 1",
                     "response header <-- x-proxy-wasm-go-sdk-example: http_headers");
         }
     }

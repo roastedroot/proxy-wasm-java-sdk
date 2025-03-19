@@ -14,7 +14,7 @@ import java.util.HashMap;
 @Provider
 public class WasmPluginFeature implements DynamicFeature {
 
-    private HashMap<String, WasmPluginFactory> plugins = new HashMap<>();
+    private HashMap<String, WasmPluginPool> plugins = new HashMap<>();
 
     @Inject @Any Instance<HttpServer> requestAdaptor;
 
@@ -22,10 +22,15 @@ public class WasmPluginFeature implements DynamicFeature {
     public WasmPluginFeature(@Any Instance<WasmPluginFactory> factories) throws StartException {
         for (var factory : factories) {
             var plugin = factory.create();
-            if (this.plugins.containsKey(plugin.name())) {
-                throw new IllegalArgumentException("Duplicate wasm plugin name: " + plugin.name());
+            String name = plugin.name();
+            if (this.plugins.containsKey(name)) {
+                throw new IllegalArgumentException("Duplicate wasm plugin name: " + name);
             }
-            this.plugins.put(plugin.name(), factory);
+            WasmPluginPool pool =
+                    plugin.isShared()
+                            ? new WasmPluginPool.AppScoped(plugin)
+                            : new WasmPluginPool.RequestScoped(factory, plugin);
+            this.plugins.put(name, pool);
         }
     }
 
@@ -42,7 +47,7 @@ public class WasmPluginFeature implements DynamicFeature {
                         resourceInfo.getResourceClass().getAnnotation(NamedWasmPlugin.class);
             }
             if (pluignNameAnnotation != null) {
-                WasmPluginFactory factory = plugins.get(pluignNameAnnotation.value());
+                WasmPluginPool factory = plugins.get(pluignNameAnnotation.value());
                 if (factory != null) {
                     context.register(new ProxyWasmFilter(factory, requestAdaptor));
                 }
