@@ -1,5 +1,12 @@
 package io.roastedroot.proxywasm;
 
+import static io.roastedroot.proxywasm.Helpers.bytes;
+import static io.roastedroot.proxywasm.Helpers.len;
+
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Map;
 
 public interface ProxyMap {
@@ -33,4 +40,39 @@ public interface ProxyMap {
     String get(String key);
 
     void remove(String key);
+
+    /**
+     * Encode the map into a byte array.
+     */
+    default byte[] encode() {
+        try {
+            var baos = new ByteArrayOutputStream();
+            var o = new DataOutputStream(baos);
+            // Write header size (number of entries)
+            int mapSize = this.size();
+            o.writeInt(mapSize);
+
+            // write all the key / value sizes.
+            ArrayList<Map.Entry<byte[], byte[]>> entries = new ArrayList<>(this.size());
+            for (var entry : this.entries()) {
+                var encoded = Map.entry(bytes(entry.getKey()), bytes(entry.getValue()));
+                entries.add(encoded);
+                o.writeInt(len(encoded.getKey()));
+                o.writeInt(len(encoded.getValue()));
+            }
+
+            // write all the key / values
+            for (var entry : entries) {
+                o.write(entry.getKey());
+                o.write(0);
+                o.write(entry.getValue());
+                o.write(0);
+            }
+            o.close();
+            return baos.toByteArray();
+        } catch (IOException e) {
+            // this should never happen since we are not really doing IO
+            throw new RuntimeException(e);
+        }
+    }
 }
