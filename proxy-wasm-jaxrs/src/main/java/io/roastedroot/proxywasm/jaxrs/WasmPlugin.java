@@ -60,14 +60,14 @@ public class WasmPlugin {
 
         private PluginHandler handler = new PluginHandler();
         private ProxyWasm.Builder proxyWasmBuilder = ProxyWasm.builder().withPluginHandler(handler);
-        private boolean shared;
+        private boolean shared = true;
 
         public WasmPlugin.Builder withName(String name) {
             this.handler.name = name;
             return this;
         }
 
-        public WasmPlugin.Builder withVmConfig(boolean shared) {
+        public WasmPlugin.Builder withShared(boolean shared) {
             this.shared = shared;
             return this;
         }

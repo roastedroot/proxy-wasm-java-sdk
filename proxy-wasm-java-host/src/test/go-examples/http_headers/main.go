@@ -50,14 +50,16 @@ type pluginContext struct {
 	// plugin configuration during OnPluginStart.
 	headerName  string
 	headerValue string
+	counter     int
 }
 
 // NewHttpContext implements types.PluginContext.
 func (p *pluginContext) NewHttpContext(contextID uint32) types.HttpContext {
 	return &httpHeaders{
-		contextID:   contextID,
-		headerName:  p.headerName,
-		headerValue: p.headerValue,
+		contextID:     contextID,
+		pluginContext: p,
+		headerName:    p.headerName,
+		headerValue:   p.headerValue,
 	}
 }
 
@@ -97,10 +99,10 @@ type httpHeaders struct {
 	// Embed the default http context here,
 	// so that we don't need to reimplement all the methods.
 	types.DefaultHttpContext
-	contextID   uint32
-	headerName  string
-	headerValue string
-	counter     int
+	contextID     uint32
+	headerName    string
+	headerValue   string
+	pluginContext *pluginContext
 }
 
 // OnHttpRequestHeaders implements types.HttpContext.
@@ -130,8 +132,8 @@ func (ctx *httpHeaders) OnHttpResponseHeaders(_ int, _ bool) types.Action {
 		proxywasm.LogCriticalf("failed to set response constant header: %v", err)
 	}
 
-	ctx.counter++
-	if err := proxywasm.AddHttpResponseHeader("x-proxy-wasm-counter", fmt.Sprintf("%d", ctx.counter)); err != nil {
+	ctx.pluginContext.counter++
+	if err := proxywasm.AddHttpResponseHeader("x-proxy-wasm-counter", fmt.Sprintf("%d", ctx.pluginContext.counter)); err != nil {
 		proxywasm.LogCriticalf("failed to set response counter header: %v", err)
 	}
 
