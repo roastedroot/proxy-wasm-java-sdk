@@ -266,6 +266,12 @@ class HttpHandler extends ChainedHandler {
         return senthttpResponse;
     }
 
+    public HttpResponse consumeSentHttpResponse() {
+        var result = senthttpResponse;
+        senthttpResponse = null;
+        return result;
+    }
+
     private Action action;
 
     @Override

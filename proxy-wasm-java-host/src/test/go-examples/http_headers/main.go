@@ -15,6 +15,7 @@
 package main
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/proxy-wasm/proxy-wasm-go-sdk/proxywasm"
@@ -99,6 +100,7 @@ type httpHeaders struct {
 	contextID   uint32
 	headerName  string
 	headerValue string
+	counter     int
 }
 
 // OnHttpRequestHeaders implements types.HttpContext.
@@ -126,6 +128,11 @@ func (ctx *httpHeaders) OnHttpResponseHeaders(_ int, _ bool) types.Action {
 	// Add a hardcoded header
 	if err := proxywasm.AddHttpResponseHeader("x-proxy-wasm-go-sdk-example", "http_headers"); err != nil {
 		proxywasm.LogCriticalf("failed to set response constant header: %v", err)
+	}
+
+	ctx.counter++
+	if err := proxywasm.AddHttpResponseHeader("x-proxy-wasm-counter", fmt.Sprintf("%d", ctx.counter)); err != nil {
+		proxywasm.LogCriticalf("failed to set response counter header: %v", err)
 	}
 
 	// Add the header passed by arguments

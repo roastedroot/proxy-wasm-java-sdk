@@ -28,27 +28,29 @@ public class ProxyWasmFilter
                 ContainerResponseFilter {
     private static final String FILTER_CONTEXT_PROPERTY_NAME = "WasmHttpFilterContext";
 
-    private final WasmPluginFactory pluginFactory;
+    private final WasmPluginPool pluginPool;
 
     Instance<HttpServer> httpServer;
 
     @Inject
-    public ProxyWasmFilter(WasmPluginFactory pluginFactory, Instance<HttpServer> httpServer) {
-        this.pluginFactory = pluginFactory;
+    public ProxyWasmFilter(WasmPluginPool pluginPool, Instance<HttpServer> httpServer) {
+        this.pluginPool = pluginPool;
         this.httpServer = httpServer;
     }
 
     // TODO: the HttpContext and ProxyWasm object's should be closed once the request is done.
     //       is there an easy way to hook up cleanup code for this?
     static class WasmHttpFilterContext {
+        final WasmPlugin plugin;
         final PluginHandler pluginHandler;
-        final HttpHandler handler;
-        final HttpContext wasm;
+        final HttpHandler httpHandler;
+        final HttpContext httpContext;
 
         public WasmHttpFilterContext(WasmPlugin plugin, HttpServer httpServer) {
+            this.plugin = plugin;
             this.pluginHandler = plugin.pluginHandler();
-            this.handler = new HttpHandler(plugin.pluginHandler(), httpServer);
-            this.wasm = plugin.proxyWasm().createHttpContext(this.handler);
+            this.httpHandler = new HttpHandler(plugin.pluginHandler(), httpServer);
+            this.httpContext = plugin.proxyWasm().createHttpContext(this.httpHandler);
         }
     }
 
@@ -57,31 +59,34 @@ public class ProxyWasmFilter
 
         WasmPlugin plugin = null;
         try {
-            plugin = pluginFactory.create();
+            plugin = pluginPool.borrow();
+            plugin.lock();
+
+            var ctx = new WasmHttpFilterContext(plugin, this.httpServer.get());
+            requestContext.setProperty(FILTER_CONTEXT_PROPERTY_NAME, ctx);
+
+            // the plugin may not be interested in the request headers.
+            if (ctx.httpContext.hasOnRequestHeaders()) {
+
+                ctx.httpHandler.setRequestContext(requestContext);
+                var action = ctx.httpContext.callOnRequestHeaders(false);
+                if (action == Action.CONTINUE) {
+                    // continue means plugin is done reading the headers.
+                    ctx.httpHandler.setRequestContext(null);
+                }
+
+                // does the plugin want to respond early?
+                HttpHandler.HttpResponse sendResponse = ctx.httpHandler.consumeSentHttpResponse();
+                if (sendResponse != null) {
+                    requestContext.abortWith(sendResponse.toResponse());
+                }
+            }
+
         } catch (StartException e) {
             requestContext.abortWith(
                     Response.status(Response.Status.INTERNAL_SERVER_ERROR).build());
-        }
-
-        var wasmHttpFilterContext = new WasmHttpFilterContext(plugin, this.httpServer.get());
-        requestContext.setProperty(FILTER_CONTEXT_PROPERTY_NAME, wasmHttpFilterContext);
-
-        // the plugin may not be interested in the request headers.
-        if (wasmHttpFilterContext.wasm.hasOnRequestHeaders()) {
-
-            wasmHttpFilterContext.handler.setRequestContext(requestContext);
-            var action = wasmHttpFilterContext.wasm.callOnRequestHeaders(false);
-            if (action == Action.CONTINUE) {
-                // continue means plugin is done reading the headers.
-                wasmHttpFilterContext.handler.setRequestContext(null);
-            }
-
-            // does the plugin want to respond early?
-            HttpHandler.HttpResponse sendResponse =
-                    wasmHttpFilterContext.handler.getSentHttpResponse();
-            if (sendResponse != null) {
-                requestContext.abortWith(sendResponse.toResponse());
-            }
+        } finally {
+            plugin.unlock(); // allow another request to use the plugin.
         }
     }
 
@@ -97,27 +102,36 @@ public class ProxyWasmFilter
         }
 
         // the plugin may not be interested in the request body.
-        if (wasmHttpFilterContext.wasm.hasOnRequestBody()) {
+        if (wasmHttpFilterContext.httpContext.hasOnRequestBody()) {
             // TODO: find out if it's more efficient to read the body in chunks and do multiple
             // callOnRequestBody calls.
             byte[] bytes = ctx.getInputStream().readAllBytes();
-            wasmHttpFilterContext.handler.setHttpRequestBody(bytes);
-            var action = wasmHttpFilterContext.wasm.callOnRequestBody(true);
-            bytes = wasmHttpFilterContext.handler.getHttpRequestBody();
-            if (action == Action.CONTINUE) {
-                // continue means plugin is done reading the body.
-                wasmHttpFilterContext.handler.setHttpRequestBody(null);
-            }
 
-            // TODO: find out more details about what to do here in a PAUSE condition.
-            //       does it mean that we park the request here and wait for another event like
-            //       tick to resume us before forwarding to the next filter?
+            try {
+                // we are about to call into the plugin which may mutate the plugin state..
+                wasmHttpFilterContext.plugin.lock();
 
-            // does the plugin want to respond early?
-            HttpHandler.HttpResponse sendResponse =
-                    wasmHttpFilterContext.handler.getSentHttpResponse();
-            if (sendResponse != null) {
-                throw new WebApplicationException(sendResponse.toResponse());
+                wasmHttpFilterContext.httpHandler.setHttpRequestBody(bytes);
+                var action = wasmHttpFilterContext.httpContext.callOnRequestBody(true);
+                bytes = wasmHttpFilterContext.httpHandler.getHttpRequestBody();
+                if (action == Action.CONTINUE) {
+                    // continue means plugin is done reading the body.
+                    wasmHttpFilterContext.httpHandler.setHttpRequestBody(null);
+                }
+
+                // TODO: find out more details about what to do here in a PAUSE condition.
+                //       does it mean that we park the request here and wait for another event like
+                //       tick to resume us before forwarding to the next filter?
+
+                // does the plugin want to respond early?
+                HttpHandler.HttpResponse sendResponse =
+                        wasmHttpFilterContext.httpHandler.getSentHttpResponse();
+                if (sendResponse != null) {
+                    throw new WebApplicationException(sendResponse.toResponse());
+                }
+            } finally {
+                // allow other request to use the plugin.
+                wasmHttpFilterContext.plugin.unlock();
             }
 
             // plugin may have modified the body
@@ -138,20 +152,26 @@ public class ProxyWasmFilter
         }
 
         // the plugin may not be interested in the request headers.
-        if (wasmHttpFilterContext.wasm.hasOnResponseHeaders()) {
+        if (wasmHttpFilterContext.httpContext.hasOnResponseHeaders()) {
+            try {
+                wasmHttpFilterContext.plugin.lock();
 
-            wasmHttpFilterContext.handler.setResponseContext(responseContext);
-            var action = wasmHttpFilterContext.wasm.callOnResponseHeaders(false);
-            if (action == Action.CONTINUE) {
-                // continue means plugin is done reading the headers.
-                wasmHttpFilterContext.handler.setResponseContext(null);
-            }
+                wasmHttpFilterContext.httpHandler.setResponseContext(responseContext);
+                var action = wasmHttpFilterContext.httpContext.callOnResponseHeaders(false);
+                if (action == Action.CONTINUE) {
+                    // continue means plugin is done reading the headers.
+                    wasmHttpFilterContext.httpHandler.setResponseContext(null);
+                }
 
-            // does the plugin want to respond early?
-            HttpHandler.HttpResponse sendResponse =
-                    wasmHttpFilterContext.handler.getSentHttpResponse();
-            if (sendResponse != null) {
-                requestContext.abortWith(sendResponse.toResponse());
+                // does the plugin want to respond early?
+                HttpHandler.HttpResponse sendResponse =
+                        wasmHttpFilterContext.httpHandler.getSentHttpResponse();
+                if (sendResponse != null) {
+                    requestContext.abortWith(sendResponse.toResponse());
+                }
+            } finally {
+                // allow other request to use the plugin.
+                wasmHttpFilterContext.plugin.unlock();
             }
         }
     }
@@ -166,52 +186,63 @@ public class ProxyWasmFilter
                     Response.status(Response.Status.INTERNAL_SERVER_ERROR).build());
         }
 
-        // the plugin may not be interested in the request body.
-        if (wasmHttpFilterContext.wasm.hasOnResponseBody()) {
+        try {
 
-            var original = ctx.getOutputStream();
-            ctx.setOutputStream(
-                    new ByteArrayOutputStream() {
-                        @Override
-                        public void close() throws IOException {
-                            super.close();
+            // the plugin may not be interested in the request body.
+            if (wasmHttpFilterContext.httpContext.hasOnResponseBody()) {
+                var original = ctx.getOutputStream();
+                ctx.setOutputStream(
+                        new ByteArrayOutputStream() {
+                            boolean closed = false;
 
-                            // TODO: find out if it's more efficient to read the body in chunks and
-                            // do
-                            //  multiple callOnRequestBody calls.
+                            @Override
+                            public void close() throws IOException {
+                                if (closed) {
+                                    return;
+                                }
+                                closed = true;
+                                super.close();
 
-                            byte[] bytes = this.toByteArray();
-                            wasmHttpFilterContext.handler.setHttpResponseBody(bytes);
-                            var action = wasmHttpFilterContext.wasm.callOnResponseBody(true);
-                            bytes = wasmHttpFilterContext.handler.getHttpResponseBody();
-                            if (action == Action.CONTINUE) {
-                                // continue means plugin is done reading the body.
-                                wasmHttpFilterContext.handler.setHttpResponseBody(null);
+                                // TODO: find out if it's more efficient to read the body in chunks
+                                // and
+                                // do
+                                //  multiple callOnRequestBody calls.
+
+                                byte[] bytes = this.toByteArray();
+
+                                wasmHttpFilterContext.plugin.lock();
+
+                                wasmHttpFilterContext.httpHandler.setHttpResponseBody(bytes);
+                                var action =
+                                        wasmHttpFilterContext.httpContext.callOnResponseBody(false);
+                                bytes = wasmHttpFilterContext.httpHandler.getHttpResponseBody();
+                                if (action == Action.CONTINUE) {
+                                    // continue means plugin is done reading the body.
+                                    wasmHttpFilterContext.httpHandler.setHttpResponseBody(null);
+                                }
+
+                                // does the plugin want to respond early?
+                                HttpHandler.HttpResponse sendResponse =
+                                        wasmHttpFilterContext.httpHandler.getSentHttpResponse();
+                                if (sendResponse != null) {
+                                    throw new WebApplicationException(sendResponse.toResponse());
+                                }
+
+                                // plugin may have modified the body
+                                original.write(bytes);
+                                original.close();
                             }
+                        });
+            }
 
-                            // does the plugin want to respond early?
-                            HttpHandler.HttpResponse sendResponse =
-                                    wasmHttpFilterContext.handler.getSentHttpResponse();
-                            if (sendResponse != null) {
-                                throw new WebApplicationException(sendResponse.toResponse());
-                            }
+            ctx.proceed();
+        } finally {
+            // allow other request to use the plugin.
+            wasmHttpFilterContext.httpContext.close();
+            wasmHttpFilterContext.plugin.unlock();
 
-                            // plugin may have modified the body
-                            original.write(bytes);
-                            original.close();
-
-                            // clean up...
-                            //                            wasmHttpFilterContext.wasm.close();
-                            //
-                            // wasmHttpFilterContext.wasm.getProxyWasm().close();
-                        }
-                    });
-        } else {
-            // clean up...
-            //            wasmHttpFilterContext.wasm.close();
-            //            wasmHttpFilterContext.wasm.getProxyWasm().close();
+            // TODO: will aroundWriteTo always get called so that we can avoid leaking the plugin?
+            this.pluginPool.release(wasmHttpFilterContext.plugin);
         }
-
-        ctx.proceed();
     }
 }
