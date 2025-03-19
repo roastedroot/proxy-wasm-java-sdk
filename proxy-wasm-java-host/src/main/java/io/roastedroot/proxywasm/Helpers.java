@@ -2,8 +2,10 @@ package io.roastedroot.proxywasm;
 
 import com.dylibso.chicory.runtime.HostFunction;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -26,6 +28,37 @@ public final class Helpers {
 
     public static byte[] bytes(String value) {
         return value.getBytes(StandardCharsets.UTF_8);
+    }
+
+    public static byte[] bytes(Date value) {
+        // encode using
+        // https://protobuf.dev/reference/protobuf/google.protobuf/#timestamp
+        var instant = value.toInstant();
+        var rfc3339String = instant.toString();
+        return bytes(rfc3339String);
+    }
+
+    public static byte[] bytes(Duration value) {
+        // encode using
+        // https://protobuf.dev/reference/protobuf/google.protobuf/#duration
+        return bytes(String.format("%d.%09d", value.getSeconds(), value.getNano()));
+    }
+
+    public static byte[] bytes(int value) {
+        // TODO: test to check byte order
+        return new byte[] {
+            (byte) (value >> 24), (byte) (value >> 16), (byte) (value >> 8), (byte) value
+        };
+    }
+
+    public static int int32(byte[] bytes) {
+        if (bytes == null || bytes.length != 4) {
+            throw new IllegalArgumentException("Byte array must be exactly 4 bytes long");
+        }
+        return ((bytes[0] & 0xFF) << 24)
+                | ((bytes[1] & 0xFF) << 16)
+                | ((bytes[2] & 0xFF) << 8)
+                | (bytes[3] & 0xFF);
     }
 
     public static String string(byte[] value) {
@@ -143,4 +176,6 @@ public final class Helpers {
 
         return result;
     }
+
+    static final int U32_LEN = 4;
 }
