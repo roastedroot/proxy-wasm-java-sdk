@@ -2,7 +2,6 @@ package io.roastedroot.proxywasm.jaxrs;
 
 import static io.restassured.RestAssured.given;
 import static io.roastedroot.proxywasm.jaxrs.TestHelpers.EXAMPLES_DIR;
-import static org.hamcrest.Matchers.equalTo;
 
 import com.dylibso.chicory.wasm.Parser;
 import io.quarkus.test.junit.QuarkusTest;
@@ -12,14 +11,14 @@ import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 
 @QuarkusTest
-public class HttpHeadersTest {
+public class HttpHeadersNotSharedTest {
 
     @Produces
     public WasmPluginFactory create() throws StartException {
         return () ->
                 WasmPlugin.builder()
-                        .withName("httpHeaders")
-                        .withShared(true)
+                        .withName("notSharedHttpHeaders")
+                        .withShared(false)
                         .withPluginConfig("{\"header\": \"x-wasm-header\", \"value\": \"foo\"}")
                         .build(
                                 Parser.parse(
@@ -30,22 +29,19 @@ public class HttpHeadersTest {
 
     @Test
     public void testRequest() {
+
+        // since the plugin is not shared, the counter should not increment since each request gets
+        // a new plugin instance.
         given().when()
-                .get("/test/httpHeaders")
+                .get("/test/notSharedHttpHeaders")
                 .then()
                 .statusCode(200)
-                .header("x-proxy-wasm-go-sdk-example", "http_headers")
-                .header("x-wasm-header", "foo")
-                .header("x-proxy-wasm-counter", "1")
-                .body(equalTo("hello world"));
+                .header("x-proxy-wasm-counter", "1");
 
         given().when()
-                .get("/test/httpHeaders")
+                .get("/test/notSharedHttpHeaders")
                 .then()
                 .statusCode(200)
-                .header("x-proxy-wasm-go-sdk-example", "http_headers")
-                .header("x-wasm-header", "foo")
-                .header("x-proxy-wasm-counter", "2")
-                .body(equalTo("hello world"));
+                .header("x-proxy-wasm-counter", "1");
     }
 }
