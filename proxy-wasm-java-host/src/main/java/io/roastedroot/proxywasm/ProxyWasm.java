@@ -36,7 +36,6 @@ public final class ProxyWasm implements Closeable {
     private ProxyMap httpCallResponseHeaders;
     private ProxyMap httpCallResponseTrailers;
     private byte[] httpCallResponseBody;
-    private HashMap<String, ForeignFunction> foreignFunctions = new HashMap<>();
 
     private ProxyWasm(Builder other) throws StartException {
         this.vmConfig = other.vmConfig;
@@ -53,7 +52,16 @@ public final class ProxyWasm implements Closeable {
             this.abi.start();
         }
 
-        // start the vm with the vmHandler, it will receive stuff like log messages.
+        if (other.start) {
+            start();
+        }
+    }
+
+    public void start() throws StartException {
+        if (pluginContext != null) {
+            throw new IllegalStateException("already started");
+        }
+
         this.pluginContext = new PluginContext(this, pluginHandler);
         registerContext(pluginContext, 0);
         if (!this.abi.proxyOnVmStart(pluginContext.id(), vmConfig.length)) {
@@ -118,15 +126,6 @@ public final class ProxyWasm implements Closeable {
             public byte[] getHttpCallResponseBody() {
                 return httpCallResponseBody;
             }
-
-            @Override
-            public byte[] callForeignFunction(String name, byte[] bytes) throws WasmException {
-                ForeignFunction func = foreignFunctions.get(name);
-                if (func == null) {
-                    throw new WasmException(WasmResult.NOT_FOUND);
-                }
-                return func.apply(bytes);
-            }
         };
     }
 
@@ -175,6 +174,9 @@ public final class ProxyWasm implements Closeable {
 
     @Override
     public void close() {
+        if (this.pluginContext == null) {
+            return;
+        }
         this.pluginContext.close();
         if (wasi != null) {
             wasi.close();
@@ -214,10 +216,6 @@ public final class ProxyWasm implements Closeable {
         return pluginContext.id();
     }
 
-    public void registerForeignFunction(String name, ForeignFunction func) {
-        foreignFunctions.put(name, func);
-    }
-
     ABI abi() {
         return abi;
     }
@@ -232,6 +230,7 @@ public final class ProxyWasm implements Closeable {
         private Handler pluginHandler;
         private ImportMemory memory;
         private WasiOptions wasiOptions;
+        private boolean start = true;
 
         @Override
         @SuppressWarnings("NoClone")
@@ -245,6 +244,11 @@ public final class ProxyWasm implements Closeable {
 
         public HostFunction[] toHostFunctions() {
             return ABI_ModuleFactory.toHostFunctions(abi);
+        }
+
+        public Builder withStart(boolean start) {
+            this.start = start;
+            return this;
         }
 
         public ProxyWasm.Builder withVmConfig(byte[] vmConfig) {

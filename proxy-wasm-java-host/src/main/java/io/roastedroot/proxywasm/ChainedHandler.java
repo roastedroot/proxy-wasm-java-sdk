@@ -227,8 +227,8 @@ public abstract class ChainedHandler implements Handler {
     }
 
     @Override
-    public byte[] callForeignFunction(String name, byte[] bytes) throws WasmException {
-        return next().callForeignFunction(name, bytes);
+    public ForeignFunction getForeignFunction(String name) {
+        return next().getForeignFunction(name);
     }
 
     @Override

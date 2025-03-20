@@ -26,7 +26,7 @@ public class ForeignCallOnTickTest {
         try (var host = builder.build(module)) {
             assertEquals(tickMilliseconds, handler.getTickPeriodMilliseconds());
 
-            host.registerForeignFunction("compress", data -> data);
+            handler.registerForeignFunction("compress", data -> data);
 
             for (int i = 1; i <= 10; i++) {
                 host.tick(); // call OnTick
