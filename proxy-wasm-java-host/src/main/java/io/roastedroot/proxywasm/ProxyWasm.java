@@ -59,7 +59,7 @@ public final class ProxyWasm implements Closeable {
 
     public void start() throws StartException {
         if (pluginContext != null) {
-            throw new IllegalStateException("already started");
+            return;
         }
 
         this.pluginContext = new PluginContext(this, pluginHandler);

@@ -2,38 +2,25 @@ package io.roastedroot.proxywasm.jaxrs.servlet;
 
 import io.roastedroot.proxywasm.jaxrs.spi.HttpServer;
 import jakarta.annotation.Priority;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Alternative;
-import jakarta.enterprise.inject.Instance;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.ws.rs.core.Context;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 @Alternative
 @Priority(100)
+@ApplicationScoped
 public class ServletHttpServer implements HttpServer {
 
-    private final HttpServletRequest request;
-
-    public ServletHttpServer(@Context Instance<HttpServletRequest> request) {
-        this.request = request.get();
-    }
+    ScheduledExecutorService executorService = Executors.newScheduledThreadPool(1);
 
     @Override
-    public String remoteAddress() {
-        return request.getRemoteAddr();
-    }
-
-    @Override
-    public String remotePort() {
-        return "" + request.getRemotePort();
-    }
-
-    @Override
-    public String localAddress() {
-        return request.getLocalAddr();
-    }
-
-    @Override
-    public String localPort() {
-        return "" + request.getLocalPort();
+    public Runnable scheduleTick(long delay, Runnable task) {
+        var f = executorService.scheduleAtFixedRate(task, delay, delay, TimeUnit.MILLISECONDS);
+        return () -> {
+            ;
+            f.cancel(false);
+        };
     }
 }

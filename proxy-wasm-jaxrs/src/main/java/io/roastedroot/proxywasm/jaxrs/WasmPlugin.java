@@ -6,6 +6,7 @@ import com.dylibso.chicory.wasm.WasmModule;
 import io.roastedroot.proxywasm.ForeignFunction;
 import io.roastedroot.proxywasm.ProxyWasm;
 import io.roastedroot.proxywasm.StartException;
+import io.roastedroot.proxywasm.jaxrs.spi.HttpServer;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -13,28 +14,22 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class WasmPlugin {
 
-    private final ProxyWasm proxyWasm;
-    private final PluginHandler handler;
+    final PluginHandler handler;
     private final ReentrantLock lock;
+    final ProxyWasm wasm;
+    HttpServer httpServer;
 
     private WasmPlugin(ProxyWasm proxyWasm, PluginHandler handler, boolean shared) {
         Objects.requireNonNull(proxyWasm);
         Objects.requireNonNull(handler);
-        this.proxyWasm = proxyWasm;
+        this.wasm = proxyWasm;
         this.handler = handler;
         this.lock = shared ? new ReentrantLock() : null;
+        this.handler.setPlugin(this);
     }
 
     public String name() {
         return handler.getName();
-    }
-
-    ProxyWasm proxyWasm() {
-        return proxyWasm;
-    }
-
-    PluginHandler pluginHandler() {
-        return handler;
     }
 
     public static WasmPlugin.Builder builder() {
@@ -59,10 +54,25 @@ public class WasmPlugin {
         return lock != null;
     }
 
+    public void setHttpServer(HttpServer httpServer) {
+        this.httpServer = httpServer;
+    }
+
+    public void close() {
+        lock();
+        try {
+            wasm.close();
+            handler.close();
+        } finally {
+            unlock();
+        }
+    }
+
     public static class Builder implements Cloneable {
 
         private PluginHandler handler = new PluginHandler();
-        private ProxyWasm.Builder proxyWasmBuilder = ProxyWasm.builder().withPluginHandler(handler);
+        private ProxyWasm.Builder proxyWasmBuilder =
+                ProxyWasm.builder().withPluginHandler(handler).withStart(false);
         private boolean shared = true;
 
         public WasmPlugin.Builder withName(String name) {
@@ -72,6 +82,11 @@ public class WasmPlugin {
 
         public Builder withForeignFunctions(Map<String, ForeignFunction> functions) {
             this.handler.foreignFunctions = new HashMap<>(functions);
+            return this;
+        }
+
+        public Builder withMinTickPeriodMilliseconds(int minTickPeriodMilliseconds) {
+            this.handler.minTickPeriodMilliseconds = minTickPeriodMilliseconds;
             return this;
         }
 
