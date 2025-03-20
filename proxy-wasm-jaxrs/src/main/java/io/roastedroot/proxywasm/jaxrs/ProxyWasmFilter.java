@@ -3,15 +3,13 @@ package io.roastedroot.proxywasm.jaxrs;
 import io.roastedroot.proxywasm.Action;
 import io.roastedroot.proxywasm.HttpContext;
 import io.roastedroot.proxywasm.StartException;
-import io.roastedroot.proxywasm.jaxrs.spi.HttpServer;
+import io.roastedroot.proxywasm.jaxrs.spi.HttpServerRequest;
 import jakarta.enterprise.inject.Instance;
-import jakarta.inject.Inject;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.container.ContainerRequestFilter;
 import jakarta.ws.rs.container.ContainerResponseContext;
 import jakarta.ws.rs.container.ContainerResponseFilter;
-import jakarta.ws.rs.container.PreMatching;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.ReaderInterceptor;
 import jakarta.ws.rs.ext.ReaderInterceptorContext;
@@ -20,7 +18,6 @@ import jakarta.ws.rs.ext.WriterInterceptorContext;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
-@PreMatching
 public class ProxyWasmFilter
         implements ContainerRequestFilter,
                 ReaderInterceptor,
@@ -30,12 +27,15 @@ public class ProxyWasmFilter
 
     private final WasmPluginPool pluginPool;
 
-    Instance<HttpServer> httpServer;
+    Instance<HttpServerRequest> httpServer;
 
-    @Inject
-    public ProxyWasmFilter(WasmPluginPool pluginPool, Instance<HttpServer> httpServer) {
+    public ProxyWasmFilter(WasmPluginPool pluginPool, Instance<HttpServerRequest> httpServer) {
         this.pluginPool = pluginPool;
         this.httpServer = httpServer;
+    }
+
+    String name() {
+        return pluginPool.name();
     }
 
     // TODO: the HttpContext and ProxyWasm object's should be closed once the request is done.
@@ -46,22 +46,27 @@ public class ProxyWasmFilter
         final HttpHandler httpHandler;
         final HttpContext httpContext;
 
-        public WasmHttpFilterContext(WasmPlugin plugin, HttpServer httpServer) {
+        public WasmHttpFilterContext(WasmPlugin plugin, HttpServerRequest httpServer) {
             this.plugin = plugin;
-            this.pluginHandler = plugin.pluginHandler();
-            this.httpHandler = new HttpHandler(plugin.pluginHandler(), httpServer);
-            this.httpContext = plugin.proxyWasm().createHttpContext(this.httpHandler);
+            this.pluginHandler = plugin.handler;
+            this.httpHandler = new HttpHandler(plugin.handler, httpServer);
+            this.httpContext = plugin.wasm.createHttpContext(this.httpHandler);
         }
     }
 
     @Override
     public void filter(ContainerRequestContext requestContext) throws IOException {
 
-        WasmPlugin plugin = null;
+        WasmPlugin plugin;
         try {
             plugin = pluginPool.borrow();
-            plugin.lock();
+        } catch (StartException e) {
+            requestContext.abortWith(interalServerError());
+            return;
+        }
 
+        plugin.lock();
+        try {
             var ctx = new WasmHttpFilterContext(plugin, this.httpServer.get());
             requestContext.setProperty(FILTER_CONTEXT_PROPERTY_NAME, ctx);
 
@@ -81,13 +86,13 @@ public class ProxyWasmFilter
                     requestContext.abortWith(sendResponse.toResponse());
                 }
             }
-
-        } catch (StartException e) {
-            requestContext.abortWith(
-                    Response.status(Response.Status.INTERNAL_SERVER_ERROR).build());
         } finally {
             plugin.unlock(); // allow another request to use the plugin.
         }
+    }
+
+    private static Response interalServerError() {
+        return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
     }
 
     @Override
@@ -97,8 +102,7 @@ public class ProxyWasmFilter
         var wasmHttpFilterContext =
                 (WasmHttpFilterContext) ctx.getProperty(FILTER_CONTEXT_PROPERTY_NAME);
         if (wasmHttpFilterContext == null) {
-            throw new WebApplicationException(
-                    Response.status(Response.Status.INTERNAL_SERVER_ERROR).build());
+            throw new WebApplicationException(interalServerError());
         }
 
         // the plugin may not be interested in the request body.
@@ -147,8 +151,7 @@ public class ProxyWasmFilter
         var wasmHttpFilterContext =
                 (WasmHttpFilterContext) requestContext.getProperty(FILTER_CONTEXT_PROPERTY_NAME);
         if (wasmHttpFilterContext == null) {
-            throw new WebApplicationException(
-                    Response.status(Response.Status.INTERNAL_SERVER_ERROR).build());
+            throw new WebApplicationException(interalServerError());
         }
 
         // the plugin may not be interested in the request headers.
@@ -182,8 +185,7 @@ public class ProxyWasmFilter
         var wasmHttpFilterContext =
                 (WasmHttpFilterContext) ctx.getProperty(FILTER_CONTEXT_PROPERTY_NAME);
         if (wasmHttpFilterContext == null) {
-            throw new WebApplicationException(
-                    Response.status(Response.Status.INTERNAL_SERVER_ERROR).build());
+            throw new WebApplicationException(interalServerError());
         }
 
         try {

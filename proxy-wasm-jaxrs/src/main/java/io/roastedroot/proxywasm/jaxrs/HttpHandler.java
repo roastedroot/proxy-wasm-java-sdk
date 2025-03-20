@@ -50,7 +50,7 @@ import io.roastedroot.proxywasm.ProxyMap;
 import io.roastedroot.proxywasm.StreamType;
 import io.roastedroot.proxywasm.WasmException;
 import io.roastedroot.proxywasm.WasmResult;
-import io.roastedroot.proxywasm.jaxrs.spi.HttpServer;
+import io.roastedroot.proxywasm.jaxrs.spi.HttpServerRequest;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.container.ContainerResponseContext;
 import jakarta.ws.rs.core.Response;
@@ -64,10 +64,10 @@ import java.util.List;
 class HttpHandler extends ChainedHandler {
 
     private final PluginHandler next;
-    private final HttpServer httpServer;
+    private final HttpServerRequest httpServer;
     private final long startedAt;
 
-    HttpHandler(PluginHandler pluginHandler, HttpServer httpServer) {
+    HttpHandler(PluginHandler pluginHandler, HttpServerRequest httpServer) {
         this.next = pluginHandler;
         this.httpServer = httpServer;
         this.startedAt = System.currentTimeMillis();
