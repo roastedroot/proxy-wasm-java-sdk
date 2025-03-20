@@ -23,6 +23,7 @@ class PluginHandler extends ChainedHandler {
     // Filter Chain Methods
     // //////////////////////////////////////////////////////////////////////
     private Handler next;
+    WasmPlugin plugin;
 
     PluginHandler() {
         this(new Handler() {});
@@ -35,6 +36,16 @@ class PluginHandler extends ChainedHandler {
     @Override
     protected Handler next() {
         return next;
+    }
+
+    // //////////////////////////////////////////////////////////////////////
+    // Cleanup
+    // //////////////////////////////////////////////////////////////////////
+    public void close() {
+        if (cancelTick != null) {
+            cancelTick.run();
+            cancelTick = null;
+        }
     }
 
     // //////////////////////////////////////////////////////////////////////
@@ -103,7 +114,9 @@ class PluginHandler extends ChainedHandler {
     // Timers
     // //////////////////////////////////////////////////////////////////////
 
+    int minTickPeriodMilliseconds;
     private int tickPeriodMilliseconds;
+    private Runnable cancelTick;
 
     public int getTickPeriodMilliseconds() {
         return tickPeriodMilliseconds;
@@ -111,7 +124,36 @@ class PluginHandler extends ChainedHandler {
 
     @Override
     public WasmResult setTickPeriodMilliseconds(int tickPeriodMilliseconds) {
+
+        // check for no change
+        if (tickPeriodMilliseconds == this.tickPeriodMilliseconds) {
+            return WasmResult.OK;
+        }
+
+        // cancel the current tick, if any
+        if (cancelTick != null) {
+            cancelTick.run();
+            cancelTick = null;
+        }
+
+        // set the new tick period, if any
         this.tickPeriodMilliseconds = tickPeriodMilliseconds;
+        if (this.tickPeriodMilliseconds == 0) {
+            return WasmResult.OK;
+        }
+
+        // schedule the new tick
+        this.cancelTick =
+                this.plugin.httpServer.scheduleTick(
+                        Math.max(minTickPeriodMilliseconds, this.tickPeriodMilliseconds),
+                        () -> {
+                            this.plugin.lock();
+                            try {
+                                this.plugin.wasm.tick();
+                            } finally {
+                                this.plugin.unlock();
+                            }
+                        });
         return WasmResult.OK;
     }
 
@@ -130,6 +172,10 @@ class PluginHandler extends ChainedHandler {
     public WasmResult setFuncCallData(byte[] data) {
         this.funcCallData = data;
         return WasmResult.OK;
+    }
+
+    public void setPlugin(WasmPlugin plugin) {
+        this.plugin = plugin;
     }
 
     // //////////////////////////////////////////////////////////////////////
@@ -296,6 +342,9 @@ class PluginHandler extends ChainedHandler {
 
     @Override
     public ForeignFunction getForeignFunction(String name) {
-        return super.getForeignFunction(name);
+        if (foreignFunctions == null) {
+            return null;
+        }
+        return foreignFunctions.get(name);
     }
 }

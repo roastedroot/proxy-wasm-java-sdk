@@ -5,11 +5,5 @@ package io.roastedroot.proxywasm.jaxrs.spi;
  */
 public interface HttpServer {
 
-    String remoteAddress();
-
-    String remotePort();
-
-    String localAddress();
-
-    String localPort();
+    Runnable scheduleTick(long delay, Runnable task);
 }
