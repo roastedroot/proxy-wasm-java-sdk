@@ -1,13 +1,11 @@
 package io.roastedroot.proxywasm.jaxrs;
 
 import static io.restassured.RestAssured.given;
-import static io.roastedroot.proxywasm.jaxrs.TestHelpers.EXAMPLES_DIR;
+import static io.roastedroot.proxywasm.jaxrs.TestHelpers.parseTestModule;
 
-import com.dylibso.chicory.wasm.Parser;
 import io.quarkus.test.junit.QuarkusTest;
 import io.roastedroot.proxywasm.StartException;
 import jakarta.enterprise.inject.Produces;
-import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 
 @QuarkusTest
@@ -20,11 +18,7 @@ public class HttpHeadersNotSharedTest {
                         .withName("notSharedHttpHeaders")
                         .withShared(false)
                         .withPluginConfig("{\"header\": \"x-wasm-header\", \"value\": \"foo\"}")
-                        .build(
-                                Parser.parse(
-                                        Path.of(
-                                                EXAMPLES_DIR
-                                                        + "/go-examples/http_headers/main.wasm")));
+                        .build(parseTestModule("/go-examples/http_headers/main.wasm"));
     }
 
     @Test

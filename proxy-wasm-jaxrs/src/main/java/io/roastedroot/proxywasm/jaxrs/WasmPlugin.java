@@ -3,8 +3,11 @@ package io.roastedroot.proxywasm.jaxrs;
 import com.dylibso.chicory.runtime.ImportMemory;
 import com.dylibso.chicory.runtime.Instance;
 import com.dylibso.chicory.wasm.WasmModule;
+import io.roastedroot.proxywasm.ForeignFunction;
 import io.roastedroot.proxywasm.ProxyWasm;
 import io.roastedroot.proxywasm.StartException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -64,6 +67,16 @@ public class WasmPlugin {
 
         public WasmPlugin.Builder withName(String name) {
             this.handler.name = name;
+            return this;
+        }
+
+        public Builder withForeignFunctions(Map<String, ForeignFunction> functions) {
+            this.handler.foreignFunctions = new HashMap<>(functions);
+            return this;
+        }
+
+        public Builder withLogger(Logger logger) {
+            this.handler.logger = logger;
             return this;
         }
 
