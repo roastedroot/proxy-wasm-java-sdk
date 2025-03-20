@@ -1868,7 +1868,12 @@ class ABI {
         try {
             var name = string(readMemory(nameDataPtr, nameSize));
             var argument = readMemory(argumentDataPtr, argumentSize);
-            var result = handler.callForeignFunction(name, argument);
+
+            var func = handler.getForeignFunction(name);
+            if (func == null) {
+                return WasmResult.NOT_FOUND.getValue();
+            }
+            var result = func.apply(argument);
 
             // Allocate memory in the WebAssembly instance
             int addr = malloc(result.length);

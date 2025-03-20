@@ -322,8 +322,8 @@ public interface Handler {
         throw new WasmException(WasmResult.UNIMPLEMENTED);
     }
 
-    default byte[] callForeignFunction(String name, byte[] bytes) throws WasmException {
-        throw new WasmException(WasmResult.NOT_FOUND);
+    default ForeignFunction getForeignFunction(String name) {
+        return null;
     }
 
     default int defineMetric(MetricType metricType, String name) throws WasmException {

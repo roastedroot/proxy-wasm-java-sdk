@@ -5,6 +5,7 @@ import static io.roastedroot.proxywasm.WellKnownProperties.PLUGIN_NAME;
 import static io.roastedroot.proxywasm.WellKnownProperties.PLUGIN_VM_ID;
 
 import io.roastedroot.proxywasm.ChainedHandler;
+import io.roastedroot.proxywasm.ForeignFunction;
 import io.roastedroot.proxywasm.Handler;
 import io.roastedroot.proxywasm.LogLevel;
 import io.roastedroot.proxywasm.MetricType;
@@ -75,20 +76,27 @@ class PluginHandler extends ChainedHandler {
     // Logging
     // //////////////////////////////////////////////////////////////////////
 
+    public Logger logger;
+
     static final boolean DEBUG = "true".equals(System.getenv("DEBUG"));
 
     @Override
     public void log(LogLevel level, String message) throws WasmException {
-        // TODO: improve
-        if (DEBUG) {
-            System.out.println(level + ": " + message);
+        Logger l = logger;
+        if (l == null) {
+            super.log(level, message);
+            return;
         }
+        l.log(level, message);
     }
 
     @Override
     public LogLevel getLogLevel() throws WasmException {
-        // TODO: improve
-        return super.getLogLevel();
+        Logger l = logger;
+        if (l == null) {
+            return super.getLogLevel();
+        }
+        return l.getLogLevel();
     }
 
     // //////////////////////////////////////////////////////////////////////
@@ -279,5 +287,15 @@ class PluginHandler extends ChainedHandler {
         }
         metricsByName.remove(metric.name);
         return WasmResult.OK;
+    }
+
+    // //////////////////////////////////////////////////////////////////////
+    // FFI
+    // //////////////////////////////////////////////////////////////////////
+    HashMap<String, ForeignFunction> foreignFunctions;
+
+    @Override
+    public ForeignFunction getForeignFunction(String name) {
+        return super.getForeignFunction(name);
     }
 }

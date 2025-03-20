@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import io.roastedroot.proxywasm.Action;
 import io.roastedroot.proxywasm.ArrayProxyMap;
 import io.roastedroot.proxywasm.ChainedHandler;
+import io.roastedroot.proxywasm.ForeignFunction;
 import io.roastedroot.proxywasm.Handler;
 import io.roastedroot.proxywasm.Helpers;
 import io.roastedroot.proxywasm.LogLevel;
@@ -467,5 +468,16 @@ public class MockHandler extends ChainedHandler {
     public WasmResult setProperty(List<String> path, byte[] value) {
         properties.put(path, value);
         return WasmResult.OK;
+    }
+
+    private final HashMap<String, ForeignFunction> foreignFunctions = new HashMap<>();
+
+    @Override
+    public ForeignFunction getForeignFunction(String name) {
+        return foreignFunctions.get(name);
+    }
+
+    public void registerForeignFunction(String name, ForeignFunction function) {
+        foreignFunctions.put(name, function);
     }
 }
