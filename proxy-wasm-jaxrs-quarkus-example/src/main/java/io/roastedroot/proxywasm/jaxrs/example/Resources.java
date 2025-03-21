@@ -1,5 +1,6 @@
-package io.roastedroot.proxywasm.jaxrs;
+package io.roastedroot.proxywasm.jaxrs.example;
 
+import io.roastedroot.proxywasm.jaxrs.NamedWasmPlugin;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 

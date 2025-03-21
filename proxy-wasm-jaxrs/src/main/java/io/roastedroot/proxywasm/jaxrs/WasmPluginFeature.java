@@ -45,7 +45,7 @@ public class WasmPluginFeature implements DynamicFeature {
         return pluginPools.values();
     }
 
-    WasmPluginPool pool(String name) {
+    public WasmPluginPool pool(String name) {
         return pluginPools.get(name);
     }
 

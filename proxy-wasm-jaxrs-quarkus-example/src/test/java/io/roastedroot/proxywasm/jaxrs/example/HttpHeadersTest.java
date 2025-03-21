@@ -1,26 +1,13 @@
-package io.roastedroot.proxywasm.jaxrs;
+package io.roastedroot.proxywasm.jaxrs.example;
 
 import static io.restassured.RestAssured.given;
-import static io.roastedroot.proxywasm.jaxrs.TestHelpers.parseTestModule;
 import static org.hamcrest.Matchers.equalTo;
 
 import io.quarkus.test.junit.QuarkusTest;
-import io.roastedroot.proxywasm.StartException;
-import jakarta.enterprise.inject.Produces;
 import org.junit.jupiter.api.Test;
 
 @QuarkusTest
 public class HttpHeadersTest {
-
-    @Produces
-    public WasmPluginFactory create() throws StartException {
-        return () ->
-                WasmPlugin.builder()
-                        .withName("httpHeaders")
-                        .withShared(true)
-                        .withPluginConfig("{\"header\": \"x-wasm-header\", \"value\": \"foo\"}")
-                        .build(parseTestModule("/go-examples/http_headers/main.wasm"));
-    }
 
     @Test
     public void testRequest() {
