@@ -57,7 +57,8 @@ public class HttpHeadersTest {
         var config =
                 String.format(
                         "{\"header\": \"%s\", \"value\": \"%s\"}", "x-wasm-header", "x-value");
-        try (var proxyWasm = ProxyWasm.builder().withPluginConfig(config).build(module)) {
+        handler.setPluginConfig(config);
+        try (var proxyWasm = ProxyWasm.builder().withPluginHandler(handler).build(module)) {
             int id = 0;
             try (var host = proxyWasm.createHttpContext(handler)) {
                 id = host.id();
@@ -82,6 +83,8 @@ public class HttpHeadersTest {
             // Check logs
             handler.assertSortedLogsEqual(
                     String.format("%d finished", id),
+                    "loading plugin config",
+                    "header from config: x-wasm-header = x-value",
                     "response header <-- key2: value2",
                     "response header <-- key1: value1",
                     "adding header: x-wasm-header=x-value",

@@ -21,8 +21,8 @@ public class HttpRoutingTest {
     @Test
     public void canary() throws StartException {
         var handler = new MockHandler();
-        ProxyWasm.Builder builder =
-                ProxyWasm.builder().withPluginHandler(handler).withPluginConfig(new byte[] {2});
+        handler.setPluginConfig(new byte[] {2});
+        ProxyWasm.Builder builder = ProxyWasm.builder().withPluginHandler(handler);
         try (var host = builder.build(module)) {
             try (var context = host.createHttpContext(handler)) {
 
@@ -47,9 +47,9 @@ public class HttpRoutingTest {
     @Test
     public void nonCanary() throws StartException {
         var handler = new MockHandler();
+        handler.setPluginConfig(new byte[] {1});
         var module = Parser.parse(Path.of("./src/test/go-examples/http_routing/main.wasm"));
-        ProxyWasm.Builder builder =
-                ProxyWasm.builder().withPluginHandler(handler).withPluginConfig(new byte[] {1});
+        ProxyWasm.Builder builder = ProxyWasm.builder().withPluginHandler(handler);
         try (var host = builder.build(module)) {
             try (var context = host.createHttpContext(handler)) {
 

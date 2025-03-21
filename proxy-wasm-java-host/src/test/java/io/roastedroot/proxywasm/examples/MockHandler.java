@@ -16,6 +16,7 @@ import io.roastedroot.proxywasm.ProxyMap;
 import io.roastedroot.proxywasm.StreamType;
 import io.roastedroot.proxywasm.WasmException;
 import io.roastedroot.proxywasm.WasmResult;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -67,6 +68,8 @@ public class MockHandler extends ChainedHandler {
     private byte[] downStreamData = new byte[0];
     private byte[] upstreamData = new byte[0];
     private byte[] grpcReceiveBuffer = new byte[0];
+    private byte[] vmConfig;
+    private byte[] pluginConfig;
 
     static final boolean DEBUG = "true".equals(System.getenv("DEBUG"));
 
@@ -117,6 +120,32 @@ public class MockHandler extends ChainedHandler {
                 assertFalse(log.contains(m), "logged messages contains: " + m);
             }
         }
+    }
+
+    @Override
+    public byte[] getVmConfig() {
+        return vmConfig;
+    }
+
+    public void setVmConfig(byte[] vmConfig) {
+        this.vmConfig = vmConfig;
+    }
+
+    public void setVmConfig(String vmConfig) {
+        this.vmConfig = vmConfig.getBytes(StandardCharsets.UTF_8);
+    }
+
+    @Override
+    public byte[] getPluginConfig() {
+        return pluginConfig;
+    }
+
+    public void setPluginConfig(byte[] pluginConfig) {
+        this.pluginConfig = pluginConfig;
+    }
+
+    public void setPluginConfig(String pluginConfig) {
+        this.pluginConfig = pluginConfig.getBytes(StandardCharsets.UTF_8);
     }
 
     @Override

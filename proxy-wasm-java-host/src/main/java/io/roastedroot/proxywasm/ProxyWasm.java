@@ -13,7 +13,6 @@ import com.dylibso.chicory.wasm.WasmModule;
 import com.dylibso.chicory.wasm.types.MemoryLimits;
 import com.dylibso.chicory.wasm.types.ValueType;
 import java.io.Closeable;
-import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,8 +23,6 @@ public final class ProxyWasm implements Closeable {
 
     private final ABI abi;
     private final Handler pluginHandler;
-    private final byte[] pluginConfig;
-    private final byte[] vmConfig;
     private final WasiPreview1 wasi;
 
     private final AtomicInteger nextContextID = new AtomicInteger(1);
@@ -38,8 +35,6 @@ public final class ProxyWasm implements Closeable {
     private byte[] httpCallResponseBody;
 
     private ProxyWasm(Builder other) throws StartException {
-        this.vmConfig = other.vmConfig;
-        this.pluginConfig = other.pluginConfig;
         this.pluginHandler = Objects.requireNonNullElse(other.pluginHandler, new Handler() {});
         this.wasi = other.wasi;
         this.abi = other.abi;
@@ -64,10 +59,14 @@ public final class ProxyWasm implements Closeable {
 
         this.pluginContext = new PluginContext(this, pluginHandler);
         registerContext(pluginContext, 0);
-        if (!this.abi.proxyOnVmStart(pluginContext.id(), vmConfig.length)) {
+
+        byte[] vmConfig = this.pluginHandler.getVmConfig();
+        if (!this.abi.proxyOnVmStart(pluginContext.id(), len(vmConfig))) {
             throw new StartException("proxy_on_vm_start failed");
         }
-        if (!this.abi.proxyOnConfigure(pluginContext.id(), pluginConfig.length)) {
+
+        byte[] pluginConfig = this.pluginHandler.getPluginConfig();
+        if (!this.abi.proxyOnConfigure(pluginContext.id(), len(pluginConfig))) {
             throw new StartException("proxy_on_configure failed");
         }
     }
@@ -85,16 +84,6 @@ public final class ProxyWasm implements Closeable {
             @Override
             protected Handler next() {
                 return activeContext.handler();
-            }
-
-            @Override
-            public byte[] getVmConfig() {
-                return vmConfig;
-            }
-
-            @Override
-            public byte[] getPluginConfig() {
-                return pluginConfig;
             }
 
             @Override
@@ -225,8 +214,6 @@ public final class ProxyWasm implements Closeable {
         private final ABI abi = new ABI();
         private WasiPreview1 wasi;
 
-        private byte[] vmConfig = new byte[0];
-        private byte[] pluginConfig = new byte[0];
         private Handler pluginHandler;
         private ImportMemory memory;
         private WasiOptions wasiOptions;
@@ -248,26 +235,6 @@ public final class ProxyWasm implements Closeable {
 
         public Builder withStart(boolean start) {
             this.start = start;
-            return this;
-        }
-
-        public ProxyWasm.Builder withVmConfig(byte[] vmConfig) {
-            this.vmConfig = vmConfig;
-            return this;
-        }
-
-        public ProxyWasm.Builder withVmConfig(String vmConfig) {
-            this.vmConfig = vmConfig.getBytes(StandardCharsets.UTF_8);
-            return this;
-        }
-
-        public ProxyWasm.Builder withPluginConfig(byte[] pluginConfig) {
-            this.pluginConfig = pluginConfig;
-            return this;
-        }
-
-        public ProxyWasm.Builder withPluginConfig(String pluginConfig) {
-            this.pluginConfig = pluginConfig.getBytes(StandardCharsets.UTF_8);
             return this;
         }
 
