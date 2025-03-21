@@ -6,15 +6,12 @@ import jakarta.enterprise.inject.Alternative;
 import jakarta.enterprise.inject.Instance;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.ws.rs.core.Context;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 
 @Alternative
 @Priority(100)
 public class ServletHttpServerRequest implements HttpServerRequest {
 
     private final HttpServletRequest request;
-    ScheduledExecutorService executorService = Executors.newScheduledThreadPool(1);
 
     public ServletHttpServerRequest(@Context Instance<HttpServletRequest> request) {
         this.request = request.get();

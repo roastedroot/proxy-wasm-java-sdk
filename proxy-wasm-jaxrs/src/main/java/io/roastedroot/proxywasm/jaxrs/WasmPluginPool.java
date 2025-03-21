@@ -5,7 +5,7 @@ import jakarta.annotation.PreDestroy;
 import java.util.Collection;
 import java.util.List;
 
-interface WasmPluginPool {
+public interface WasmPluginPool {
 
     WasmPlugin borrow() throws StartException;
 

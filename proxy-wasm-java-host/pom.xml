@@ -8,9 +8,9 @@
     <version>1.0-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
+
   <artifactId>proxy-wasm-java-host</artifactId>
   <packaging>jar</packaging>
-
   <name>proxy-wasm-java-host</name>
 
   <dependencies>
