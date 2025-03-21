@@ -57,12 +57,12 @@ public class SharedQueueTest {
 
         // Create and configure the http_request_headers receiver instance
         var receiverHandler1 = new MockHandler(sharedData);
+        receiverHandler1.setPluginConfig("http_request_headers");
         receiverHandler1.setProperty(List.of("vm_id"), bytes(receiverVmId));
         var receiverHost1 =
                 deferClose(
                         ProxyWasm.builder()
                                 .withPluginHandler(receiverHandler1)
-                                .withPluginConfig("http_request_headers")
                                 .build(receiverModule));
 
         var requestHeadersQueueId =
@@ -76,12 +76,12 @@ public class SharedQueueTest {
 
         // Create and configure the http_response_headers receiver instance
         var receiverHandler2 = new MockHandler(sharedData);
+        receiverHandler2.setPluginConfig("http_response_headers");
         receiverHandler2.setProperty(List.of("vm_id"), bytes(receiverVmId));
         var receiverHost2 =
                 deferClose(
                         ProxyWasm.builder()
                                 .withPluginHandler(receiverHandler2)
-                                .withPluginConfig("http_response_headers")
                                 .build(receiverModule));
 
         var responseHeadersQueueId =
@@ -97,14 +97,12 @@ public class SharedQueueTest {
 
         // Create and configure the sender instance
         var senderHandler = new MockHandler(sharedData);
+        senderHandler.setPluginConfig("http");
         var senderVmId = "sender";
         senderHandler.setProperty(List.of("vm_id"), bytes(senderVmId));
         var senderHost =
                 deferClose(
-                        ProxyWasm.builder()
-                                .withPluginHandler(senderHandler)
-                                .withPluginConfig("http")
-                                .build(senderModule));
+                        ProxyWasm.builder().withPluginHandler(senderHandler).build(senderModule));
         senderHandler.assertLogsContain(
                 String.format("contextID=%d is configured for %s", senderHost.contextId(), "http"));
 

@@ -22,12 +22,11 @@ public class VmPluginConfigurationTest {
     @Test
     public void test() throws StartException {
         var handler = new MockHandler();
+        handler.setPluginConfig("plugin_config");
+        handler.setVmConfig("vm_config");
+
         handler.setProperty(List.of("plugin_name"), bytes("vm_plugin_configuration"));
-        ProxyWasm.Builder builder =
-                ProxyWasm.builder()
-                        .withPluginConfig("plugin_config")
-                        .withVmConfig("vm_config")
-                        .withPluginHandler(handler);
+        ProxyWasm.Builder builder = ProxyWasm.builder().withPluginHandler(handler);
         try (var ignored = builder.build(module)) {
 
             assertEquals(

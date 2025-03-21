@@ -147,7 +147,8 @@ public class JsonValidationTest {
         @BeforeEach
         void setUp() throws StartException {
             var config = "{\"requiredKeys\": [\"my_key\"]}";
-            this.host = ProxyWasm.builder().withPluginConfig(config).build(module);
+            handler.setPluginConfig(config);
+            this.host = ProxyWasm.builder().withPluginHandler(handler).build(module);
             this.context = host.createHttpContext(handler);
         }
 
