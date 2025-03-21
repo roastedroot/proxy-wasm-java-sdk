@@ -40,7 +40,9 @@
     <maven-checkstyle-plugin.version>3.6.0</maven-checkstyle-plugin.version>
     <spotless-maven-plugin.version>2.44.3</spotless-maven-plugin.version>
     <maven.compiler.version>3.14.0</maven.compiler.version>
+    <compiler-plugin.version>${maven.compiler.version}</compiler-plugin.version>
     <surefire-plugin.version>3.5.2</surefire-plugin.version>
+    <failsafe-plugin.version>${surefire-plugin.version}</failsafe-plugin.version>
 
     <!-- test time versions -->
     <junit.version>5.12.0</junit.version>
@@ -50,6 +52,7 @@
     <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
     <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
     <quarkus.platform.version>3.19.3</quarkus.platform.version>
+    <quarkus.version>3.21.0</quarkus.version>
 
   </properties>
 
@@ -204,4 +207,20 @@
       </plugins>
     </pluginManagement>
   </build>
+
+  <profiles>
+
+    <!-- Quarkus is only supported on JDK 17 and newer-->
+    <profile>
+      <id>jdk-17-and-newer</id>
+      <activation>
+        <jdk>[17,)</jdk>
+      </activation>
+      <modules>
+        <module>proxy-wasm-jaxrs-quarkus</module>
+        <module>proxy-wasm-jaxrs-quarkus-example</module>
+      </modules>
+    </profile>
+  </profiles>
+
 </project>

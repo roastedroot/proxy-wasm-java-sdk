@@ -21,6 +21,10 @@ public class WasmPlugin {
     final ProxyWasm wasm;
     HttpServer httpServer;
 
+    public Logger logger() {
+        return handler.logger;
+    }
+
     private WasmPlugin(ProxyWasm proxyWasm, PluginHandler handler, boolean shared) {
         Objects.requireNonNull(proxyWasm);
         Objects.requireNonNull(handler);
