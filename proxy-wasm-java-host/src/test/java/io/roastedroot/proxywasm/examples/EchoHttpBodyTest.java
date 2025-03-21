@@ -31,9 +31,9 @@ public class EchoHttpBodyTest {
     @BeforeEach
     void setUp() throws StartException {
         this.handler = new MockHandler();
-        ProxyWasm.Builder builder = ProxyWasm.builder();
-        builder.withPluginConfig("echo");
-        this.proxyWasm = builder.build(module);
+        handler.setPluginConfig("echo");
+
+        this.proxyWasm = ProxyWasm.builder().withPluginHandler(handler).build(module);
         this.httpContext = proxyWasm.createHttpContext(handler);
     }
 

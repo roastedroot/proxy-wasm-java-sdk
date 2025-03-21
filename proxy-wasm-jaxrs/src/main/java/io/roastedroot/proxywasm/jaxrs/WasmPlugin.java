@@ -1,5 +1,7 @@
 package io.roastedroot.proxywasm.jaxrs;
 
+import static io.roastedroot.proxywasm.Helpers.bytes;
+
 import com.dylibso.chicory.runtime.ImportMemory;
 import com.dylibso.chicory.runtime.Instance;
 import com.dylibso.chicory.wasm.WasmModule;
@@ -101,22 +103,22 @@ public class WasmPlugin {
         }
 
         public WasmPlugin.Builder withVmConfig(byte[] vmConfig) {
-            proxyWasmBuilder = proxyWasmBuilder.withVmConfig(vmConfig);
+            this.handler.vmConfig = vmConfig;
             return this;
         }
 
         public WasmPlugin.Builder withVmConfig(String vmConfig) {
-            proxyWasmBuilder = proxyWasmBuilder.withVmConfig(vmConfig);
+            this.handler.vmConfig = bytes(vmConfig);
             return this;
         }
 
         public WasmPlugin.Builder withPluginConfig(byte[] pluginConfig) {
-            proxyWasmBuilder = proxyWasmBuilder.withPluginConfig(pluginConfig);
+            this.handler.pluginConfig = pluginConfig;
             return this;
         }
 
         public WasmPlugin.Builder withPluginConfig(String pluginConfig) {
-            proxyWasmBuilder = proxyWasmBuilder.withPluginConfig(pluginConfig);
+            this.handler.pluginConfig = bytes(pluginConfig);
             return this;
         }
 
