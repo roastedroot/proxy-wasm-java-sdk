@@ -1,9 +1,14 @@
 package io.roastedroot.proxywasm.jaxrs;
 
 import static io.roastedroot.proxywasm.Helpers.bytes;
+import static io.roastedroot.proxywasm.WellKnownHeaders.AUTHORITY;
+import static io.roastedroot.proxywasm.WellKnownHeaders.METHOD;
+import static io.roastedroot.proxywasm.WellKnownHeaders.PATH;
+import static io.roastedroot.proxywasm.WellKnownHeaders.SCHEME;
 import static io.roastedroot.proxywasm.WellKnownProperties.PLUGIN_NAME;
 import static io.roastedroot.proxywasm.WellKnownProperties.PLUGIN_VM_ID;
 
+import io.roastedroot.proxywasm.ArrayProxyMap;
 import io.roastedroot.proxywasm.ChainedHandler;
 import io.roastedroot.proxywasm.ForeignFunction;
 import io.roastedroot.proxywasm.Handler;
@@ -12,6 +17,8 @@ import io.roastedroot.proxywasm.MetricType;
 import io.roastedroot.proxywasm.ProxyMap;
 import io.roastedroot.proxywasm.WasmException;
 import io.roastedroot.proxywasm.WasmResult;
+import jakarta.ws.rs.core.UriBuilder;
+import java.net.URI;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
@@ -46,6 +53,10 @@ class PluginHandler extends ChainedHandler {
             cancelTick.run();
             cancelTick = null;
         }
+        for (var cancelHttpCall : httpCalls.values()) {
+            cancelHttpCall.run();
+        }
+        httpCalls.clear();
     }
 
     // //////////////////////////////////////////////////////////////////////
@@ -200,61 +211,105 @@ class PluginHandler extends ChainedHandler {
     // HTTP calls
     // //////////////////////////////////////////////////////////////////////
 
-    public static class HttpCall {
-        public enum Type {
-            REGULAR,
-            DISPATCH
-        }
-
-        public final int id;
-        public final Type callType;
-        public final String uri;
-        public final Object headers;
-        public final byte[] body;
-        public final ProxyMap trailers;
-        public final int timeoutMilliseconds;
-
-        public HttpCall(
-                int id,
-                Type callType,
-                String uri,
-                ProxyMap headers,
-                byte[] body,
-                ProxyMap trailers,
-                int timeoutMilliseconds) {
-            this.id = id;
-            this.callType = callType;
-            this.uri = uri;
-            this.headers = headers;
-            this.body = body;
-            this.trailers = trailers;
-            this.timeoutMilliseconds = timeoutMilliseconds;
-        }
-    }
-
     private final AtomicInteger lastCallId = new AtomicInteger(0);
-    private final HashMap<Integer, HttpCall> httpCalls = new HashMap();
+    private final HashMap<Integer, Runnable> httpCalls = new HashMap<>();
 
-    public HashMap<Integer, HttpCall> getHttpCalls() {
-        return httpCalls;
-    }
+    HashMap<String, String> upstreams = new HashMap<>();
+    boolean strictUpstreams;
 
     @Override
     public int httpCall(
-            String uri, ProxyMap headers, byte[] body, ProxyMap trailers, int timeoutMilliseconds)
+            String upstreamName,
+            ProxyMap headers,
+            byte[] body,
+            ProxyMap trailers,
+            int timeoutMilliseconds)
             throws WasmException {
-        var id = lastCallId.incrementAndGet();
-        HttpCall value =
-                new HttpCall(
-                        id,
-                        HttpCall.Type.REGULAR,
-                        uri,
-                        headers,
-                        body,
-                        trailers,
-                        timeoutMilliseconds);
-        httpCalls.put(id, value);
-        return id;
+
+        var method = headers.get(METHOD);
+        if (method == null) {
+            throw new WasmException(WasmResult.BAD_ARGUMENT);
+        }
+
+        var scheme = headers.get(SCHEME);
+        if (scheme == null) {
+            scheme = "http";
+        }
+        var authority = headers.get(AUTHORITY);
+        if (authority == null) {
+            throw new WasmException(WasmResult.BAD_ARGUMENT);
+        }
+        headers.put("Host", authority);
+
+        var connectHostPort = upstreams.get(upstreamName);
+        if (connectHostPort == null && strictUpstreams) {
+            throw new WasmException(WasmResult.BAD_ARGUMENT);
+        }
+        if (connectHostPort == null) {
+            connectHostPort = authority;
+        }
+
+        var connectUri = UriBuilder.newInstance().scheme(scheme).host(connectHostPort).build();
+        var connectHost = connectUri.getHost();
+        var connectPort = connectUri.getPort();
+        if (connectPort == -1) {
+            connectPort = "https".equals(scheme) ? 443 : 80;
+        }
+
+        var path = headers.get(PATH);
+        if (path == null) {
+            throw new WasmException(WasmResult.BAD_ARGUMENT);
+        }
+        if (!path.isEmpty() && !path.startsWith("/")) {
+            path = "/" + path;
+        }
+
+        var uri =
+                URI.create(
+                        UriBuilder.newInstance()
+                                        .scheme(scheme)
+                                        .host(authority)
+                                        .port(connectPort)
+                                        .build()
+                                        .toString()
+                                + path);
+
+        // Remove all the pseudo headers
+        for (var r : new ArrayProxyMap(headers).entries()) {
+            if (r.getKey().startsWith(":")) {
+                headers.remove(r.getKey());
+            }
+        }
+
+        try {
+            var id = lastCallId.incrementAndGet();
+            var future =
+                    this.plugin.httpServer.scheduleHttpCall(
+                            method,
+                            connectHost,
+                            connectPort,
+                            uri,
+                            headers,
+                            body,
+                            trailers,
+                            timeoutMilliseconds,
+                            (resp) -> {
+                                this.plugin.lock();
+                                try {
+                                    if (httpCalls.remove(id) == null) {
+                                        return; // the call could have already been cancelled
+                                    }
+                                    this.plugin.wasm.sendHttpCallResponse(
+                                            id, resp.headers, new ArrayProxyMap(), resp.body);
+                                } finally {
+                                    this.plugin.unlock();
+                                }
+                            });
+            httpCalls.put(id, future);
+            return id;
+        } catch (InterruptedException e) {
+            throw new WasmException(WasmResult.INTERNAL_FAILURE);
+        }
     }
 
     @Override
@@ -265,18 +320,7 @@ class PluginHandler extends ChainedHandler {
             ProxyMap trailers,
             int timeoutMilliseconds)
             throws WasmException {
-        var id = lastCallId.incrementAndGet();
-        HttpCall value =
-                new HttpCall(
-                        id,
-                        HttpCall.Type.DISPATCH,
-                        upstreamName,
-                        headers,
-                        body,
-                        trailers,
-                        timeoutMilliseconds);
-        httpCalls.put(id, value);
-        return id;
+        return httpCall(upstreamName, headers, body, trailers, timeoutMilliseconds);
     }
 
     // //////////////////////////////////////////////////////////////////////
@@ -298,8 +342,8 @@ class PluginHandler extends ChainedHandler {
     }
 
     private final AtomicInteger lastMetricId = new AtomicInteger(0);
-    private HashMap<Integer, Metric> metrics = new HashMap();
-    private HashMap<String, Metric> metricsByName = new HashMap();
+    private HashMap<Integer, Metric> metrics = new HashMap<>();
+    private HashMap<String, Metric> metricsByName = new HashMap<>();
 
     @Override
     public int defineMetric(MetricType type, String name) throws WasmException {
