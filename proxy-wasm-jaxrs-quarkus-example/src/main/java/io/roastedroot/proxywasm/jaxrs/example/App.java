@@ -49,4 +49,14 @@ public class App {
                         .withPluginConfig("{\"header\": \"x-wasm-header\", \"value\": \"foo\"}")
                         .build(parseTestModule("/go-examples/http_headers/main.wasm"));
     }
+
+    @Produces
+    public WasmPluginFactory dispatchCallOnTickTest() throws StartException {
+        return () ->
+                WasmPlugin.builder()
+                        .withName("dispatchCallOnTickTest")
+                        .withLogger(new MockLogger())
+                        .withUpstreams(Map.of("web_service", "localhost:8081"))
+                        .build(parseTestModule("/go-examples/dispatch_call_on_tick/main.wasm"));
+    }
 }
