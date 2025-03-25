@@ -17,7 +17,8 @@ import java.util.concurrent.locks.ReentrantLock;
 public class WasmPlugin {
 
     final PluginHandler handler;
-    private final ReentrantLock lock;
+    private final ReentrantLock lock = new ReentrantLock();
+    private final boolean shared;
     final ProxyWasm wasm;
     HttpServer httpServer;
 
@@ -28,9 +29,9 @@ public class WasmPlugin {
     private WasmPlugin(ProxyWasm proxyWasm, PluginHandler handler, boolean shared) {
         Objects.requireNonNull(proxyWasm);
         Objects.requireNonNull(handler);
+        this.shared = shared;
         this.wasm = proxyWasm;
         this.handler = handler;
-        this.lock = shared ? new ReentrantLock() : null;
         this.handler.setPlugin(this);
     }
 
@@ -43,21 +44,15 @@ public class WasmPlugin {
     }
 
     public void lock() {
-        if (lock == null) {
-            return;
-        }
         lock.lock();
     }
 
     public void unlock() {
-        if (lock == null) {
-            return;
-        }
         lock.unlock();
     }
 
     public boolean isShared() {
-        return lock != null;
+        return shared;
     }
 
     public void setHttpServer(HttpServer httpServer) {
@@ -88,6 +83,16 @@ public class WasmPlugin {
 
         public Builder withForeignFunctions(Map<String, ForeignFunction> functions) {
             this.handler.foreignFunctions = new HashMap<>(functions);
+            return this;
+        }
+
+        public Builder withUpstreams(Map<String, String> upstreams) {
+            this.handler.upstreams = new HashMap<>(upstreams);
+            return this;
+        }
+
+        public Builder withStrictUpstreams(boolean strictUpstreams) {
+            this.handler.strictUpstreams = strictUpstreams;
             return this;
         }
 
