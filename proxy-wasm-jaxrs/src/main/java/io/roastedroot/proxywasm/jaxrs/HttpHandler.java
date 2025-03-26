@@ -11,7 +11,6 @@ import static io.roastedroot.proxywasm.WellKnownProperties.CONNECTION_REQUESTED_
 import static io.roastedroot.proxywasm.WellKnownProperties.CONNECTION_SHA256_PEER_CERTIFICATE_DIGEST;
 import static io.roastedroot.proxywasm.WellKnownProperties.CONNECTION_SUBJECT_LOCAL_CERTIFICATE;
 import static io.roastedroot.proxywasm.WellKnownProperties.CONNECTION_SUBJECT_PEER_CERTIFICATE;
-import static io.roastedroot.proxywasm.WellKnownProperties.CONNECTION_TLS_VERSION;
 import static io.roastedroot.proxywasm.WellKnownProperties.CONNECTION_URI_SAN_LOCAL_CERTIFICATE;
 import static io.roastedroot.proxywasm.WellKnownProperties.CONNECTION_URI_SAN_PEER_CERTIFICATE;
 import static io.roastedroot.proxywasm.WellKnownProperties.DESTINATION_ADDRESS;
@@ -50,6 +49,7 @@ import io.roastedroot.proxywasm.ProxyMap;
 import io.roastedroot.proxywasm.StreamType;
 import io.roastedroot.proxywasm.WasmException;
 import io.roastedroot.proxywasm.WasmResult;
+import io.roastedroot.proxywasm.WellKnownProperties;
 import io.roastedroot.proxywasm.jaxrs.spi.HttpServerRequest;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.container.ContainerResponseContext;
@@ -60,6 +60,7 @@ import java.time.Duration;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 
 class HttpHandler extends ChainedHandler {
 
@@ -259,6 +260,10 @@ class HttpHandler extends ChainedHandler {
                         responseBody,
                         additionalHeaders,
                         grpcStatus);
+
+        if (resumeLatch != null) {
+            resumeLatch.countDown();
+        }
         return WasmResult.OK;
     }
 
@@ -273,15 +278,42 @@ class HttpHandler extends ChainedHandler {
     }
 
     private Action action;
+    private CountDownLatch resumeLatch;
 
     @Override
     public WasmResult setAction(StreamType streamType, Action action) {
         this.action = action;
+        if (this.action == Action.CONTINUE && resumeLatch != null) {
+            resumeLatch.countDown();
+        }
         return WasmResult.OK;
     }
 
     public Action getAction() {
         return action;
+    }
+
+    void maybePause(WasmPlugin plugin) {
+        // don't pause if plugin wants us to continue
+        if (action == Action.CONTINUE) {
+            return;
+        }
+        // don't pause if the plugin wants to respond to the request
+        if (senthttpResponse != null) {
+            return;
+        }
+
+        // ok, lets pause the request processing. A tick or http call response event will
+        // need to resume the processing
+        resumeLatch = new CountDownLatch(1);
+        plugin.unlock();
+        try {
+            resumeLatch.await();
+        } catch (InterruptedException ignore) {
+        } finally {
+            plugin.lock();
+            resumeLatch = null;
+        }
     }
 
     // //////////////////////////////////////////////////////////////////////
@@ -310,7 +342,7 @@ class HttpHandler extends ChainedHandler {
         }
 
         // TODO: get TLS connection properties
-        else if (CONNECTION_TLS_VERSION.equals(path)) {
+        else if (WellKnownProperties.CONNECTION_TLS_VERSION.equals(path)) {
             // TODO:
             return null;
         } else if (CONNECTION_REQUESTED_SERVER_NAME.equals(path)) {

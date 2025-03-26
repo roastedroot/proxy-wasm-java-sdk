@@ -12,4 +12,8 @@ public class Helpers {
                     loggedMessages.contains(m), "logged messages does not contain: " + m);
         }
     }
+
+    public static <T> IsTrueMatcher<T> isTrue(IsTrueMatcher.Predicate<T> predicate) {
+        return new IsTrueMatcher<T>(predicate);
+    }
 }

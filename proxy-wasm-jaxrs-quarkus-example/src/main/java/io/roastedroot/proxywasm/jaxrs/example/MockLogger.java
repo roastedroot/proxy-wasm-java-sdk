@@ -9,11 +9,16 @@ public class MockLogger implements Logger {
     static final boolean DEBUG = "true".equals(System.getenv("DEBUG"));
 
     final ArrayList<String> loggedMessages = new ArrayList<>();
+    private final String name;
+
+    public MockLogger(String name) {
+        this.name = name;
+    }
 
     @Override
     public synchronized void log(LogLevel level, String message) {
         if (DEBUG) {
-            System.out.println(level + ": " + message);
+            System.out.printf("%s: [%s] %s\n", level, name, message);
         }
         loggedMessages.add(message);
     }

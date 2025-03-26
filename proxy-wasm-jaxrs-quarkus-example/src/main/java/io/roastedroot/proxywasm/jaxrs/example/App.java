@@ -2,6 +2,7 @@ package io.roastedroot.proxywasm.jaxrs.example;
 
 import com.dylibso.chicory.wasm.Parser;
 import com.dylibso.chicory.wasm.WasmModule;
+import com.google.gson.Gson;
 import io.roastedroot.proxywasm.StartException;
 import io.roastedroot.proxywasm.jaxrs.WasmPlugin;
 import io.roastedroot.proxywasm.jaxrs.WasmPluginFactory;
@@ -14,49 +15,75 @@ import java.util.Map;
 public class App {
 
     public static final String EXAMPLES_DIR = "../proxy-wasm-java-host/src/test";
+    private static final Gson gson = new Gson();
 
     public static WasmModule parseTestModule(String file) {
         return Parser.parse(Path.of(EXAMPLES_DIR + file));
     }
 
     @Produces
-    public WasmPluginFactory foreignCallOnTickTest() throws StartException {
+    public WasmPluginFactory headerTests() throws StartException {
         return () ->
                 WasmPlugin.builder()
-                        .withName("foreignCallOnTickTest")
-                        .withLogger(new MockLogger())
-                        .withMinTickPeriodMilliseconds(
-                                100) // plugin wants a tick every 1 ms, that's too often
-                        .withForeignFunctions(Map.of("compress", data -> data))
-                        .build(parseTestModule("/go-examples/foreign_call_on_tick/main.wasm"));
+                        .withName("headerTests")
+                        .withLogger(new MockLogger("headerTests"))
+                        .withPluginConfig(gson.toJson(Map.of("type", "headerTests")))
+                        .build(parseTestModule("/go-examples/unit_tester/main.wasm"));
     }
 
     @Produces
-    public WasmPluginFactory notSharedHttpHeaders() throws StartException {
+    public WasmPluginFactory headerTestsNotShared() throws StartException {
         return () ->
                 WasmPlugin.builder()
-                        .withName("notSharedHttpHeaders")
+                        .withName("headerTestsNotShared")
                         .withShared(false)
-                        .withPluginConfig("{\"header\": \"x-wasm-header\", \"value\": \"foo\"}")
-                        .build(parseTestModule("/go-examples/http_headers/main.wasm"));
+                        .withLogger(new MockLogger("headerTestsNotShared"))
+                        .withPluginConfig(gson.toJson(Map.of("type", "headerTests")))
+                        .build(parseTestModule("/go-examples/unit_tester/main.wasm"));
     }
 
     @Produces
-    public WasmPluginFactory httpHeaders() throws StartException {
+    public WasmPluginFactory tickTests() throws StartException {
         return () ->
                 WasmPlugin.builder()
-                        .withName("httpHeaders")
-                        .withPluginConfig("{\"header\": \"x-wasm-header\", \"value\": \"foo\"}")
-                        .build(parseTestModule("/go-examples/http_headers/main.wasm"));
+                        .withName("tickTests")
+                        .withLogger(new MockLogger("tickTests"))
+                        .withPluginConfig(gson.toJson(Map.of("type", "tickTests")))
+                        .build(parseTestModule("/go-examples/unit_tester/main.wasm"));
     }
 
     @Produces
-    public WasmPluginFactory dispatchCallOnTickTest() throws StartException {
+    public WasmPluginFactory ffiTests() throws StartException {
         return () ->
                 WasmPlugin.builder()
-                        .withName("dispatchCallOnTickTest")
-                        .withLogger(new MockLogger())
+                        .withName("ffiTests")
+                        .withLogger(new MockLogger("ffiTests"))
+                        .withPluginConfig(gson.toJson(Map.of("type", "ffiTests")))
+                        .withForeignFunctions(Map.of("reverse", App::reverse))
+                        .build(parseTestModule("/go-examples/unit_tester/main.wasm"));
+    }
+
+    public static byte[] reverse(byte[] data) {
+        byte[] reversed = new byte[data.length];
+        for (int i = 0; i < data.length; i++) {
+            reversed[i] = data[data.length - 1 - i];
+        }
+        return reversed;
+    }
+
+    @Produces
+    public WasmPluginFactory httpCallTests() throws StartException {
+        return () ->
+                WasmPlugin.builder()
+                        .withName("httpCallTests")
+                        .withLogger(new MockLogger("httpCallTests"))
+                        .withPluginConfig(
+                                gson.toJson(
+                                        Map.of(
+                                                "type", "httpCallTests",
+                                                "upstream", "web_service",
+                                                "path", "/ok")))
                         .withUpstreams(Map.of("web_service", "localhost:8081"))
-                        .build(parseTestModule("/go-examples/dispatch_call_on_tick/main.wasm"));
+                        .build(parseTestModule("/go-examples/unit_tester/main.wasm"));
     }
 }

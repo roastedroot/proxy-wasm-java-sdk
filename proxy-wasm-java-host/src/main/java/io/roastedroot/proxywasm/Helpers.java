@@ -62,6 +62,9 @@ public final class Helpers {
     }
 
     public static String string(byte[] value) {
+        if (value == null) {
+            return null;
+        }
         return new String(value, StandardCharsets.UTF_8);
     }
 
