@@ -66,7 +66,7 @@ public class JaxrsProxyMap<T> implements ProxyMap {
 
     @Override
     public String get(String key) {
-        return entries.get(key).stream().findFirst().map(JaxrsProxyMap::asString).orElse(null);
+        return asString(entries.getFirst(key));
     }
 
     private static String asString(Object x) {
