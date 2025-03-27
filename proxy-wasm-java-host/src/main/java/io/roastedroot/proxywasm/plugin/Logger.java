@@ -1,4 +1,4 @@
-package io.roastedroot.proxywasm.jaxrs;
+package io.roastedroot.proxywasm.plugin;
 
 import io.roastedroot.proxywasm.LogLevel;
 

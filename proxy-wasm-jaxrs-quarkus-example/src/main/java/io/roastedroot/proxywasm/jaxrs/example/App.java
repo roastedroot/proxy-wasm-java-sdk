@@ -4,8 +4,8 @@ import com.dylibso.chicory.wasm.Parser;
 import com.dylibso.chicory.wasm.WasmModule;
 import com.google.gson.Gson;
 import io.roastedroot.proxywasm.StartException;
-import io.roastedroot.proxywasm.jaxrs.WasmPlugin;
-import io.roastedroot.proxywasm.jaxrs.WasmPluginFactory;
+import io.roastedroot.proxywasm.plugin.Plugin;
+import io.roastedroot.proxywasm.plugin.PluginFactory;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Produces;
 import java.nio.file.Path;
@@ -21,69 +21,23 @@ public class App {
         return Parser.parse(Path.of(EXAMPLES_DIR + file));
     }
 
+    // configure the ffiTests wasm plugin
     @Produces
-    public WasmPluginFactory headerTests() throws StartException {
+    public PluginFactory ffiTests() throws StartException {
         return () ->
-                WasmPlugin.builder()
-                        .withName("headerTests")
-                        .withLogger(new MockLogger("headerTests"))
-                        .withPluginConfig(gson.toJson(Map.of("type", "headerTests")))
-                        .build(parseTestModule("/go-examples/unit_tester/main.wasm"));
-    }
-
-    @Produces
-    public WasmPluginFactory headerTestsNotShared() throws StartException {
-        return () ->
-                WasmPlugin.builder()
-                        .withName("headerTestsNotShared")
-                        .withShared(false)
-                        .withLogger(new MockLogger("headerTestsNotShared"))
-                        .withPluginConfig(gson.toJson(Map.of("type", "headerTests")))
-                        .build(parseTestModule("/go-examples/unit_tester/main.wasm"));
-    }
-
-    @Produces
-    public WasmPluginFactory tickTests() throws StartException {
-        return () ->
-                WasmPlugin.builder()
-                        .withName("tickTests")
-                        .withLogger(new MockLogger("tickTests"))
-                        .withPluginConfig(gson.toJson(Map.of("type", "tickTests")))
-                        .build(parseTestModule("/go-examples/unit_tester/main.wasm"));
-    }
-
-    @Produces
-    public WasmPluginFactory ffiTests() throws StartException {
-        return () ->
-                WasmPlugin.builder()
+                Plugin.builder()
                         .withName("ffiTests")
-                        .withLogger(new MockLogger("ffiTests"))
-                        .withPluginConfig(gson.toJson(Map.of("type", "ffiTests")))
+                        .withPluginConfig("{ \"type\": \"ffiTests\" }")
                         .withForeignFunctions(Map.of("reverse", App::reverse))
                         .build(parseTestModule("/go-examples/unit_tester/main.wasm"));
     }
 
+    // This function can be called from the Wasm module
     public static byte[] reverse(byte[] data) {
         byte[] reversed = new byte[data.length];
         for (int i = 0; i < data.length; i++) {
             reversed[i] = data[data.length - 1 - i];
         }
         return reversed;
-    }
-
-    @Produces
-    public WasmPluginFactory httpCallTests() throws StartException {
-        return () ->
-                WasmPlugin.builder()
-                        .withName("httpCallTests")
-                        .withLogger(new MockLogger("httpCallTests"))
-                        .withPluginConfig(
-                                gson.toJson(
-                                        Map.of(
-                                                "type", "httpCallTests",
-                                                "upstream", "web_service",
-                                                "path", "/ok")))
-                        .withUpstreams(Map.of("web_service", "localhost:8081"))
-                        .build(parseTestModule("/go-examples/unit_tester/main.wasm"));
     }
 }

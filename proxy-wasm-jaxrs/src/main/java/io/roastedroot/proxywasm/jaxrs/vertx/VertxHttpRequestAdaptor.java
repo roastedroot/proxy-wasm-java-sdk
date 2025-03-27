@@ -1,24 +1,17 @@
 package io.roastedroot.proxywasm.jaxrs.vertx;
 
-import io.roastedroot.proxywasm.jaxrs.spi.HttpServerRequest;
+import io.roastedroot.proxywasm.jaxrs.JaxrsHttpRequestAdaptor;
 import jakarta.annotation.Priority;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.enterprise.inject.Alternative;
-import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
-import jakarta.ws.rs.core.Context;
 
 @Alternative
 @Priority(200)
 @RequestScoped
-public class VertxHttpServerRequest implements HttpServerRequest {
+public class VertxHttpRequestAdaptor extends JaxrsHttpRequestAdaptor {
 
-    private final io.vertx.core.http.HttpServerRequest request;
-
-    @Inject
-    public VertxHttpServerRequest(@Context Instance<io.vertx.core.http.HttpServerRequest> request) {
-        this.request = request.get();
-    }
+    @Inject io.vertx.core.http.HttpServerRequest request;
 
     @Override
     public String remoteAddress() {

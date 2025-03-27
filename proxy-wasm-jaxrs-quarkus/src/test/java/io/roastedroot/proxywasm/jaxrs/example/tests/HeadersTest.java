@@ -1,4 +1,4 @@
-package io.roastedroot.proxywasm.jaxrs.example;
+package io.roastedroot.proxywasm.jaxrs.example.tests;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;

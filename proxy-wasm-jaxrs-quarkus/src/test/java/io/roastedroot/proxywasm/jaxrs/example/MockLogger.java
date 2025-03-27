@@ -1,7 +1,7 @@
 package io.roastedroot.proxywasm.jaxrs.example;
 
 import io.roastedroot.proxywasm.LogLevel;
-import io.roastedroot.proxywasm.jaxrs.Logger;
+import io.roastedroot.proxywasm.plugin.Logger;
 import java.util.ArrayList;
 
 public class MockLogger implements Logger {

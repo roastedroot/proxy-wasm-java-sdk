@@ -1,4 +1,4 @@
-package io.roastedroot.proxywasm.jaxrs.example;
+package io.roastedroot.proxywasm.jaxrs.example.tests;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
@@ -10,7 +10,7 @@ import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
 @QuarkusTest
-public class HttpCallTests {
+public class HttpCallTest {
 
     @Inject WasmPluginFeature feature;
 
@@ -23,7 +23,7 @@ public class HttpCallTests {
                 .get("/httpCallTests")
                 .then()
                 .statusCode(200)
-                .header("echo-test", "ok")
-                .body(equalTo("ok"));
+                .body(equalTo("ok"))
+                .header("echo-test", "ok");
     }
 }
