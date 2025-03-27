@@ -1,4 +1,4 @@
-package io.roastedroot.proxywasm.jaxrs;
+package io.roastedroot.proxywasm.plugin;
 
 import static io.roastedroot.proxywasm.Helpers.bytes;
 
@@ -8,25 +8,24 @@ import com.dylibso.chicory.wasm.WasmModule;
 import io.roastedroot.proxywasm.ForeignFunction;
 import io.roastedroot.proxywasm.ProxyWasm;
 import io.roastedroot.proxywasm.StartException;
-import io.roastedroot.proxywasm.jaxrs.spi.HttpServer;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class WasmPlugin {
+public final class Plugin {
 
     final PluginHandler handler;
     private final ReentrantLock lock = new ReentrantLock();
     private final boolean shared;
     final ProxyWasm wasm;
-    HttpServer httpServer;
+    ServerAdaptor httpServer;
 
     public Logger logger() {
         return handler.logger;
     }
 
-    private WasmPlugin(ProxyWasm proxyWasm, PluginHandler handler, boolean shared) {
+    private Plugin(ProxyWasm proxyWasm, PluginHandler handler, boolean shared) {
         Objects.requireNonNull(proxyWasm);
         Objects.requireNonNull(handler);
         this.shared = shared;
@@ -39,8 +38,8 @@ public class WasmPlugin {
         return handler.getName();
     }
 
-    public static WasmPlugin.Builder builder() {
-        return new WasmPlugin.Builder();
+    public static Plugin.Builder builder() {
+        return new Plugin.Builder();
     }
 
     public void lock() {
@@ -55,8 +54,12 @@ public class WasmPlugin {
         return shared;
     }
 
-    public void setHttpServer(HttpServer httpServer) {
+    public void setHttpServer(ServerAdaptor httpServer) {
         this.httpServer = httpServer;
+    }
+
+    public HttpContext createHttpContext(HttpRequestAdaptor requestAdaptor) {
+        return new HttpContext(this, requestAdaptor);
     }
 
     public void close() {
@@ -76,7 +79,7 @@ public class WasmPlugin {
                 ProxyWasm.builder().withPluginHandler(handler).withStart(false);
         private boolean shared = true;
 
-        public WasmPlugin.Builder withName(String name) {
+        public Plugin.Builder withName(String name) {
             this.handler.name = name;
             return this;
         }
@@ -106,50 +109,50 @@ public class WasmPlugin {
             return this;
         }
 
-        public WasmPlugin.Builder withShared(boolean shared) {
+        public Plugin.Builder withShared(boolean shared) {
             this.shared = shared;
             return this;
         }
 
-        public WasmPlugin.Builder withVmConfig(byte[] vmConfig) {
+        public Plugin.Builder withVmConfig(byte[] vmConfig) {
             this.handler.vmConfig = vmConfig;
             return this;
         }
 
-        public WasmPlugin.Builder withVmConfig(String vmConfig) {
+        public Plugin.Builder withVmConfig(String vmConfig) {
             this.handler.vmConfig = bytes(vmConfig);
             return this;
         }
 
-        public WasmPlugin.Builder withPluginConfig(byte[] pluginConfig) {
+        public Plugin.Builder withPluginConfig(byte[] pluginConfig) {
             this.handler.pluginConfig = pluginConfig;
             return this;
         }
 
-        public WasmPlugin.Builder withPluginConfig(String pluginConfig) {
+        public Plugin.Builder withPluginConfig(String pluginConfig) {
             this.handler.pluginConfig = bytes(pluginConfig);
             return this;
         }
 
-        public WasmPlugin.Builder withImportMemory(ImportMemory memory) {
+        public Plugin.Builder withImportMemory(ImportMemory memory) {
             proxyWasmBuilder = proxyWasmBuilder.withImportMemory(memory);
             return this;
         }
 
-        public WasmPlugin build(WasmModule module) throws StartException {
+        public Plugin build(WasmModule module) throws StartException {
             return build(proxyWasmBuilder.build(module));
         }
 
-        public WasmPlugin build(Instance.Builder instanceBuilder) throws StartException {
+        public Plugin build(Instance.Builder instanceBuilder) throws StartException {
             return build(proxyWasmBuilder.build(instanceBuilder));
         }
 
-        public WasmPlugin build(Instance instance) throws StartException {
+        public Plugin build(Instance instance) throws StartException {
             return build(proxyWasmBuilder.build(instance));
         }
 
-        public WasmPlugin build(ProxyWasm proxyWasm) throws StartException {
-            return new WasmPlugin(proxyWasm, handler, shared);
+        public Plugin build(ProxyWasm proxyWasm) throws StartException {
+            return new Plugin(proxyWasm, handler, shared);
         }
     }
 }

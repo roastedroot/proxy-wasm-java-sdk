@@ -1,4 +1,4 @@
-package io.roastedroot.proxywasm.jaxrs.spi;
+package io.roastedroot.proxywasm.plugin;
 
 import io.roastedroot.proxywasm.ProxyMap;
 import java.net.URI;
@@ -6,7 +6,7 @@ import java.net.URI;
 /**
  * This interface will help us deal with differences in the http server impl.
  */
-public interface HttpServer {
+public interface ServerAdaptor {
 
     Runnable scheduleTick(long delay, Runnable task);
 

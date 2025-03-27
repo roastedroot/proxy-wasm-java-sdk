@@ -1,7 +1,7 @@
 package io.roastedroot.proxywasm.jaxrs.vertx;
 
 import io.roastedroot.proxywasm.ProxyMap;
-import io.roastedroot.proxywasm.jaxrs.spi.HttpServer;
+import io.roastedroot.proxywasm.plugin.ServerAdaptor;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpClient;
@@ -18,7 +18,7 @@ import java.net.URI;
 @Alternative
 @Priority(200)
 @ApplicationScoped
-public class VertxHttpServer implements HttpServer {
+public class VertxHttpServer implements ServerAdaptor {
 
     @Inject Vertx vertx;
 

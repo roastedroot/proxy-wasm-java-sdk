@@ -41,49 +41,26 @@ import static io.roastedroot.proxywasm.WellKnownProperties.RESPONSE_TRAILERS;
 import static io.roastedroot.proxywasm.WellKnownProperties.SOURCE_ADDRESS;
 import static io.roastedroot.proxywasm.WellKnownProperties.SOURCE_PORT;
 
-import io.roastedroot.proxywasm.Action;
-import io.roastedroot.proxywasm.ChainedHandler;
-import io.roastedroot.proxywasm.Handler;
-import io.roastedroot.proxywasm.Helpers;
 import io.roastedroot.proxywasm.ProxyMap;
-import io.roastedroot.proxywasm.StreamType;
 import io.roastedroot.proxywasm.WasmException;
 import io.roastedroot.proxywasm.WasmResult;
 import io.roastedroot.proxywasm.WellKnownProperties;
-import io.roastedroot.proxywasm.jaxrs.spi.HttpServerRequest;
+import io.roastedroot.proxywasm.plugin.HttpContext;
+import io.roastedroot.proxywasm.plugin.HttpRequestAdaptor;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.container.ContainerResponseContext;
-import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriBuilder;
 import java.net.URI;
 import java.time.Duration;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
 
-class HttpHandler extends ChainedHandler {
-
-    private final PluginHandler next;
-    private final HttpServerRequest httpServer;
-    private final long startedAt;
-
-    HttpHandler(PluginHandler pluginHandler, HttpServerRequest httpServer) {
-        this.next = pluginHandler;
-        this.httpServer = httpServer;
-        this.startedAt = System.currentTimeMillis();
-    }
-
-    @Override
-    protected Handler next() {
-        return next;
-    }
-
-    // //////////////////////////////////////////////////////////////////////
-    // HTTP fields
-    // //////////////////////////////////////////////////////////////////////
+public abstract class JaxrsHttpRequestAdaptor implements HttpRequestAdaptor {
 
     private ContainerRequestContext requestContext;
+    private ContainerResponseContext responseContext;
+
+    private final long startedAt = System.currentTimeMillis();
 
     public ContainerRequestContext getRequestContext() {
         return requestContext;
@@ -93,9 +70,21 @@ class HttpHandler extends ChainedHandler {
         this.requestContext = requestContext;
     }
 
+    public ContainerResponseContext getResponseContext() {
+        return responseContext;
+    }
+
+    public void setResponseContext(ContainerResponseContext responseContext) {
+        this.responseContext = responseContext;
+    }
+
+    // //////////////////////////////////////////////////////////////////////
+    // HTTP fields
+    // //////////////////////////////////////////////////////////////////////
+
     @Override
     public ProxyMap getHttpRequestHeaders() {
-        return new JaxrsProxyMap(requestContext.getHeaders());
+        return new MultivaluedMapAdaptor<>(requestContext.getHeaders());
     }
 
     @Override
@@ -103,15 +92,9 @@ class HttpHandler extends ChainedHandler {
         return null;
     }
 
-    private ContainerResponseContext responseContext;
-
-    public void setResponseContext(ContainerResponseContext responseContext) {
-        this.responseContext = responseContext;
-    }
-
     @Override
     public ProxyMap getHttpResponseHeaders() {
-        return new JaxrsProxyMap(responseContext.getHeaders());
+        return new MultivaluedMapAdaptor<>(responseContext.getHeaders());
     }
 
     @Override
@@ -129,201 +112,8 @@ class HttpHandler extends ChainedHandler {
         return null;
     }
 
-    // //////////////////////////////////////////////////////////////////////
-    // Buffers
-    // //////////////////////////////////////////////////////////////////////
-
-    private byte[] httpRequestBody = new byte[0];
-
     @Override
-    public byte[] getHttpRequestBody() {
-        return this.httpRequestBody;
-    }
-
-    @Override
-    public WasmResult setHttpRequestBody(byte[] body) {
-        this.httpRequestBody = body;
-        return WasmResult.OK;
-    }
-
-    public void appendHttpRequestBody(byte[] body) {
-        this.httpRequestBody = Helpers.append(this.httpRequestBody, body);
-    }
-
-    private byte[] grpcReceiveBuffer = new byte[0];
-
-    @Override
-    public byte[] getGrpcReceiveBuffer() {
-        return this.grpcReceiveBuffer;
-    }
-
-    @Override
-    public WasmResult setGrpcReceiveBuffer(byte[] buffer) {
-        this.grpcReceiveBuffer = buffer;
-        return WasmResult.OK;
-    }
-
-    private byte[] upstreamData = new byte[0];
-
-    @Override
-    public byte[] getUpstreamData() {
-        return this.upstreamData;
-    }
-
-    @Override
-    public WasmResult setUpstreamData(byte[] data) {
-        this.upstreamData = data;
-        return WasmResult.OK;
-    }
-
-    private byte[] downStreamData = new byte[0];
-
-    @Override
-    public byte[] getDownStreamData() {
-        return this.downStreamData;
-    }
-
-    @Override
-    public WasmResult setDownStreamData(byte[] data) {
-        this.downStreamData = data;
-        return WasmResult.OK;
-    }
-
-    private byte[] httpResponseBody = new byte[0];
-
-    @Override
-    public byte[] getHttpResponseBody() {
-        return this.httpResponseBody;
-    }
-
-    @Override
-    public WasmResult setHttpResponseBody(byte[] body) {
-        this.httpResponseBody = body;
-        return WasmResult.OK;
-    }
-
-    public void appendHttpResponseBody(byte[] body) {
-        this.httpResponseBody = Helpers.append(this.httpResponseBody, body);
-    }
-
-    // //////////////////////////////////////////////////////////////////////
-    // HTTP streams
-    // //////////////////////////////////////////////////////////////////////
-
-    public static class HttpResponse {
-
-        public final int statusCode;
-        public final byte[] statusCodeDetails;
-        public final byte[] body;
-        public final ProxyMap headers;
-        public final int grpcStatus;
-
-        public HttpResponse(
-                int responseCode,
-                byte[] responseCodeDetails,
-                byte[] responseBody,
-                ProxyMap additionalHeaders,
-                int grpcStatus) {
-            this.statusCode = responseCode;
-            this.statusCodeDetails = responseCodeDetails;
-            this.body = responseBody;
-            this.headers = additionalHeaders;
-            this.grpcStatus = grpcStatus;
-        }
-
-        public Response toResponse() {
-            Response.ResponseBuilder builder =
-                    Response.status(statusCode, string(statusCodeDetails));
-            if (headers != null) {
-                for (var entry : headers.entries()) {
-                    builder = builder.header(entry.getKey(), entry.getValue());
-                }
-            }
-            builder.entity(body);
-            return builder.build();
-        }
-    }
-
-    private HttpResponse senthttpResponse;
-
-    @Override
-    public WasmResult sendHttpResponse(
-            int responseCode,
-            byte[] responseCodeDetails,
-            byte[] responseBody,
-            ProxyMap additionalHeaders,
-            int grpcStatus) {
-        this.senthttpResponse =
-                new HttpResponse(
-                        responseCode,
-                        responseCodeDetails,
-                        responseBody,
-                        additionalHeaders,
-                        grpcStatus);
-
-        if (resumeLatch != null) {
-            resumeLatch.countDown();
-        }
-        return WasmResult.OK;
-    }
-
-    public HttpResponse getSentHttpResponse() {
-        return senthttpResponse;
-    }
-
-    public HttpResponse consumeSentHttpResponse() {
-        var result = senthttpResponse;
-        senthttpResponse = null;
-        return result;
-    }
-
-    private Action action;
-    private CountDownLatch resumeLatch;
-
-    @Override
-    public WasmResult setAction(StreamType streamType, Action action) {
-        this.action = action;
-        if (this.action == Action.CONTINUE && resumeLatch != null) {
-            resumeLatch.countDown();
-        }
-        return WasmResult.OK;
-    }
-
-    public Action getAction() {
-        return action;
-    }
-
-    void maybePause(WasmPlugin plugin) {
-        // don't pause if plugin wants us to continue
-        if (action == Action.CONTINUE) {
-            return;
-        }
-        // don't pause if the plugin wants to respond to the request
-        if (senthttpResponse != null) {
-            return;
-        }
-
-        // ok, lets pause the request processing. A tick or http call response event will
-        // need to resume the processing
-        resumeLatch = new CountDownLatch(1);
-        plugin.unlock();
-        try {
-            resumeLatch.await();
-        } catch (InterruptedException ignore) {
-        } finally {
-            plugin.lock();
-            resumeLatch = null;
-        }
-    }
-
-    // //////////////////////////////////////////////////////////////////////
-    // Properties
-    // //////////////////////////////////////////////////////////////////////
-
-    final HashMap<List<String>, byte[]> properties = new HashMap<>();
-
-    @Override
-    public byte[] getProperty(List<String> path) throws WasmException {
+    public byte[] getProperty(HttpContext pluginRequest, List<String> path) throws WasmException {
 
         // Check to see if it's a well known property
 
@@ -332,13 +122,13 @@ class HttpHandler extends ChainedHandler {
             // Do we need to generate one?
             return null;
         } else if (SOURCE_ADDRESS.equals(path)) {
-            return bytes(httpServer.remoteAddress());
+            return bytes(remoteAddress());
         } else if (SOURCE_PORT.equals(path)) {
-            return bytes(httpServer.remotePort());
+            return bytes(remotePort());
         } else if (DESTINATION_ADDRESS.equals(path)) {
-            return bytes(httpServer.localAddress());
+            return bytes(localAddress());
         } else if (DESTINATION_PORT.equals(path)) {
-            return bytes(httpServer.localPort());
+            return bytes(localPort());
         }
 
         // TODO: get TLS connection properties
@@ -447,6 +237,7 @@ class HttpHandler extends ChainedHandler {
         } else if (REQUEST_DURATION.equals(path)) {
             return bytes(Duration.ofMillis((System.currentTimeMillis() - startedAt)));
         } else if (REQUEST_SIZE.equals(path)) {
+            var httpRequestBody = pluginRequest.getHttpRequestBody();
             if (httpRequestBody == null) {
                 return null;
             }
@@ -458,14 +249,8 @@ class HttpHandler extends ChainedHandler {
 
         // HTTP response properties
         else if (RESPONSE_CODE.equals(path)) {
-            if (responseContext == null) {
-                return null;
-            }
             return bytes(responseContext.getStatus());
         } else if (RESPONSE_CODE_DETAILS.equals(path)) {
-            if (responseContext == null) {
-                return null;
-            }
             return bytes(responseContext.getStatusInfo().getReasonPhrase());
         } else if (RESPONSE_FLAGS.equals(path)) {
             // TODO: implement response flags retrieval
@@ -489,6 +274,7 @@ class HttpHandler extends ChainedHandler {
             // TODO: implement backend latency retrieval
             return null;
         } else if (RESPONSE_SIZE.equals(path)) {
+            var httpResponseBody = pluginRequest.getHttpResponseBody();
             if (httpResponseBody == null) {
                 return null;
             }
@@ -498,15 +284,11 @@ class HttpHandler extends ChainedHandler {
             return null;
         }
 
-        byte[] result = properties.get(path);
-        if (result != null) {
-            return result;
-        }
-        return next().getProperty(path);
+        return null;
     }
 
     @Override
-    public WasmResult setProperty(List<String> path, byte[] value) {
+    public WasmResult setProperty(HttpContext pluginRequest, List<String> path, byte[] value) {
 
         // Check to see if it's a well known property
         if (REQUEST_PATH.equals(path)) {
@@ -589,9 +371,6 @@ class HttpHandler extends ChainedHandler {
 
         // HTTP response properties
         else if (RESPONSE_CODE.equals(path)) {
-            if (responseContext == null) {
-                return null;
-            }
             responseContext.setStatus(int32(value));
         } else if (RESPONSE_CODE_DETAILS.equals(path)) {
             // TODO:
@@ -599,9 +378,9 @@ class HttpHandler extends ChainedHandler {
             // TODO:
         } else if (RESPONSE_TRAILERS.equals(path)) {
             // TODO:
+        } else {
+            return WasmResult.NOT_FOUND;
         }
-
-        properties.put(path, value);
         return WasmResult.OK;
     }
 }
