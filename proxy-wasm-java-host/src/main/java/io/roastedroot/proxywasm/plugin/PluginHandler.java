@@ -1,4 +1,4 @@
-package io.roastedroot.proxywasm.jaxrs;
+package io.roastedroot.proxywasm.plugin;
 
 import static io.roastedroot.proxywasm.Helpers.bytes;
 import static io.roastedroot.proxywasm.WellKnownHeaders.AUTHORITY;
@@ -17,8 +17,8 @@ import io.roastedroot.proxywasm.MetricType;
 import io.roastedroot.proxywasm.ProxyMap;
 import io.roastedroot.proxywasm.WasmException;
 import io.roastedroot.proxywasm.WasmResult;
-import jakarta.ws.rs.core.UriBuilder;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
@@ -30,7 +30,7 @@ class PluginHandler extends ChainedHandler {
     // Filter Chain Methods
     // //////////////////////////////////////////////////////////////////////
     private Handler next;
-    WasmPlugin plugin;
+    Plugin plugin;
 
     PluginHandler() {
         this(new Handler() {});
@@ -203,7 +203,7 @@ class PluginHandler extends ChainedHandler {
         return WasmResult.OK;
     }
 
-    public void setPlugin(WasmPlugin plugin) {
+    public void setPlugin(Plugin plugin) {
         this.plugin = plugin;
     }
 
@@ -249,7 +249,13 @@ class PluginHandler extends ChainedHandler {
             connectHostPort = authority;
         }
 
-        var connectUri = UriBuilder.newInstance().scheme(scheme).host(connectHostPort).build();
+        URI connectUri = null;
+        try {
+            connectUri = URI.create(scheme + "://" + connectHostPort);
+        } catch (IllegalArgumentException e) {
+            throw new WasmException(WasmResult.BAD_ARGUMENT);
+        }
+
         var connectHost = connectUri.getHost();
         var connectPort = connectUri.getPort();
         if (connectPort == -1) {
@@ -264,15 +270,14 @@ class PluginHandler extends ChainedHandler {
             path = "/" + path;
         }
 
-        var uri =
-                URI.create(
-                        UriBuilder.newInstance()
-                                        .scheme(scheme)
-                                        .host(authority)
-                                        .port(connectPort)
-                                        .build()
-                                        .toString()
-                                + path);
+        URI uri = null;
+        try {
+            uri =
+                    URI.create(
+                            new URI(scheme, null, authority, connectPort, null, null, null) + path);
+        } catch (IllegalArgumentException | URISyntaxException e) {
+            throw new WasmException(WasmResult.BAD_ARGUMENT);
+        }
 
         // Remove all the pseudo headers
         for (var r : new ArrayProxyMap(headers).entries()) {

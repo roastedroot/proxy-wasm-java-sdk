@@ -1,8 +1,11 @@
 package io.roastedroot.proxywasm.jaxrs;
 
 import io.roastedroot.proxywasm.StartException;
-import io.roastedroot.proxywasm.jaxrs.spi.HttpServer;
-import io.roastedroot.proxywasm.jaxrs.spi.HttpServerRequest;
+import io.roastedroot.proxywasm.plugin.Plugin;
+import io.roastedroot.proxywasm.plugin.PluginFactory;
+import io.roastedroot.proxywasm.plugin.Pool;
+import io.roastedroot.proxywasm.plugin.ServerAdaptor;
+import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Any;
 import jakarta.enterprise.inject.Instance;
@@ -18,34 +21,41 @@ import java.util.HashMap;
 @ApplicationScoped
 public class WasmPluginFeature implements DynamicFeature {
 
-    private final HashMap<String, WasmPluginPool> pluginPools = new HashMap<>();
+    private final HashMap<String, Pool> pluginPools = new HashMap<>();
 
-    @Inject @Any Instance<HttpServerRequest> httpServerRequest;
+    @Inject @Any Instance<JaxrsHttpRequestAdaptor> httpServerRequest;
 
     @Inject
-    public WasmPluginFeature(Instance<WasmPluginFactory> factories, @Any HttpServer httpServer)
+    public WasmPluginFeature(Instance<PluginFactory> factories, @Any ServerAdaptor httpServer)
             throws StartException {
         for (var factory : factories) {
-            WasmPlugin plugin = null;
+            Plugin plugin = null;
             plugin = factory.create();
             plugin.setHttpServer(httpServer);
             String name = plugin.name();
             if (this.pluginPools.containsKey(name)) {
                 throw new IllegalArgumentException("Duplicate wasm plugin name: " + name);
             }
-            WasmPluginPool pool =
+            Pool pool =
                     plugin.isShared()
-                            ? new WasmPluginPool.AppScoped(plugin)
-                            : new WasmPluginPool.RequestScoped(factory, plugin);
+                            ? new Pool.AppScoped(plugin)
+                            : new Pool.RequestScoped(factory, plugin);
             this.pluginPools.put(name, pool);
         }
     }
 
-    public Collection<WasmPluginPool> getPluginPools() {
+    @PreDestroy
+    public void destroy() {
+        for (var pool : pluginPools.values()) {
+            pool.close();
+        }
+    }
+
+    public Collection<Pool> getPluginPools() {
         return pluginPools.values();
     }
 
-    public WasmPluginPool pool(String name) {
+    public Pool pool(String name) {
         return pluginPools.get(name);
     }
 
@@ -62,7 +72,7 @@ public class WasmPluginFeature implements DynamicFeature {
                         resourceInfo.getResourceClass().getAnnotation(NamedWasmPlugin.class);
             }
             if (pluignNameAnnotation != null) {
-                WasmPluginPool factory = pluginPools.get(pluignNameAnnotation.value());
+                Pool factory = pluginPools.get(pluignNameAnnotation.value());
                 if (factory != null) {
                     context.register(new ProxyWasmFilter(factory, httpServerRequest));
                 }

@@ -8,26 +8,26 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Stream;
 
-public class JaxrsProxyMap<T> implements ProxyMap {
+public class MultivaluedMapAdaptor<T> implements ProxyMap {
 
     final MultivaluedMap<String, T> entries;
 
-    public JaxrsProxyMap() {
+    public MultivaluedMapAdaptor() {
         this.entries = new MultivaluedHashMap<>();
     }
 
-    public JaxrsProxyMap(int mapSize) {
+    public MultivaluedMapAdaptor(int mapSize) {
         this.entries = new MultivaluedHashMap<>();
     }
 
-    public JaxrsProxyMap(ProxyMap other) {
+    public MultivaluedMapAdaptor(ProxyMap other) {
         this(other.size());
         for (Map.Entry<String, String> entry : other.entries()) {
             add(entry.getKey(), entry.getValue());
         }
     }
 
-    public JaxrsProxyMap(MultivaluedMap<String, T> other) {
+    public MultivaluedMapAdaptor(MultivaluedMap<String, T> other) {
         this.entries = other;
     }
 
@@ -89,7 +89,7 @@ public class JaxrsProxyMap<T> implements ProxyMap {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        JaxrsProxyMap that = (JaxrsProxyMap) o;
+        MultivaluedMapAdaptor that = (MultivaluedMapAdaptor) o;
         return Objects.equals(entries, that.entries);
     }
 

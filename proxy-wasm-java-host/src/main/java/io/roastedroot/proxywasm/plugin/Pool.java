@@ -1,31 +1,31 @@
-package io.roastedroot.proxywasm.jaxrs;
+package io.roastedroot.proxywasm.plugin;
 
 import io.roastedroot.proxywasm.StartException;
-import jakarta.annotation.PreDestroy;
 import java.util.Collection;
 import java.util.List;
 
-public interface WasmPluginPool {
+public interface Pool {
 
-    WasmPlugin borrow() throws StartException;
+    Plugin borrow() throws StartException;
 
     String name();
 
-    void release(WasmPlugin plugin);
+    void release(Plugin plugin);
 
-    class AppScoped implements WasmPluginPool {
-        private final WasmPlugin plugin;
+    default void close() {}
 
-        public AppScoped(WasmPlugin plugin) throws StartException {
+    class AppScoped implements Pool {
+        private final Plugin plugin;
+
+        public AppScoped(Plugin plugin) throws StartException {
             this.plugin = plugin;
         }
 
-        @PreDestroy
         public void close() {
             plugin.wasm.close();
         }
 
-        public Collection<WasmPlugin> getPluginPools() {
+        public Collection<Plugin> getPluginPools() {
             return List.of(plugin);
         }
 
@@ -35,25 +35,25 @@ public interface WasmPluginPool {
         }
 
         @Override
-        public void release(WasmPlugin plugin) {
+        public void release(Plugin plugin) {
             if (plugin != this.plugin) {
                 throw new IllegalArgumentException("Plugin not from this pool");
             }
         }
 
         @Override
-        public WasmPlugin borrow() throws StartException {
+        public Plugin borrow() throws StartException {
             plugin.wasm.start();
             return plugin;
         }
     }
 
-    class RequestScoped implements WasmPluginPool {
+    class RequestScoped implements Pool {
 
-        final WasmPluginFactory factory;
+        final PluginFactory factory;
         private final String name;
 
-        public RequestScoped(WasmPluginFactory factory, WasmPlugin plugin) {
+        public RequestScoped(PluginFactory factory, Plugin plugin) {
             this.factory = factory;
             this.name = plugin.name();
             release(plugin);
@@ -65,15 +65,15 @@ public interface WasmPluginPool {
         }
 
         @Override
-        public WasmPlugin borrow() throws StartException {
-            WasmPlugin plugin = factory.create();
+        public Plugin borrow() throws StartException {
+            Plugin plugin = factory.create();
             plugin.wasm.start();
             return plugin;
         }
 
         // Return the plugin to the pool
         @Override
-        public void release(WasmPlugin plugin) {
+        public void release(Plugin plugin) {
             // TODO: maybe implementing pooling in the future to reduce GC pressure
             // but for now, we just close the plugin
             plugin.close();
