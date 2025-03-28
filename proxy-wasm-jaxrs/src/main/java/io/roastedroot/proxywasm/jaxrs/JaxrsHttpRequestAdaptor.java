@@ -55,7 +55,7 @@ import java.time.Duration;
 import java.util.Date;
 import java.util.List;
 
-public abstract class JaxrsHttpRequestAdaptor implements HttpRequestAdaptor {
+public class JaxrsHttpRequestAdaptor implements HttpRequestAdaptor {
 
     private ContainerRequestContext requestContext;
     private ContainerResponseContext responseContext;
@@ -76,6 +76,26 @@ public abstract class JaxrsHttpRequestAdaptor implements HttpRequestAdaptor {
 
     public void setResponseContext(ContainerResponseContext responseContext) {
         this.responseContext = responseContext;
+    }
+
+    @Override
+    public String remoteAddress() {
+        return "";
+    }
+
+    @Override
+    public String remotePort() {
+        return "";
+    }
+
+    @Override
+    public String localAddress() {
+        return "";
+    }
+
+    @Override
+    public String localPort() {
+        return "";
     }
 
     // //////////////////////////////////////////////////////////////////////

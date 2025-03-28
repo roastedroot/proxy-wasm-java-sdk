@@ -8,7 +8,6 @@ import io.roastedroot.proxywasm.plugin.HttpContext;
 import io.roastedroot.proxywasm.plugin.Plugin;
 import io.roastedroot.proxywasm.plugin.Pool;
 import io.roastedroot.proxywasm.plugin.SendResponse;
-import jakarta.enterprise.inject.Instance;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.container.ContainerRequestFilter;
@@ -26,11 +25,8 @@ public class WasmPluginFilter
 
     private final Pool pluginPool;
 
-    Instance<JaxrsHttpRequestAdaptor> requestAdaptor;
-
-    public WasmPluginFilter(Pool pluginPool, Instance<JaxrsHttpRequestAdaptor> httpServer) {
+    public WasmPluginFilter(Pool pluginPool) {
         this.pluginPool = pluginPool;
-        this.requestAdaptor = httpServer;
     }
 
     @Override
@@ -46,7 +42,9 @@ public class WasmPluginFilter
 
         plugin.lock();
         try {
-            var requestAdaptor = this.requestAdaptor.get();
+            var requestAdaptor =
+                    (JaxrsHttpRequestAdaptor)
+                            plugin.getServerAdaptor().httpRequestAdaptor(requestContext);
             var httpContext = plugin.createHttpContext(requestAdaptor);
             requestContext.setProperty(FILTER_CONTEXT_PROPERTY_NAME, httpContext);
 
@@ -116,7 +114,7 @@ public class WasmPluginFilter
             try {
                 httpContext.plugin().lock();
 
-                var requestAdaptor = this.requestAdaptor.get();
+                var requestAdaptor = (JaxrsHttpRequestAdaptor) httpContext.requestAdaptor();
                 requestAdaptor.setResponseContext(responseContext);
                 var action = httpContext.context().callOnResponseHeaders(false);
                 if (action == Action.PAUSE) {
@@ -147,55 +145,38 @@ public class WasmPluginFilter
         }
 
         try {
+            httpContext.plugin().lock();
 
             // the plugin may not be interested in the request body.
-            if (httpContext.context().hasOnResponseBody()) {
-                var original = ctx.getOutputStream();
-                ctx.setOutputStream(
-                        new ByteArrayOutputStream() {
-                            boolean closed = false;
-
-                            @Override
-                            public void close() throws IOException {
-                                if (closed) {
-                                    return;
-                                }
-                                closed = true;
-                                super.close();
-
-                                // TODO: find out if it's more efficient to read the body in chunks
-                                // and
-                                // do
-                                //  multiple callOnRequestBody calls.
-
-                                byte[] bytes = this.toByteArray();
-
-                                httpContext.plugin().lock();
-
-                                httpContext.setHttpResponseBody(bytes);
-                                var action = httpContext.context().callOnResponseBody(false);
-                                bytes = httpContext.getHttpResponseBody();
-                                if (action == Action.CONTINUE) {
-                                    // continue means plugin is done reading the body.
-                                    httpContext.setHttpResponseBody(null);
-                                } else {
-                                    httpContext.maybePause();
-                                }
-
-                                // does the plugin want to respond early?
-                                var sendResponse = httpContext.consumeSentHttpResponse();
-                                if (sendResponse != null) {
-                                    throw new WebApplicationException(toResponse(sendResponse));
-                                }
-
-                                // plugin may have modified the body
-                                original.write(bytes);
-                                original.close();
-                            }
-                        });
+            if (!httpContext.context().hasOnResponseBody()) {
+                ctx.proceed();
             }
 
+            var original = ctx.getOutputStream();
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            ctx.setOutputStream(baos);
             ctx.proceed();
+
+            byte[] bytes = baos.toByteArray();
+            httpContext.setHttpResponseBody(bytes);
+            var action = httpContext.context().callOnResponseBody(false);
+            bytes = httpContext.getHttpResponseBody();
+            if (action == Action.CONTINUE) {
+                // continue means plugin is done reading the body.
+                httpContext.setHttpResponseBody(null);
+            } else {
+                httpContext.maybePause();
+            }
+
+            // does the plugin want to respond early?
+            var sendResponse = httpContext.consumeSentHttpResponse();
+            if (sendResponse != null) {
+                throw new WebApplicationException(toResponse(sendResponse));
+            }
+
+            // plugin may have modified the body
+            original.write(bytes);
+
         } finally {
             // allow other request to use the plugin.
             httpContext.context().close();
