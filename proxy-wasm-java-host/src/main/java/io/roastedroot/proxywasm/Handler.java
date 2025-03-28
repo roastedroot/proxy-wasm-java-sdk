@@ -3,6 +3,10 @@ package io.roastedroot.proxywasm;
 import java.util.List;
 
 public interface Handler {
+    /**
+     * The default handler.  It holds no state.
+     */
+    Handler DEFAULT = new Handler() {};
 
     default void log(LogLevel level, String message) throws WasmException {}
 

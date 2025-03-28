@@ -22,7 +22,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 public final class ProxyWasm implements Closeable {
 
     private final ABI abi;
-    private final Handler pluginHandler;
     private final WasiPreview1 wasi;
 
     private final AtomicInteger nextContextID = new AtomicInteger(1);
@@ -33,6 +32,7 @@ public final class ProxyWasm implements Closeable {
     private ProxyMap httpCallResponseHeaders;
     private ProxyMap httpCallResponseTrailers;
     private byte[] httpCallResponseBody;
+    private Handler pluginHandler;
 
     private ProxyWasm(Builder other) throws StartException {
         this.pluginHandler = Objects.requireNonNullElse(other.pluginHandler, new Handler() {});
@@ -50,6 +50,14 @@ public final class ProxyWasm implements Closeable {
         if (other.start) {
             start();
         }
+    }
+
+    public Handler getPluginHandler() {
+        return pluginHandler;
+    }
+
+    public void setPluginHandler(Handler pluginHandler) {
+        this.pluginHandler = pluginHandler;
     }
 
     public void start() throws StartException {

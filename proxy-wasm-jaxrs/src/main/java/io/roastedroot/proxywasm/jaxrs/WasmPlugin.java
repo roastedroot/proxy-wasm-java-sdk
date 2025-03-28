@@ -6,9 +6,9 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-@NameBinding // Marks this annotation as being used for JAX-RS filtering
+@NameBinding
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE, ElementType.METHOD})
-public @interface NamedWasmPlugin {
+public @interface WasmPlugin {
     String value();
 }

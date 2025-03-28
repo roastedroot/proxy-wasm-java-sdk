@@ -20,7 +20,7 @@ import jakarta.ws.rs.ext.WriterInterceptorContext;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
-public class ProxyWasmFilter
+public class WasmPluginFilter
         implements ContainerRequestFilter, WriterInterceptor, ContainerResponseFilter {
     private static final String FILTER_CONTEXT_PROPERTY_NAME = HttpContext.class.getName();
 
@@ -28,7 +28,7 @@ public class ProxyWasmFilter
 
     Instance<JaxrsHttpRequestAdaptor> requestAdaptor;
 
-    public ProxyWasmFilter(Pool pluginPool, Instance<JaxrsHttpRequestAdaptor> httpServer) {
+    public WasmPluginFilter(Pool pluginPool, Instance<JaxrsHttpRequestAdaptor> httpServer) {
         this.pluginPool = pluginPool;
         this.requestAdaptor = httpServer;
     }
@@ -208,13 +208,13 @@ public class ProxyWasmFilter
 
     public Response toResponse(SendResponse other) {
         Response.ResponseBuilder builder =
-                Response.status(other.statusCode, string(other.statusCodeDetails));
-        if (other.headers != null) {
-            for (var entry : other.headers.entries()) {
+                Response.status(other.statusCode(), string(other.statusCodeDetails()));
+        if (other.headers() != null) {
+            for (var entry : other.headers().entries()) {
                 builder = builder.header(entry.getKey(), entry.getValue());
             }
         }
-        builder.entity(other.body);
+        builder.entity(other.body());
         return builder.build();
     }
 }

@@ -126,10 +126,11 @@ public class HttpContext {
     }
 
     class HandlerImpl extends ChainedHandler {
+        private final Handler next = plugin.wasm.getPluginHandler();
 
         @Override
         protected Handler next() {
-            return plugin.handler;
+            return next;
         }
 
         public ProxyMap getHttpRequestHeaders() {
