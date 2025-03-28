@@ -1,6 +1,8 @@
 package io.roastedroot.proxywasm.jaxrs.vertx;
 
 import io.roastedroot.proxywasm.ProxyMap;
+import io.roastedroot.proxywasm.plugin.HttpCallResponse;
+import io.roastedroot.proxywasm.plugin.HttpCallResponseHandler;
 import io.roastedroot.proxywasm.plugin.ServerAdaptor;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
@@ -18,7 +20,7 @@ import java.net.URI;
 @Alternative
 @Priority(200)
 @ApplicationScoped
-public class VertxHttpServer implements ServerAdaptor {
+public class VertxServerAdaptor implements ServerAdaptor {
 
     @Inject Vertx vertx;
 
@@ -52,7 +54,7 @@ public class VertxHttpServer implements ServerAdaptor {
             byte[] body,
             ProxyMap trailers,
             int timeout,
-            HandlerHttpResponseHandler handler)
+            HttpCallResponseHandler handler)
             throws InterruptedException {
         var f =
                 client.request(HttpMethod.valueOf(method), port, host, uri.toString())
@@ -78,14 +80,14 @@ public class VertxHttpServer implements ServerAdaptor {
                                                                                     e.getKey(),
                                                                                     e.getValue()));
                                                     handler.call(
-                                                            new HandlerHttpResponse(
+                                                            new HttpCallResponse(
                                                                     result.statusCode(),
                                                                     h,
                                                                     bodyHandler.getBytes()));
                                                 });
                                     } else {
                                         handler.call(
-                                                new HandlerHttpResponse(
+                                                new HttpCallResponse(
                                                         500,
                                                         ProxyMap.of(),
                                                         resp.cause().getMessage().getBytes()));

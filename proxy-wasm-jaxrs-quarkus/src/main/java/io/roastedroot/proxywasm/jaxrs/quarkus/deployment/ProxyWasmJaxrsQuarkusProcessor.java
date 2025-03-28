@@ -4,7 +4,7 @@ import io.quarkus.arc.deployment.AdditionalBeanBuildItem;
 import io.quarkus.deployment.annotations.BuildStep;
 import io.quarkus.deployment.builditem.FeatureBuildItem;
 import io.quarkus.jaxrs.spi.deployment.AdditionalJaxRsResourceMethodAnnotationsBuildItem;
-import io.roastedroot.proxywasm.jaxrs.NamedWasmPlugin;
+import io.roastedroot.proxywasm.jaxrs.WasmPlugin;
 import io.roastedroot.proxywasm.jaxrs.WasmPluginFeature;
 import java.util.List;
 import org.jboss.jandex.DotName;
@@ -24,6 +24,6 @@ class ProxyWasmJaxrsQuarkusProcessor {
     @BuildStep
     public AdditionalJaxRsResourceMethodAnnotationsBuildItem annotations() {
         return new AdditionalJaxRsResourceMethodAnnotationsBuildItem(
-                List.of(DotName.createSimple(NamedWasmPlugin.class.getName())));
+                List.of(DotName.createSimple(WasmPlugin.class.getName())));
     }
 }

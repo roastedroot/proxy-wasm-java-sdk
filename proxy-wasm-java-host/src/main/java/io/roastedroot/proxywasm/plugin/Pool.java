@@ -14,10 +14,10 @@ public interface Pool {
 
     default void close() {}
 
-    class AppScoped implements Pool {
+    class SharedPlugin implements Pool {
         private final Plugin plugin;
 
-        public AppScoped(Plugin plugin) throws StartException {
+        public SharedPlugin(Plugin plugin) throws StartException {
             this.plugin = plugin;
         }
 
@@ -48,12 +48,12 @@ public interface Pool {
         }
     }
 
-    class RequestScoped implements Pool {
+    class PluginPerRequest implements Pool {
 
         final PluginFactory factory;
         private final String name;
 
-        public RequestScoped(PluginFactory factory, Plugin plugin) {
+        public PluginPerRequest(PluginFactory factory, Plugin plugin) {
             this.factory = factory;
             this.name = plugin.name();
             release(plugin);
