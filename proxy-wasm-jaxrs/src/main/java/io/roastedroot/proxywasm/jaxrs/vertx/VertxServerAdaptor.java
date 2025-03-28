@@ -3,6 +3,7 @@ package io.roastedroot.proxywasm.jaxrs.vertx;
 import io.roastedroot.proxywasm.ProxyMap;
 import io.roastedroot.proxywasm.plugin.HttpCallResponse;
 import io.roastedroot.proxywasm.plugin.HttpCallResponseHandler;
+import io.roastedroot.proxywasm.plugin.HttpRequestAdaptor;
 import io.roastedroot.proxywasm.plugin.ServerAdaptor;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
@@ -14,6 +15,7 @@ import jakarta.annotation.PreDestroy;
 import jakarta.annotation.Priority;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Alternative;
+import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 import java.net.URI;
 
@@ -42,6 +44,13 @@ public class VertxServerAdaptor implements ServerAdaptor {
         return () -> {
             vertx.cancelTimer(id);
         };
+    }
+
+    @Inject Instance<VertxHttpRequestAdaptor> httpRequestAdaptors;
+
+    @Override
+    public HttpRequestAdaptor httpRequestAdaptor(Object context) {
+        return httpRequestAdaptors.get();
     }
 
     @Override

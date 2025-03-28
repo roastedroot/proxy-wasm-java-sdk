@@ -5,7 +5,7 @@ import io.quarkus.deployment.annotations.BuildStep;
 import io.quarkus.deployment.builditem.FeatureBuildItem;
 import io.quarkus.jaxrs.spi.deployment.AdditionalJaxRsResourceMethodAnnotationsBuildItem;
 import io.roastedroot.proxywasm.jaxrs.WasmPlugin;
-import io.roastedroot.proxywasm.jaxrs.WasmPluginFeature;
+import io.roastedroot.proxywasm.jaxrs.cdi.WasmPluginFeature;
 import java.util.List;
 import org.jboss.jandex.DotName;
 

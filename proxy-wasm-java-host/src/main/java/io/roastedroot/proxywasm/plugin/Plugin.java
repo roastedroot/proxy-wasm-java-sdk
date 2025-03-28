@@ -35,7 +35,7 @@ public final class Plugin {
 
     private final ReentrantLock lock = new ReentrantLock();
     final ProxyWasm wasm;
-    ServerAdaptor httpServer;
+    ServerAdaptor serverAdaptor;
     private final boolean shared;
     private final String name;
 
@@ -76,8 +76,12 @@ public final class Plugin {
         return shared;
     }
 
-    public void setHttpServer(ServerAdaptor httpServer) {
-        this.httpServer = httpServer;
+    public ServerAdaptor getServerAdaptor() {
+        return serverAdaptor;
+    }
+
+    public void setServerAdaptor(ServerAdaptor serverAdaptor) {
+        this.serverAdaptor = serverAdaptor;
     }
 
     public Logger logger() {
@@ -318,7 +322,7 @@ public final class Plugin {
 
             // schedule the new tick
             cancelTick =
-                    httpServer.scheduleTick(
+                    serverAdaptor.scheduleTick(
                             Math.max(minTickPeriodMilliseconds, tickPeriodMilliseconds),
                             () -> {
                                 lock();
@@ -423,7 +427,7 @@ public final class Plugin {
             try {
                 var id = lastCallId.incrementAndGet();
                 var future =
-                        httpServer.scheduleHttpCall(
+                        serverAdaptor.scheduleHttpCall(
                                 method,
                                 connectHost,
                                 connectPort,
