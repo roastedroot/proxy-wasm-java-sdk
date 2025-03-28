@@ -17,8 +17,9 @@ public interface Pool {
     class SharedPlugin implements Pool {
         private final Plugin plugin;
 
-        public SharedPlugin(Plugin plugin) throws StartException {
+        public SharedPlugin(ServerAdaptor serverAdaptor, Plugin plugin) throws StartException {
             this.plugin = plugin;
+            this.plugin.setServerAdaptor(serverAdaptor);
         }
 
         public void close() {
@@ -50,10 +51,12 @@ public interface Pool {
 
     class PluginPerRequest implements Pool {
 
+        private final ServerAdaptor serverAdaptor;
         final PluginFactory factory;
         private final String name;
 
-        public PluginPerRequest(PluginFactory factory, Plugin plugin) {
+        public PluginPerRequest(ServerAdaptor serverAdaptor, PluginFactory factory, Plugin plugin) {
+            this.serverAdaptor = serverAdaptor;
             this.factory = factory;
             this.name = plugin.name();
             release(plugin);
@@ -67,6 +70,7 @@ public interface Pool {
         @Override
         public Plugin borrow() throws StartException {
             Plugin plugin = factory.create();
+            plugin.setServerAdaptor(serverAdaptor);
             plugin.wasm.start();
             return plugin;
         }

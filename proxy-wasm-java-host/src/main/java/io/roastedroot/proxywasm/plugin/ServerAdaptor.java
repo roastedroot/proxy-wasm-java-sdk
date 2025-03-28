@@ -10,6 +10,8 @@ public interface ServerAdaptor {
 
     Runnable scheduleTick(long delay, Runnable task);
 
+    HttpRequestAdaptor httpRequestAdaptor(Object context);
+
     Runnable scheduleHttpCall(
             String method,
             String host,
