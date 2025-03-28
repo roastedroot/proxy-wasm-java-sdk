@@ -38,8 +38,8 @@ public class WasmPluginFeature implements DynamicFeature {
             }
             Pool pool =
                     plugin.isShared()
-                            ? new Pool.AppScoped(plugin)
-                            : new Pool.RequestScoped(factory, plugin);
+                            ? new Pool.SharedPlugin(plugin)
+                            : new Pool.PluginPerRequest(factory, plugin);
             this.pluginPools.put(name, pool);
         }
     }
@@ -64,17 +64,16 @@ public class WasmPluginFeature implements DynamicFeature {
 
         var resourceMethod = resourceInfo.getResourceMethod();
         if (resourceMethod != null) {
-            NamedWasmPlugin pluignNameAnnotation =
-                    resourceMethod.getAnnotation(NamedWasmPlugin.class);
+            WasmPlugin pluignNameAnnotation = resourceMethod.getAnnotation(WasmPlugin.class);
             if (pluignNameAnnotation == null) {
                 // If no annotation on method, check the class level
                 pluignNameAnnotation =
-                        resourceInfo.getResourceClass().getAnnotation(NamedWasmPlugin.class);
+                        resourceInfo.getResourceClass().getAnnotation(WasmPlugin.class);
             }
             if (pluignNameAnnotation != null) {
                 Pool factory = pluginPools.get(pluignNameAnnotation.value());
                 if (factory != null) {
-                    context.register(new ProxyWasmFilter(factory, httpServerRequest));
+                    context.register(new WasmPluginFilter(factory, httpServerRequest));
                 }
             }
         }

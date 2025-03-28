@@ -1,41 +1,63 @@
 package io.roastedroot.proxywasm.plugin;
 
 import static io.roastedroot.proxywasm.Helpers.bytes;
+import static io.roastedroot.proxywasm.WellKnownHeaders.AUTHORITY;
+import static io.roastedroot.proxywasm.WellKnownHeaders.METHOD;
+import static io.roastedroot.proxywasm.WellKnownHeaders.PATH;
+import static io.roastedroot.proxywasm.WellKnownHeaders.SCHEME;
+import static io.roastedroot.proxywasm.WellKnownProperties.PLUGIN_NAME;
+import static io.roastedroot.proxywasm.WellKnownProperties.PLUGIN_VM_ID;
 
 import com.dylibso.chicory.runtime.ImportMemory;
 import com.dylibso.chicory.runtime.Instance;
 import com.dylibso.chicory.wasm.WasmModule;
+import io.roastedroot.proxywasm.ArrayProxyMap;
+import io.roastedroot.proxywasm.ChainedHandler;
 import io.roastedroot.proxywasm.ForeignFunction;
+import io.roastedroot.proxywasm.Handler;
+import io.roastedroot.proxywasm.LogLevel;
+import io.roastedroot.proxywasm.MetricType;
+import io.roastedroot.proxywasm.ProxyMap;
 import io.roastedroot.proxywasm.ProxyWasm;
 import io.roastedroot.proxywasm.StartException;
+import io.roastedroot.proxywasm.WasmException;
+import io.roastedroot.proxywasm.WasmResult;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 
 public final class Plugin {
 
-    final PluginHandler handler;
     private final ReentrantLock lock = new ReentrantLock();
-    private final boolean shared;
     final ProxyWasm wasm;
     ServerAdaptor httpServer;
+    private final boolean shared;
+    private final String name;
 
-    public Logger logger() {
-        return handler.logger;
-    }
-
-    private Plugin(ProxyWasm proxyWasm, PluginHandler handler, boolean shared) {
+    private Plugin(Builder builder, ProxyWasm proxyWasm) throws StartException {
         Objects.requireNonNull(proxyWasm);
-        Objects.requireNonNull(handler);
-        this.shared = shared;
+        this.name = Objects.requireNonNullElse(builder.name, "default");
+        this.shared = builder.shared;
+        this.foreignFunctions = builder.foreignFunctions;
+        this.upstreams = builder.upstreams;
+        this.strictUpstreams = builder.strictUpstreams;
+        this.minTickPeriodMilliseconds = builder.minTickPeriodMilliseconds;
+        this.logger = builder.logger;
+        this.vmConfig = builder.vmConfig;
+        this.pluginConfig = builder.pluginConfig;
+
         this.wasm = proxyWasm;
-        this.handler = handler;
-        this.handler.setPlugin(this);
+        this.wasm.setPluginHandler(new HandlerImpl());
+        this.wasm.start();
     }
 
     public String name() {
-        return handler.getName();
+        return name;
     }
 
     public static Plugin.Builder builder() {
@@ -58,6 +80,10 @@ public final class Plugin {
         this.httpServer = httpServer;
     }
 
+    public Logger logger() {
+        return logger;
+    }
+
     public HttpContext createHttpContext(HttpRequestAdaptor requestAdaptor) {
         return new HttpContext(this, requestAdaptor);
     }
@@ -66,7 +92,15 @@ public final class Plugin {
         lock();
         try {
             wasm.close();
-            handler.close();
+            if (cancelTick != null) {
+                cancelTick.run();
+                cancelTick = null;
+            }
+            for (var cancelHttpCall : httpCalls.values()) {
+                cancelHttpCall.run();
+            }
+            httpCalls.clear();
+
         } finally {
             unlock();
         }
@@ -74,38 +108,44 @@ public final class Plugin {
 
     public static class Builder implements Cloneable {
 
-        private PluginHandler handler = new PluginHandler();
-        private ProxyWasm.Builder proxyWasmBuilder =
-                ProxyWasm.builder().withPluginHandler(handler).withStart(false);
+        private ProxyWasm.Builder proxyWasmBuilder = ProxyWasm.builder().withStart(false);
         private boolean shared = true;
+        private String name;
+        private HashMap<String, ForeignFunction> foreignFunctions;
+        private HashMap<String, String> upstreams;
+        private boolean strictUpstreams;
+        private int minTickPeriodMilliseconds;
+        private Logger logger;
+        private byte[] vmConfig;
+        private byte[] pluginConfig;
 
         public Plugin.Builder withName(String name) {
-            this.handler.name = name;
+            this.name = name;
             return this;
         }
 
         public Builder withForeignFunctions(Map<String, ForeignFunction> functions) {
-            this.handler.foreignFunctions = new HashMap<>(functions);
+            this.foreignFunctions = new HashMap<>(functions);
             return this;
         }
 
         public Builder withUpstreams(Map<String, String> upstreams) {
-            this.handler.upstreams = new HashMap<>(upstreams);
+            this.upstreams = new HashMap<>(upstreams);
             return this;
         }
 
         public Builder withStrictUpstreams(boolean strictUpstreams) {
-            this.handler.strictUpstreams = strictUpstreams;
+            this.strictUpstreams = strictUpstreams;
             return this;
         }
 
         public Builder withMinTickPeriodMilliseconds(int minTickPeriodMilliseconds) {
-            this.handler.minTickPeriodMilliseconds = minTickPeriodMilliseconds;
+            this.minTickPeriodMilliseconds = minTickPeriodMilliseconds;
             return this;
         }
 
         public Builder withLogger(Logger logger) {
-            this.handler.logger = logger;
+            this.logger = logger;
             return this;
         }
 
@@ -115,22 +155,22 @@ public final class Plugin {
         }
 
         public Plugin.Builder withVmConfig(byte[] vmConfig) {
-            this.handler.vmConfig = vmConfig;
+            this.vmConfig = vmConfig;
             return this;
         }
 
         public Plugin.Builder withVmConfig(String vmConfig) {
-            this.handler.vmConfig = bytes(vmConfig);
+            this.vmConfig = bytes(vmConfig);
             return this;
         }
 
         public Plugin.Builder withPluginConfig(byte[] pluginConfig) {
-            this.handler.pluginConfig = pluginConfig;
+            this.pluginConfig = pluginConfig;
             return this;
         }
 
         public Plugin.Builder withPluginConfig(String pluginConfig) {
-            this.handler.pluginConfig = bytes(pluginConfig);
+            this.pluginConfig = bytes(pluginConfig);
             return this;
         }
 
@@ -152,7 +192,339 @@ public final class Plugin {
         }
 
         public Plugin build(ProxyWasm proxyWasm) throws StartException {
-            return new Plugin(proxyWasm, handler, shared);
+            return new Plugin(this, proxyWasm);
+        }
+    }
+
+    public Logger logger;
+    static final boolean DEBUG = "true".equals(System.getenv("DEBUG"));
+    byte[] vmConfig;
+    byte[] pluginConfig;
+    private final AtomicInteger lastCallId = new AtomicInteger(0);
+    private final HashMap<Integer, Runnable> httpCalls = new HashMap<>();
+    HashMap<String, String> upstreams = new HashMap<>();
+    boolean strictUpstreams;
+    int minTickPeriodMilliseconds;
+    private int tickPeriodMilliseconds;
+    private Runnable cancelTick;
+    HashMap<String, ForeignFunction> foreignFunctions;
+    private final AtomicInteger lastMetricId = new AtomicInteger(0);
+    private HashMap<Integer, io.roastedroot.proxywasm.plugin.Metric> metrics = new HashMap<>();
+    private HashMap<String, io.roastedroot.proxywasm.plugin.Metric> metricsByName = new HashMap<>();
+    private byte[] funcCallData = new byte[0];
+    private final HashMap<List<String>, byte[]> properties = new HashMap<>();
+
+    public static class Metric {
+
+        public final int id;
+        public final MetricType type;
+        public final String name;
+        public long value;
+
+        public Metric(int id, MetricType type, String name) {
+            this.id = id;
+            this.type = type;
+            this.name = name;
+        }
+    }
+
+    class HandlerImpl extends ChainedHandler {
+
+        @Override
+        protected Handler next() {
+            return Handler.DEFAULT;
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        // Plugin config
+        // //////////////////////////////////////////////////////////////////////
+        @Override
+        public byte[] getVmConfig() {
+            return vmConfig;
+        }
+
+        @Override
+        public byte[] getPluginConfig() {
+            return pluginConfig;
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        // Properties
+        // //////////////////////////////////////////////////////////////////////
+
+        @Override
+        public byte[] getProperty(List<String> path) throws WasmException {
+            // TODO: do we need field for vm_id and root_id?
+            if (PLUGIN_VM_ID.equals(path)) {
+                return bytes(name);
+            }
+            if (PLUGIN_NAME.equals(path)) {
+                return bytes(name);
+            }
+            return properties.get(path);
+        }
+
+        @Override
+        public WasmResult setProperty(List<String> path, byte[] value) {
+            properties.put(path, value);
+            return WasmResult.OK;
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        // Logging
+        // //////////////////////////////////////////////////////////////////////
+
+        @Override
+        public void log(LogLevel level, String message) throws WasmException {
+            Logger l = logger;
+            if (l == null) {
+                super.log(level, message);
+                return;
+            }
+            l.log(level, message);
+        }
+
+        @Override
+        public LogLevel getLogLevel() throws WasmException {
+            Logger l = logger;
+            if (l == null) {
+                return super.getLogLevel();
+            }
+            return l.getLogLevel();
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        // Timers
+        // //////////////////////////////////////////////////////////////////////
+        @Override
+        public WasmResult setTickPeriodMilliseconds(int tickMs) {
+
+            // check for no change
+            if (tickMs == tickPeriodMilliseconds) {
+                return WasmResult.OK;
+            }
+
+            // cancel the current tick, if any
+            if (cancelTick != null) {
+                cancelTick.run();
+                cancelTick = null;
+            }
+
+            // set the new tick period, if any
+            tickPeriodMilliseconds = tickMs;
+            if (tickPeriodMilliseconds == 0) {
+                return WasmResult.OK;
+            }
+
+            // schedule the new tick
+            cancelTick =
+                    httpServer.scheduleTick(
+                            Math.max(minTickPeriodMilliseconds, tickPeriodMilliseconds),
+                            () -> {
+                                lock();
+                                try {
+                                    wasm.tick();
+                                } finally {
+                                    unlock();
+                                }
+                            });
+            return WasmResult.OK;
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        // Foreign function interface (FFI)
+        // //////////////////////////////////////////////////////////////////////
+
+        @Override
+        public byte[] getFuncCallData() {
+            return funcCallData;
+        }
+
+        @Override
+        public WasmResult setFuncCallData(byte[] data) {
+            funcCallData = data;
+            return WasmResult.OK;
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        // HTTP calls
+        // //////////////////////////////////////////////////////////////////////
+
+        @Override
+        public int httpCall(
+                String upstreamName,
+                ProxyMap headers,
+                byte[] body,
+                ProxyMap trailers,
+                int timeoutMilliseconds)
+                throws WasmException {
+
+            var method = headers.get(METHOD);
+            if (method == null) {
+                throw new WasmException(WasmResult.BAD_ARGUMENT);
+            }
+
+            var scheme = headers.get(SCHEME);
+            if (scheme == null) {
+                scheme = "http";
+            }
+            var authority = headers.get(AUTHORITY);
+            if (authority == null) {
+                throw new WasmException(WasmResult.BAD_ARGUMENT);
+            }
+            headers.put("Host", authority);
+
+            var connectHostPort = upstreams.get(upstreamName);
+            if (connectHostPort == null && strictUpstreams) {
+                throw new WasmException(WasmResult.BAD_ARGUMENT);
+            }
+            if (connectHostPort == null) {
+                connectHostPort = authority;
+            }
+
+            URI connectUri = null;
+            try {
+                connectUri = URI.create(scheme + "://" + connectHostPort);
+            } catch (IllegalArgumentException e) {
+                throw new WasmException(WasmResult.BAD_ARGUMENT);
+            }
+
+            var connectHost = connectUri.getHost();
+            var connectPort = connectUri.getPort();
+            if (connectPort == -1) {
+                connectPort = "https".equals(scheme) ? 443 : 80;
+            }
+
+            var path = headers.get(PATH);
+            if (path == null) {
+                throw new WasmException(WasmResult.BAD_ARGUMENT);
+            }
+            if (!path.isEmpty() && !path.startsWith("/")) {
+                path = "/" + path;
+            }
+
+            URI uri = null;
+            try {
+                uri =
+                        URI.create(
+                                new URI(scheme, null, authority, connectPort, null, null, null)
+                                        + path);
+            } catch (IllegalArgumentException | URISyntaxException e) {
+                throw new WasmException(WasmResult.BAD_ARGUMENT);
+            }
+
+            // Remove all the pseudo headers
+            for (var r : new ArrayProxyMap(headers).entries()) {
+                if (r.getKey().startsWith(":")) {
+                    headers.remove(r.getKey());
+                }
+            }
+
+            try {
+                var id = lastCallId.incrementAndGet();
+                var future =
+                        httpServer.scheduleHttpCall(
+                                method,
+                                connectHost,
+                                connectPort,
+                                uri,
+                                headers,
+                                body,
+                                trailers,
+                                timeoutMilliseconds,
+                                (resp) -> {
+                                    lock();
+                                    try {
+                                        if (httpCalls.remove(id) == null) {
+                                            return; // the call could have already been cancelled
+                                        }
+                                        wasm.sendHttpCallResponse(
+                                                id, resp.headers, new ArrayProxyMap(), resp.body);
+                                    } finally {
+                                        unlock();
+                                    }
+                                });
+                httpCalls.put(id, future);
+                return id;
+            } catch (InterruptedException e) {
+                throw new WasmException(WasmResult.INTERNAL_FAILURE);
+            }
+        }
+
+        @Override
+        public int dispatchHttpCall(
+                String upstreamName,
+                ProxyMap headers,
+                byte[] body,
+                ProxyMap trailers,
+                int timeoutMilliseconds)
+                throws WasmException {
+            return httpCall(upstreamName, headers, body, trailers, timeoutMilliseconds);
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        // Metrics
+        // //////////////////////////////////////////////////////////////////////
+
+        @Override
+        public int defineMetric(MetricType type, String name) throws WasmException {
+            var id = lastMetricId.incrementAndGet();
+            io.roastedroot.proxywasm.plugin.Metric value =
+                    new io.roastedroot.proxywasm.plugin.Metric(id, type, name);
+            metrics.put(id, value);
+            metricsByName.put(name, value);
+            return id;
+        }
+
+        @Override
+        public long getMetric(int metricId) throws WasmException {
+            var metric = metrics.get(metricId);
+            if (metric == null) {
+                throw new WasmException(WasmResult.NOT_FOUND);
+            }
+            return metric.value;
+        }
+
+        @Override
+        public WasmResult incrementMetric(int metricId, long value) {
+            var metric = metrics.get(metricId);
+            if (metric == null) {
+                return WasmResult.NOT_FOUND;
+            }
+            metric.value += value;
+            return WasmResult.OK;
+        }
+
+        @Override
+        public WasmResult recordMetric(int metricId, long value) {
+            var metric = metrics.get(metricId);
+            if (metric == null) {
+                return WasmResult.NOT_FOUND;
+            }
+            metric.value = value;
+            return WasmResult.OK;
+        }
+
+        @Override
+        public WasmResult removeMetric(int metricId) {
+            io.roastedroot.proxywasm.plugin.Metric metric = metrics.remove(metricId);
+            if (metric == null) {
+                return WasmResult.NOT_FOUND;
+            }
+            metricsByName.remove(metric.name);
+            return WasmResult.OK;
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        // FFI
+        // //////////////////////////////////////////////////////////////////////
+
+        @Override
+        public ForeignFunction getForeignFunction(String name) {
+            if (foreignFunctions == null) {
+                return null;
+            }
+            return foreignFunctions.get(name);
         }
     }
 }

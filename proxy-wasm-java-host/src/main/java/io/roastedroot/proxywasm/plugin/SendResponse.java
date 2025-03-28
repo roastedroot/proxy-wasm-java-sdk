@@ -4,11 +4,11 @@ import io.roastedroot.proxywasm.ProxyMap;
 
 public class SendResponse {
 
-    public final int statusCode;
-    public final byte[] statusCodeDetails;
-    public final byte[] body;
-    public final ProxyMap headers;
-    public final int grpcStatus;
+    private final int statusCode;
+    private final byte[] statusCodeDetails;
+    private final byte[] body;
+    private final ProxyMap headers;
+    private final int grpcStatus;
 
     public SendResponse(
             int responseCode,
@@ -21,5 +21,25 @@ public class SendResponse {
         this.body = responseBody;
         this.headers = additionalHeaders;
         this.grpcStatus = grpcStatus;
+    }
+
+    public int statusCode() {
+        return statusCode;
+    }
+
+    public byte[] statusCodeDetails() {
+        return statusCodeDetails;
+    }
+
+    public byte[] body() {
+        return body;
+    }
+
+    public ProxyMap headers() {
+        return headers;
+    }
+
+    public int grpcStatus() {
+        return grpcStatus;
     }
 }

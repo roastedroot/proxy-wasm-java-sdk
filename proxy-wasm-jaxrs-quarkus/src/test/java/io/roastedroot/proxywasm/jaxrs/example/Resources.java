@@ -1,6 +1,6 @@
 package io.roastedroot.proxywasm.jaxrs.example;
 
-import io.roastedroot.proxywasm.jaxrs.NamedWasmPlugin;
+import io.roastedroot.proxywasm.jaxrs.WasmPlugin;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.HeaderParam;
 import jakarta.ws.rs.POST;
@@ -37,35 +37,35 @@ public class Resources {
 
     @Path("/headerTests")
     @GET
-    @NamedWasmPlugin("headerTests")
+    @WasmPlugin("headerTests")
     public String uhttpHeaders(@HeaderParam("x-request-counter") String counter) {
         return String.format("counter: %s", counter);
     }
 
     @Path("/headerTestsNotShared")
     @GET
-    @NamedWasmPlugin("headerTestsNotShared")
+    @WasmPlugin("headerTestsNotShared")
     public String unotSharedHttpHeaders(@HeaderParam("x-request-counter") String counter) {
         return String.format("counter: %s", counter);
     }
 
     @Path("/tickTests/{sub: .+ }")
     @GET
-    @NamedWasmPlugin("tickTests")
+    @WasmPlugin("tickTests")
     public String tickTests(@PathParam("sub") String sub) {
         return "hello world";
     }
 
     @Path("/ffiTests/reverse")
     @POST
-    @NamedWasmPlugin("ffiTests")
+    @WasmPlugin("ffiTests")
     public String ffiTests(String body) {
         return body;
     }
 
     @Path("/httpCallTests")
     @GET
-    @NamedWasmPlugin("httpCallTests")
+    @WasmPlugin("httpCallTests")
     public String httpCallTests() {
         return "hello world";
     }

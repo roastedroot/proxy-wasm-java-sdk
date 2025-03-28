@@ -19,23 +19,6 @@ public interface ServerAdaptor {
             byte[] body,
             ProxyMap trailers,
             int timeout,
-            HandlerHttpResponseHandler handler)
+            HttpCallResponseHandler handler)
             throws InterruptedException;
-
-    class HandlerHttpResponse {
-
-        public final int statusCode;
-        public final ProxyMap headers;
-        public final byte[] body;
-
-        public HandlerHttpResponse(int statusCode, ProxyMap headers, byte[] body) {
-            this.statusCode = statusCode;
-            this.headers = headers;
-            this.body = body;
-        }
-    }
-
-    interface HandlerHttpResponseHandler {
-        void call(HandlerHttpResponse response);
-    }
 }
