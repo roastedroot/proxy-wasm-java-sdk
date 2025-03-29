@@ -1592,7 +1592,7 @@ class ABI {
             String key = string(readMemory(keyDataPtr, keySize));
 
             // Get shared data value using handler
-            Handler.SharedData value = handler.getSharedData(key);
+            SharedData value = handler.getSharedData(key);
             if (value == null) {
                 return WasmResult.NOT_FOUND.getValue();
             }
