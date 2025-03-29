@@ -19,6 +19,8 @@ import io.roastedroot.proxywasm.LogLevel;
 import io.roastedroot.proxywasm.MetricType;
 import io.roastedroot.proxywasm.ProxyMap;
 import io.roastedroot.proxywasm.ProxyWasm;
+import io.roastedroot.proxywasm.QueueName;
+import io.roastedroot.proxywasm.SharedData;
 import io.roastedroot.proxywasm.StartException;
 import io.roastedroot.proxywasm.WasmException;
 import io.roastedroot.proxywasm.WasmResult;
@@ -529,6 +531,44 @@ public final class Plugin {
                 return null;
             }
             return foreignFunctions.get(name);
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        // Shared Data
+        // //////////////////////////////////////////////////////////////////////
+
+        @Override
+        public SharedData getSharedData(String key) throws WasmException {
+            return next().getSharedData(key);
+        }
+
+        @Override
+        public WasmResult setSharedData(String key, byte[] value, int cas) {
+            return next().setSharedData(key, value, cas);
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        // Shared Queue
+        // //////////////////////////////////////////////////////////////////////
+
+        @Override
+        public int registerSharedQueue(QueueName queueName) throws WasmException {
+            return next().registerSharedQueue(queueName);
+        }
+
+        @Override
+        public int resolveSharedQueue(QueueName queueName) throws WasmException {
+            return next().resolveSharedQueue(queueName);
+        }
+
+        @Override
+        public byte[] dequeueSharedQueue(int queueId) throws WasmException {
+            return next().dequeueSharedQueue(queueId);
+        }
+
+        @Override
+        public WasmResult enqueueSharedQueue(int queueId, byte[] value) {
+            return next().enqueueSharedQueue(queueId, value);
         }
     }
 }
