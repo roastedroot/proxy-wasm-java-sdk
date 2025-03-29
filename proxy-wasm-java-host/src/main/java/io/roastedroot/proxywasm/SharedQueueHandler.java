@@ -1,0 +1,20 @@
+package io.roastedroot.proxywasm;
+
+public interface SharedQueueHandler {
+
+    default int registerSharedQueue(QueueName name) throws WasmException {
+        throw new WasmException(WasmResult.UNIMPLEMENTED);
+    }
+
+    default int resolveSharedQueue(QueueName name) throws WasmException {
+        throw new WasmException(WasmResult.UNIMPLEMENTED);
+    }
+
+    default byte[] dequeueSharedQueue(int queueId) throws WasmException {
+        throw new WasmException(WasmResult.UNIMPLEMENTED);
+    }
+
+    default WasmResult enqueueSharedQueue(int queueId, byte[] value) {
+        return WasmResult.UNIMPLEMENTED;
+    }
+}

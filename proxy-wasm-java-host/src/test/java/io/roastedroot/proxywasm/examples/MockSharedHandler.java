@@ -2,6 +2,7 @@ package io.roastedroot.proxywasm.examples;
 
 import io.roastedroot.proxywasm.Handler;
 import io.roastedroot.proxywasm.QueueName;
+import io.roastedroot.proxywasm.SharedData;
 import io.roastedroot.proxywasm.WasmException;
 import io.roastedroot.proxywasm.WasmResult;
 import java.util.HashMap;
