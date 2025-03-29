@@ -1,0 +1,5 @@
+name: quarkus-proxy-wasm
+title: Proxy Wasm
+version: dev
+nav:
+  - modules/ROOT/nav.adoc
