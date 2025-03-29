@@ -27,49 +27,15 @@
 
   <dependencies>
     <dependency>
-      <groupId>com.dylibso.chicory</groupId>
-      <artifactId>aot-experimental</artifactId>
-      <version>${chicory.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>com.dylibso.chicory</groupId>
-      <artifactId>host-module-annotations-experimental</artifactId>
-      <version>${chicory.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>com.dylibso.chicory</groupId>
-      <artifactId>runtime</artifactId>
-      <version>${chicory.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>com.dylibso.chicory</groupId>
-      <artifactId>wasi</artifactId>
-      <version>${chicory.version}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-arc</artifactId>
-      <optional>true</optional>
-    </dependency>
-    <dependency>
       <groupId>io.roastedroot</groupId>
       <artifactId>proxy-wasm-java-host</artifactId>
       <version>${project.version}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-core</artifactId>
-      <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>jakarta.servlet</groupId>
       <artifactId>jakarta.servlet-api</artifactId>
       <optional>true</optional>
     </dependency>
-
-    <!-- Depend on a minimal set of jakarta/jaxrs apis -->
     <dependency>
       <groupId>jakarta.enterprise</groupId>
       <artifactId>jakarta.enterprise.cdi-api</artifactId>
@@ -80,6 +46,8 @@
       <artifactId>jakarta.inject-api</artifactId>
       <scope>provided</scope>
     </dependency>
+
+    <!-- Depend on a minimal set of jakarta/jaxrs apis -->
     <dependency>
       <groupId>jakarta.ws.rs</groupId>
       <artifactId>jakarta.ws.rs-api</artifactId>
@@ -93,7 +61,7 @@
       <plugin>
         <groupId>io.smallrye</groupId>
         <artifactId>jandex-maven-plugin</artifactId>
-        <version>3.2.7</version>
+        <version>${jandex.version}</version>
         <executions>
           <execution>
             <id>make-index</id>

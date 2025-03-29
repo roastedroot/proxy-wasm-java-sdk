@@ -1,4 +1,4 @@
-package io.roastedroot.proxywasm.jaxrs.vertx;
+package io.quarkiverse.proxywasm.runtime;
 
 import io.roastedroot.proxywasm.ProxyMap;
 import io.roastedroot.proxywasm.plugin.HttpCallResponse;

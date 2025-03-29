@@ -17,12 +17,12 @@ public class WasmPluginFeature extends io.roastedroot.proxywasm.jaxrs.AbstractWa
 
     @Inject Instance<PluginFactory> factories;
 
-    @Inject @Any ServerAdaptor httpServer;
+    @Inject @Any ServerAdaptor serverAdaptor;
 
     @Inject
     @PostConstruct
     public void init() throws StartException {
-        init(factories, httpServer);
+        init(factories, serverAdaptor);
     }
 
     @PreDestroy

@@ -1,5 +1,7 @@
 package io.quarkiverse.proxywasm.deployment;
 
+import io.quarkiverse.proxywasm.runtime.VertxHttpRequestAdaptor;
+import io.quarkiverse.proxywasm.runtime.VertxServerAdaptor;
 import io.quarkus.arc.deployment.AdditionalBeanBuildItem;
 import io.quarkus.deployment.annotations.BuildStep;
 import io.quarkus.deployment.builditem.FeatureBuildItem;
@@ -20,7 +22,8 @@ class ProxyWasmProcessor {
 
     @BuildStep
     AdditionalBeanBuildItem resources() {
-        return new AdditionalBeanBuildItem(WasmPluginFeature.class);
+        return new AdditionalBeanBuildItem(
+                WasmPluginFeature.class, VertxServerAdaptor.class, VertxHttpRequestAdaptor.class);
     }
 
     @BuildStep

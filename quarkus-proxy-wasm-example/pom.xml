@@ -9,9 +9,9 @@
     <relativePath>../pom.xml</relativePath>
   </parent>
 
-  <artifactId>proxy-wasm-quarkus-example</artifactId>
+  <artifactId>quarkus-proxy-wasm-example</artifactId>
   <packaging>jar</packaging>
-  <name>proxy-wasm-quarkus-example</name>
+  <name>quarkus-proxy-wasm-example</name>
 
   <dependencyManagement>
     <dependencies>

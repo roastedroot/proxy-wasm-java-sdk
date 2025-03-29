@@ -5,9 +5,6 @@ import io.roastedroot.proxywasm.ProxyMap;
 import io.roastedroot.proxywasm.plugin.HttpCallResponse;
 import io.roastedroot.proxywasm.plugin.HttpCallResponseHandler;
 import io.roastedroot.proxywasm.plugin.HttpRequestAdaptor;
-import jakarta.annotation.Priority;
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.enterprise.inject.Alternative;
 import jakarta.ws.rs.core.UriBuilder;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -19,9 +16,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-@Alternative
-@Priority(100)
-@ApplicationScoped
 public class ServerAdaptor implements io.roastedroot.proxywasm.plugin.ServerAdaptor {
 
     ScheduledExecutorService tickExecutorService = Executors.newScheduledThreadPool(1);
