@@ -207,6 +207,17 @@
             <annotationProcessorPathsUseDepMgmt>true</annotationProcessorPathsUseDepMgmt>
           </configuration>
         </plugin>
+
+        <plugin>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <version>${surefire-plugin.version}</version>
+          <configuration>
+            <systemPropertyVariables>
+              <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
+            </systemPropertyVariables>
+          </configuration>
+        </plugin>
+
       </plugins>
     </pluginManagement>
   </build>
@@ -220,8 +231,8 @@
         <jdk>[17,)</jdk>
       </activation>
       <modules>
-        <module>proxy-wasm-jaxrs-quarkus</module>
-        <module>proxy-wasm-jaxrs-quarkus-example</module>
+        <module>quarkus-proxy-wasm</module>
+        <module>proxy-wasm-quarkus-example</module>
       </modules>
     </profile>
   </profiles>
