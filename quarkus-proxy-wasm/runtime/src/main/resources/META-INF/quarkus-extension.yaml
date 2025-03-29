@@ -1,0 +1,14 @@
+---
+artifact: ${project.groupId}:${project.artifactId}:${project.version}
+name: "Proxy Wasm"
+description: "Filter HTTP requests and responses with a WebAssembly module"
+metadata:
+  keywords:
+    - "proxy-wasm"
+    - "wasm"
+    - "jaxrs"
+    - "vertx"
+    - "WebAssembly"
+  categories:
+    - "web"
+  status: "development"
