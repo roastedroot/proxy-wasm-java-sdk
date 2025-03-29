@@ -1598,18 +1598,18 @@ class ABI {
             }
 
             try {
-                if (value.data.length != 0) {
-                    int addr = malloc(value.data.length);
-                    putMemory(addr, value.data);
+                if (value.data().length != 0) {
+                    int addr = malloc(value.data().length);
+                    putMemory(addr, value.data());
                     putUint32(returnValueData, addr);
                 } else {
                     putUint32(returnValueData, 0);
                 }
-                putUint32(returnValueSize, value.data.length);
+                putUint32(returnValueSize, value.data().length);
             } catch (WasmException e) {
                 throw new WasmException(WasmResult.INVALID_MEMORY_ACCESS);
             }
-            putUint32(returnCas, value.cas);
+            putUint32(returnCas, value.cas());
             return WasmResult.OK.getValue();
 
         } catch (WasmException e) {
