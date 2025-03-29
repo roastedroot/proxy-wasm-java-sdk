@@ -15,12 +15,16 @@ import io.roastedroot.proxywasm.ArrayProxyMap;
 import io.roastedroot.proxywasm.ChainedHandler;
 import io.roastedroot.proxywasm.ForeignFunction;
 import io.roastedroot.proxywasm.Handler;
+import io.roastedroot.proxywasm.LogHandler;
 import io.roastedroot.proxywasm.LogLevel;
 import io.roastedroot.proxywasm.MetricType;
+import io.roastedroot.proxywasm.MetricsHandler;
 import io.roastedroot.proxywasm.ProxyMap;
 import io.roastedroot.proxywasm.ProxyWasm;
 import io.roastedroot.proxywasm.QueueName;
 import io.roastedroot.proxywasm.SharedData;
+import io.roastedroot.proxywasm.SharedDataHandler;
+import io.roastedroot.proxywasm.SharedQueueHandler;
 import io.roastedroot.proxywasm.StartException;
 import io.roastedroot.proxywasm.WasmException;
 import io.roastedroot.proxywasm.WasmResult;
@@ -41,6 +45,10 @@ public final class Plugin {
     private final boolean shared;
     private final String name;
 
+    private final MetricsHandler metricsHandler;
+    private final SharedQueueHandler sharedQueueHandler;
+    private final SharedDataHandler sharedDataHandler;
+
     private Plugin(Builder builder, ProxyWasm proxyWasm) throws StartException {
         Objects.requireNonNull(proxyWasm);
         this.name = Objects.requireNonNullElse(builder.name, "default");
@@ -49,9 +57,16 @@ public final class Plugin {
         this.upstreams = builder.upstreams;
         this.strictUpstreams = builder.strictUpstreams;
         this.minTickPeriodMilliseconds = builder.minTickPeriodMilliseconds;
-        this.logger = builder.logger;
         this.vmConfig = builder.vmConfig;
         this.pluginConfig = builder.pluginConfig;
+        this.logger = Objects.requireNonNullElse(builder.logger, LogHandler.DEFAULT);
+        ;
+        this.metricsHandler =
+                Objects.requireNonNullElse(builder.metricsHandler, MetricsHandler.DEFAULT);
+        this.sharedQueueHandler =
+                Objects.requireNonNullElse(builder.sharedQueueHandler, SharedQueueHandler.DEFAULT);
+        this.sharedDataHandler =
+                Objects.requireNonNullElse(builder.sharedDataHandler, SharedDataHandler.DEFAULT);
 
         this.wasm = proxyWasm;
         this.wasm.setPluginHandler(new HandlerImpl());
@@ -86,7 +101,7 @@ public final class Plugin {
         this.serverAdaptor = serverAdaptor;
     }
 
-    public Logger logger() {
+    public LogHandler logger() {
         return logger;
     }
 
@@ -121,9 +136,12 @@ public final class Plugin {
         private HashMap<String, String> upstreams;
         private boolean strictUpstreams;
         private int minTickPeriodMilliseconds;
-        private Logger logger;
+        private LogHandler logger;
         private byte[] vmConfig;
         private byte[] pluginConfig;
+        private MetricsHandler metricsHandler;
+        private SharedQueueHandler sharedQueueHandler;
+        private SharedDataHandler sharedDataHandler;
 
         public Plugin.Builder withName(String name) {
             this.name = name;
@@ -150,8 +168,23 @@ public final class Plugin {
             return this;
         }
 
-        public Builder withLogger(Logger logger) {
+        public Builder withLogger(LogHandler logger) {
             this.logger = logger;
+            return this;
+        }
+
+        public Builder withMetricsHandler(MetricsHandler metricsHandler) {
+            this.metricsHandler = metricsHandler;
+            return this;
+        }
+
+        public Builder withSharedQueueHandler(SharedQueueHandler sharedQueueHandler) {
+            this.sharedQueueHandler = sharedQueueHandler;
+            return this;
+        }
+
+        public Builder withSharedDataHandler(SharedDataHandler sharedDataHandler) {
+            this.sharedDataHandler = sharedDataHandler;
             return this;
         }
 
@@ -202,7 +235,7 @@ public final class Plugin {
         }
     }
 
-    public Logger logger;
+    public LogHandler logger;
     static final boolean DEBUG = "true".equals(System.getenv("DEBUG"));
     byte[] vmConfig;
     byte[] pluginConfig;
@@ -214,25 +247,8 @@ public final class Plugin {
     private int tickPeriodMilliseconds;
     private Runnable cancelTick;
     HashMap<String, ForeignFunction> foreignFunctions;
-    private final AtomicInteger lastMetricId = new AtomicInteger(0);
-    private HashMap<Integer, io.roastedroot.proxywasm.plugin.Metric> metrics = new HashMap<>();
-    private HashMap<String, io.roastedroot.proxywasm.plugin.Metric> metricsByName = new HashMap<>();
     private byte[] funcCallData = new byte[0];
     private final HashMap<List<String>, byte[]> properties = new HashMap<>();
-
-    public static class Metric {
-
-        public final int id;
-        public final MetricType type;
-        public final String name;
-        public long value;
-
-        public Metric(int id, MetricType type, String name) {
-            this.id = id;
-            this.type = type;
-            this.name = name;
-        }
-    }
 
     class HandlerImpl extends ChainedHandler {
 
@@ -282,21 +298,12 @@ public final class Plugin {
 
         @Override
         public void log(LogLevel level, String message) throws WasmException {
-            Logger l = logger;
-            if (l == null) {
-                super.log(level, message);
-                return;
-            }
-            l.log(level, message);
+            logger.log(level, message);
         }
 
         @Override
         public LogLevel getLogLevel() throws WasmException {
-            Logger l = logger;
-            if (l == null) {
-                return super.getLogLevel();
-            }
-            return l.getLogLevel();
+            return logger.getLogLevel();
         }
 
         // //////////////////////////////////////////////////////////////////////
@@ -474,51 +481,27 @@ public final class Plugin {
 
         @Override
         public int defineMetric(MetricType type, String name) throws WasmException {
-            var id = lastMetricId.incrementAndGet();
-            io.roastedroot.proxywasm.plugin.Metric value =
-                    new io.roastedroot.proxywasm.plugin.Metric(id, type, name);
-            metrics.put(id, value);
-            metricsByName.put(name, value);
-            return id;
+            return metricsHandler.defineMetric(type, name);
         }
 
         @Override
         public long getMetric(int metricId) throws WasmException {
-            var metric = metrics.get(metricId);
-            if (metric == null) {
-                throw new WasmException(WasmResult.NOT_FOUND);
-            }
-            return metric.value;
+            return metricsHandler.getMetric(metricId);
         }
 
         @Override
         public WasmResult incrementMetric(int metricId, long value) {
-            var metric = metrics.get(metricId);
-            if (metric == null) {
-                return WasmResult.NOT_FOUND;
-            }
-            metric.value += value;
-            return WasmResult.OK;
+            return metricsHandler.incrementMetric(metricId, value);
         }
 
         @Override
         public WasmResult recordMetric(int metricId, long value) {
-            var metric = metrics.get(metricId);
-            if (metric == null) {
-                return WasmResult.NOT_FOUND;
-            }
-            metric.value = value;
-            return WasmResult.OK;
+            return metricsHandler.recordMetric(metricId, value);
         }
 
         @Override
         public WasmResult removeMetric(int metricId) {
-            io.roastedroot.proxywasm.plugin.Metric metric = metrics.remove(metricId);
-            if (metric == null) {
-                return WasmResult.NOT_FOUND;
-            }
-            metricsByName.remove(metric.name);
-            return WasmResult.OK;
+            return metricsHandler.removeMetric(metricId);
         }
 
         // //////////////////////////////////////////////////////////////////////
@@ -539,12 +522,12 @@ public final class Plugin {
 
         @Override
         public SharedData getSharedData(String key) throws WasmException {
-            return next().getSharedData(key);
+            return sharedDataHandler.getSharedData(key);
         }
 
         @Override
         public WasmResult setSharedData(String key, byte[] value, int cas) {
-            return next().setSharedData(key, value, cas);
+            return sharedDataHandler.setSharedData(key, value, cas);
         }
 
         // //////////////////////////////////////////////////////////////////////
@@ -553,22 +536,22 @@ public final class Plugin {
 
         @Override
         public int registerSharedQueue(QueueName queueName) throws WasmException {
-            return next().registerSharedQueue(queueName);
+            return sharedQueueHandler.registerSharedQueue(queueName);
         }
 
         @Override
         public int resolveSharedQueue(QueueName queueName) throws WasmException {
-            return next().resolveSharedQueue(queueName);
+            return sharedQueueHandler.resolveSharedQueue(queueName);
         }
 
         @Override
         public byte[] dequeueSharedQueue(int queueId) throws WasmException {
-            return next().dequeueSharedQueue(queueId);
+            return sharedQueueHandler.dequeueSharedQueue(queueId);
         }
 
         @Override
         public WasmResult enqueueSharedQueue(int queueId, byte[] value) {
-            return next().enqueueSharedQueue(queueId, value);
+            return sharedQueueHandler.enqueueSharedQueue(queueId, value);
         }
     }
 }
