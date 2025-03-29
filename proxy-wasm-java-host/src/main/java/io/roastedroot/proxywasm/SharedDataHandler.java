@@ -2,6 +2,8 @@ package io.roastedroot.proxywasm;
 
 public interface SharedDataHandler {
 
+    SharedDataHandler DEFAULT = new SharedDataHandler() {};
+
     default SharedData getSharedData(String key) throws WasmException {
         throw new WasmException(WasmResult.UNIMPLEMENTED);
     }

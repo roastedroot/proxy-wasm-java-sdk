@@ -1,10 +1,10 @@
 package io.roastedroot.proxywasm.jaxrs.example;
 
+import io.roastedroot.proxywasm.LogHandler;
 import io.roastedroot.proxywasm.LogLevel;
-import io.roastedroot.proxywasm.plugin.Logger;
 import java.util.ArrayList;
 
-public class MockLogger implements Logger {
+public class MockLogger implements LogHandler {
 
     static final boolean DEBUG = "true".equals(System.getenv("DEBUG"));
 

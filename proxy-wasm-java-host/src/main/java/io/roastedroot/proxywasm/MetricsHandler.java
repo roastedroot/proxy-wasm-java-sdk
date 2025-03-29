@@ -2,6 +2,8 @@ package io.roastedroot.proxywasm;
 
 public interface MetricsHandler {
 
+    MetricsHandler DEFAULT = new MetricsHandler() {};
+
     default int defineMetric(MetricType metricType, String name) throws WasmException {
         throw new WasmException(WasmResult.UNIMPLEMENTED);
     }
