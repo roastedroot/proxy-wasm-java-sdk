@@ -31,7 +31,7 @@ type httpCallTests struct {
 }
 
 func (
-	p *pluginContext) httpCallTests(contextID uint32) types.HttpContext {
+p *pluginContext) httpCallTests(contextID uint32) types.HttpContext {
 	return &httpCallTests{
 		DefaultHttpContext: types.DefaultHttpContext{},
 		contextID:          contextID,
@@ -42,12 +42,8 @@ func (
 
 func (ctx *httpCallTests) OnHttpRequestHeaders(int, bool) types.Action {
 	proxywasm.LogDebug("OnHttpRequestHeaders")
-	var err error
-	ctx.headers, err = proxywasm.GetHttpRequestHeaders()
-	if err != nil {
-		proxywasm.LogCriticalf("failed to get request headers: %v", err)
-	}
 
+	ctx.headers = nil
 	method, err := proxywasm.GetProperty([]string{"request", "method"})
 	if err != nil {
 		proxywasm.LogCriticalf("failed to get request method: %v", err)
@@ -63,6 +59,11 @@ func (ctx *httpCallTests) OnHttpRequestHeaders(int, bool) types.Action {
 	path := gjson.Get(ctx.pluginContext.config, "path").Str
 	ctx.headers = append(ctx.headers, [2]string{":path", path})
 
+	requestHeaders, err := proxywasm.GetHttpRequestHeaders()
+	if err != nil {
+		proxywasm.LogCriticalf("failed to get request headers: %v", err)
+	}
+	ctx.headers = append(ctx.headers, requestHeaders...)
 	return types.ActionContinue
 }
 

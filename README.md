@@ -10,7 +10,7 @@ To build the project, you need to have Maven installed. You can build the projec
 mvn clean install
 ```
 
-## Quarkus Example 
+## Quarkus Example
 
 The `quarkus-proxy-wasm-example` directory contains a simple example of how to use the proxy-wasm Java host with Quarkus.
 
@@ -35,7 +35,7 @@ public class Resources {
 }
 ```
 
-The `WasmPlugin` annotation is used to specify the name of the plugin to be used for filtering. 
+The `WasmPlugin` annotation is used to specify the name of the plugin to be used for filtering.
 
 ```java
 package io.roastedroot.proxywasm.jaxrs.example;

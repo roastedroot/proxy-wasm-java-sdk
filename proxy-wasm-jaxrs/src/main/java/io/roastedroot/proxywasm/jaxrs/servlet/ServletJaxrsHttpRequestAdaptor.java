@@ -20,11 +20,11 @@ public class ServletJaxrsHttpRequestAdaptor extends JaxrsHttpRequestAdaptor {
     }
 
     @Override
-    public String remotePort() {
+    public int remotePort() {
         if (request == null) {
-            return "";
+            return 0;
         }
-        return "" + request.getRemotePort();
+        return request.getRemotePort();
     }
 
     @Override
@@ -36,10 +36,15 @@ public class ServletJaxrsHttpRequestAdaptor extends JaxrsHttpRequestAdaptor {
     }
 
     @Override
-    public String localPort() {
+    public int localPort() {
         if (request == null) {
-            return "";
+            return 0;
         }
-        return "" + request.getLocalPort();
+        return request.getLocalPort();
+    }
+
+    @Override
+    public String protocol() {
+        return request.getProtocol();
     }
 }

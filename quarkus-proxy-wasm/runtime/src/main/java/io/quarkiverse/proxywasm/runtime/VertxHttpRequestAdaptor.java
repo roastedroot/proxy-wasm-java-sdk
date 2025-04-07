@@ -15,21 +15,35 @@ public class VertxHttpRequestAdaptor extends JaxrsHttpRequestAdaptor {
 
     @Override
     public String remoteAddress() {
-        return request.remoteAddress().hostAddress();
+        return request.remoteAddress().hostAddress() + ":" + request.remoteAddress().port();
     }
 
     @Override
-    public String remotePort() {
-        return "" + request.remoteAddress().port();
+    public int remotePort() {
+        return request.remoteAddress().port();
     }
 
     @Override
     public String localAddress() {
-        return request.localAddress().hostAddress();
+        return request.localAddress().hostAddress() + ":" + request.localAddress().port();
     }
 
     @Override
-    public String localPort() {
-        return "" + request.localAddress().port();
+    public int localPort() {
+        return request.localAddress().port();
+    }
+
+    @Override
+    public String protocol() {
+        switch (request.version()) {
+            case HTTP_1_0:
+                return "HTTP/1.0";
+            case HTTP_1_1:
+                return "HTTP/1.1";
+            case HTTP_2:
+                return "HTTP/2";
+            default:
+                return "unknown";
+        }
     }
 }
