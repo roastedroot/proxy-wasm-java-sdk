@@ -41,9 +41,12 @@ import static io.roastedroot.proxywasm.WellKnownProperties.RESPONSE_TRAILERS;
 import static io.roastedroot.proxywasm.WellKnownProperties.SOURCE_ADDRESS;
 import static io.roastedroot.proxywasm.WellKnownProperties.SOURCE_PORT;
 
+import io.roastedroot.proxywasm.ArrayProxyMap;
 import io.roastedroot.proxywasm.ProxyMap;
+import io.roastedroot.proxywasm.SplitProxyMap;
 import io.roastedroot.proxywasm.WasmException;
 import io.roastedroot.proxywasm.WasmResult;
+import io.roastedroot.proxywasm.WellKnownHeaders;
 import io.roastedroot.proxywasm.WellKnownProperties;
 import io.roastedroot.proxywasm.plugin.HttpContext;
 import io.roastedroot.proxywasm.plugin.HttpRequestAdaptor;
@@ -84,8 +87,8 @@ public class JaxrsHttpRequestAdaptor implements HttpRequestAdaptor {
     }
 
     @Override
-    public String remotePort() {
-        return "";
+    public int remotePort() {
+        return 0;
     }
 
     @Override
@@ -94,8 +97,20 @@ public class JaxrsHttpRequestAdaptor implements HttpRequestAdaptor {
     }
 
     @Override
-    public String localPort() {
-        return "";
+    public int localPort() {
+        return 0;
+    }
+
+    @Override
+    public String protocol() {
+        String protocol = requestContext.getUriInfo().getRequestUri().getScheme();
+        if (protocol == null) {
+            protocol = "HTTP";
+        }
+        protocol = protocol.toUpperCase();
+        // technically it should be something like "HTTP/1.1" or "HTTP/2" (but JAX-RS doesn't give
+        // us that info).
+        return protocol;
     }
 
     // //////////////////////////////////////////////////////////////////////
@@ -104,7 +119,21 @@ public class JaxrsHttpRequestAdaptor implements HttpRequestAdaptor {
 
     @Override
     public ProxyMap getHttpRequestHeaders() {
-        return new MultivaluedMapAdaptor<>(requestContext.getHeaders());
+        URI requestUri = requestContext.getUriInfo().getRequestUri();
+        ArrayProxyMap wellKnownHeaders = new ArrayProxyMap();
+        wellKnownHeaders.add(WellKnownHeaders.AUTHORITY, requestUri.getAuthority());
+        wellKnownHeaders.add(WellKnownHeaders.SCHEME, requestUri.getScheme());
+        wellKnownHeaders.add(WellKnownHeaders.METHOD, requestContext.getMethod());
+        var path = requestUri.getRawPath();
+        if (path == null) {
+            path = "";
+        }
+        if (requestUri.getRawQuery() != null) {
+            path += "?" + requestUri.getRawQuery();
+        }
+        wellKnownHeaders.add(WellKnownHeaders.PATH, path);
+        return new SplitProxyMap(
+                wellKnownHeaders, new MultivaluedMapAdaptor<>(requestContext.getHeaders()));
     }
 
     @Override
@@ -114,7 +143,10 @@ public class JaxrsHttpRequestAdaptor implements HttpRequestAdaptor {
 
     @Override
     public ProxyMap getHttpResponseHeaders() {
-        return new MultivaluedMapAdaptor<>(responseContext.getHeaders());
+        ArrayProxyMap wellKnownHeaders = new ArrayProxyMap();
+        wellKnownHeaders.add(WellKnownHeaders.STATUS, "" + responseContext.getStatus());
+        return new SplitProxyMap(
+                wellKnownHeaders, new MultivaluedMapAdaptor<>(responseContext.getHeaders()));
     }
 
     @Override
@@ -144,11 +176,17 @@ public class JaxrsHttpRequestAdaptor implements HttpRequestAdaptor {
         } else if (SOURCE_ADDRESS.equals(path)) {
             return bytes(remoteAddress());
         } else if (SOURCE_PORT.equals(path)) {
-            return bytes(remotePort());
+            // Port attribute is populated as uint64 (8 byte)
+            // Ref:
+            // https://github.com/envoyproxy/envoy/blob/1b3da361279a54956f01abba830fc5d3a5421828/source/common/network/utility.cc#L201
+            return bytes((long) remotePort());
         } else if (DESTINATION_ADDRESS.equals(path)) {
             return bytes(localAddress());
         } else if (DESTINATION_PORT.equals(path)) {
-            return bytes(localPort());
+            // Port attribute is populated as uint64 (8 byte)
+            // Ref:
+            // https://github.com/envoyproxy/envoy/blob/1b3da361279a54956f01abba830fc5d3a5421828/source/common/network/utility.cc#L201
+            return bytes((long) localPort());
         }
 
         // TODO: get TLS connection properties
@@ -248,10 +286,7 @@ public class JaxrsHttpRequestAdaptor implements HttpRequestAdaptor {
 
         // HTTP request properties
         else if (REQUEST_PROTOCOL.equals(path)) {
-            if (requestContext == null) {
-                return null;
-            }
-            return bytes(requestContext.getUriInfo().getRequestUri().getScheme());
+            return bytes(protocol());
         } else if (REQUEST_TIME.equals(path)) {
             return bytes(new Date(startedAt));
         } else if (REQUEST_DURATION.equals(path)) {

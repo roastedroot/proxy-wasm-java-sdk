@@ -29,7 +29,6 @@ import io.roastedroot.proxywasm.StartException;
 import io.roastedroot.proxywasm.WasmException;
 import io.roastedroot.proxywasm.WasmResult;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -418,11 +417,8 @@ public final class Plugin {
 
             URI uri = null;
             try {
-                uri =
-                        URI.create(
-                                new URI(scheme, null, authority, connectPort, null, null, null)
-                                        + path);
-            } catch (IllegalArgumentException | URISyntaxException e) {
+                uri = URI.create(scheme + "://" + authority + path);
+            } catch (IllegalArgumentException e) {
                 throw new WasmException(WasmResult.BAD_ARGUMENT);
             }
 

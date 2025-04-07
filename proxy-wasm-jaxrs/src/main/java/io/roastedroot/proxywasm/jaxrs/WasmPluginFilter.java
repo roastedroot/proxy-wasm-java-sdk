@@ -61,6 +61,7 @@ public class WasmPluginFilter
                 var sendResponse = httpContext.consumeSentHttpResponse();
                 if (sendResponse != null) {
                     requestContext.abortWith(toResponse(sendResponse));
+                    return;
                 }
             }
 
@@ -84,7 +85,8 @@ public class WasmPluginFilter
                 // does the plugin want to respond early?
                 var sendResponse = httpContext.consumeSentHttpResponse();
                 if (sendResponse != null) {
-                    throw new WebApplicationException(toResponse(sendResponse));
+                    requestContext.abortWith(toResponse(sendResponse));
+                    return;
                 }
 
                 // plugin may have modified the body
@@ -128,7 +130,35 @@ public class WasmPluginFilter
                     responseContext.setStatus(response.getStatus());
                     responseContext.getHeaders().putAll(response.getHeaders());
                     responseContext.setEntity(response.getEntity());
+                    return;
                 }
+
+                // aroundWriteTo won't be called if there is no entity to send.
+                if (responseContext.getEntity() == null
+                        && httpContext.context().hasOnResponseBody()) {
+
+                    byte[] bytes = new byte[0];
+                    httpContext.setHttpResponseBody(bytes);
+                    action = httpContext.context().callOnResponseBody(true);
+                    bytes = httpContext.getHttpResponseBody();
+                    if (action == Action.CONTINUE) {
+                        // continue means plugin is done reading the body.
+                        httpContext.setHttpResponseBody(null);
+                    } else {
+                        httpContext.maybePause();
+                    }
+
+                    // does the plugin want to respond early?
+                    sendResponse = httpContext.consumeSentHttpResponse();
+                    if (sendResponse != null) {
+                        Response response = toResponse(sendResponse);
+                        responseContext.setStatus(response.getStatus());
+                        responseContext.getHeaders().putAll(response.getHeaders());
+                        responseContext.setEntity(response.getEntity());
+                        return;
+                    }
+                }
+
             } finally {
                 // allow other request to use the plugin.
                 httpContext.plugin().unlock();
@@ -159,7 +189,7 @@ public class WasmPluginFilter
 
             byte[] bytes = baos.toByteArray();
             httpContext.setHttpResponseBody(bytes);
-            var action = httpContext.context().callOnResponseBody(false);
+            var action = httpContext.context().callOnResponseBody(true);
             bytes = httpContext.getHttpResponseBody();
             if (action == Action.CONTINUE) {
                 // continue means plugin is done reading the body.

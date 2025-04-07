@@ -1,6 +1,8 @@
 package io.roastedroot.proxywasm;
 
 import com.dylibso.chicory.runtime.HostFunction;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -45,20 +47,31 @@ public final class Helpers {
     }
 
     public static byte[] bytes(int value) {
-        // TODO: test to check byte order
-        return new byte[] {
-            (byte) (value >> 24), (byte) (value >> 16), (byte) (value >> 8), (byte) value
-        };
+        return ByteBuffer.allocate(Integer.BYTES)
+                .order(ByteOrder.LITTLE_ENDIAN)
+                .putInt(value)
+                .array();
+    }
+
+    public static byte[] bytes(long value) {
+        return ByteBuffer.allocate(Long.BYTES)
+                .order(ByteOrder.LITTLE_ENDIAN)
+                .putLong(value)
+                .array();
     }
 
     public static int int32(byte[] bytes) {
         if (bytes == null || bytes.length != 4) {
             throw new IllegalArgumentException("Byte array must be exactly 4 bytes long");
         }
-        return ((bytes[0] & 0xFF) << 24)
-                | ((bytes[1] & 0xFF) << 16)
-                | ((bytes[2] & 0xFF) << 8)
-                | (bytes[3] & 0xFF);
+        return ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN).getInt();
+    }
+
+    public static long int64(byte[] bytes) {
+        if (bytes == null || bytes.length != 8) {
+            throw new IllegalArgumentException("Byte array must be exactly 8 bytes long");
+        }
+        return ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN).getLong();
     }
 
     public static String string(byte[] value) {

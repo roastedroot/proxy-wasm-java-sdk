@@ -79,12 +79,16 @@ public class HttpContext {
         return httpRequestBody;
     }
 
+    public void setHttpRequestBody(byte[] httpRequestBody) {
+        this.httpRequestBody = httpRequestBody;
+    }
+
     public byte[] getHttpResponseBody() {
         return httpResponseBody;
     }
 
-    public void setHttpRequestBody(byte[] httpRequestBody) {
-        this.httpRequestBody = httpRequestBody;
+    public void setHttpResponseBody(byte[] httpResponseBody) {
+        this.httpResponseBody = httpResponseBody;
     }
 
     public byte[] getGrpcReceiveBuffer() {
@@ -109,10 +113,6 @@ public class HttpContext {
 
     public void setDownStreamData(byte[] downStreamData) {
         this.downStreamData = downStreamData;
-    }
-
-    public void setHttpResponseBody(byte[] httpResponseBody) {
-        this.httpResponseBody = httpResponseBody;
     }
 
     public SendResponse getSendResponse() {
