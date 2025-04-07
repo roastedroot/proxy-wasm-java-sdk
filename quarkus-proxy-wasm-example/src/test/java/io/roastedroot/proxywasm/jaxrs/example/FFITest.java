@@ -12,11 +12,18 @@ public class FFITest {
     @Test
     public void reverse() throws InterruptedException {
 
-        given().body("My Test")
-                .when()
-                .post("/ffiTests/reverse")
+        given().when()
+                .get("/test")
                 .then()
                 .statusCode(200)
-                .body(equalTo("tseT yM"));
+                .header("x-response-counter", "1")
+                .body(equalTo("Hello World"));
+
+        given().when()
+                .get("/test")
+                .then()
+                .statusCode(200)
+                .header("x-response-counter", "2")
+                .body(equalTo("Hello World"));
     }
 }
