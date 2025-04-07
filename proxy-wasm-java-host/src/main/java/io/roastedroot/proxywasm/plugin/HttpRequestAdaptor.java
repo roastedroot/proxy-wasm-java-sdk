@@ -12,11 +12,13 @@ public interface HttpRequestAdaptor {
 
     String remoteAddress();
 
-    String remotePort();
+    int remotePort();
 
     String localAddress();
 
-    String localPort();
+    int localPort();
+
+    String protocol();
 
     ProxyMap getHttpRequestHeaders();
 

@@ -234,6 +234,7 @@
       <modules>
         <module>quarkus-proxy-wasm</module>
         <module>quarkus-proxy-wasm-example</module>
+        <module>quarkus-x-corazawaf-example</module>
       </modules>
     </profile>
   </profiles>

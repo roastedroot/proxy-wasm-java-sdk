@@ -10,4 +10,5 @@ public final class WellKnownHeaders {
     public static final String AUTHORITY = ":authority";
     public static final String PATH = ":path";
     public static final String METHOD = ":method";
+    public static final String STATUS = ":status";
 }
