@@ -487,7 +487,11 @@ class ABI {
      */
     @WasmExport
     int proxyGetBufferBytes(
-            int bufferType, int start, int length, int returnBufferData, int returnBufferSize) {
+            int bufferType,
+            int start,
+            int chunkLength,
+            int returnBufferData,
+            int returnBufferSize) {
 
         try {
             // Get the buffer based on the buffer type
@@ -496,29 +500,34 @@ class ABI {
                 return WasmResult.NOT_FOUND.getValue();
             }
 
-            if (start > start + length) {
+            if (start < 0) {
                 return WasmResult.BAD_ARGUMENT.getValue();
             }
 
+            int maxChunkLength = b.length - start;
+            if (chunkLength < 0 || chunkLength > maxChunkLength) {
+                chunkLength = maxChunkLength;
+            }
+
             ByteBuffer buffer = ByteBuffer.wrap(b);
-            if (start + length > buffer.capacity()) {
-                length = buffer.capacity() - start;
+            if (start + chunkLength > buffer.capacity()) {
+                chunkLength = buffer.capacity() - start;
             }
 
             try {
                 buffer.position(start);
-                buffer.limit(start + length);
+                buffer.limit(start + chunkLength);
             } catch (IllegalArgumentException e) {
                 return WasmResult.BAD_ARGUMENT.getValue();
             }
 
             // Allocate memory in the WebAssembly instance
-            int addr = malloc(length);
+            int addr = malloc(chunkLength);
             putMemory(addr, buffer);
             // Write the address to the return pointer
             putUint32(returnBufferData, addr);
             // Write the length to the return size pointer
-            putUint32(returnBufferSize, length);
+            putUint32(returnBufferSize, chunkLength);
             return WasmResult.OK.getValue();
 
         } catch (WasmException e) {
