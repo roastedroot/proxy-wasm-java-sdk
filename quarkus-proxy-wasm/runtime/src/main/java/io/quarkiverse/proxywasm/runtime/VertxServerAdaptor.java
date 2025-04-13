@@ -1,6 +1,15 @@
 package io.quarkiverse.proxywasm.runtime;
 
+import io.grpc.CallOptions;
+import io.grpc.ClientCall;
+import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
+import io.grpc.Metadata;
+import io.grpc.MethodDescriptor;
+import io.grpc.Status;
+import io.roastedroot.proxywasm.ArrayBytesProxyMap;
 import io.roastedroot.proxywasm.ProxyMap;
+import io.roastedroot.proxywasm.plugin.GrpcCallResponseHandler;
 import io.roastedroot.proxywasm.plugin.HttpCallResponse;
 import io.roastedroot.proxywasm.plugin.HttpCallResponseHandler;
 import io.roastedroot.proxywasm.plugin.HttpRequestAdaptor;
@@ -17,7 +26,12 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Alternative;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 @Alternative
 @Priority(200)
@@ -106,5 +120,130 @@ public class VertxServerAdaptor implements ServerAdaptor {
         return () -> {
             // There doesn't seem to be a way to cancel the request.
         };
+    }
+
+    @Override
+    public Runnable scheduleGrpcCall(
+            String host,
+            int port,
+            boolean plainText,
+            String serviceName,
+            String methodName,
+            ProxyMap headers,
+            byte[] message,
+            int timeoutMillis,
+            GrpcCallResponseHandler handler)
+            throws InterruptedException {
+
+        ManagedChannelBuilder<?> managedChannelBuilder =
+                ManagedChannelBuilder.forAddress(host, port);
+        if (plainText) {
+            managedChannelBuilder.usePlaintext();
+        } else {
+            managedChannelBuilder.useTransportSecurity();
+        }
+        ManagedChannel channel = managedChannelBuilder.build();
+
+        // Construct method descriptor (assuming unary request/response and protobuf)
+        MethodDescriptor<byte[], byte[]> methodDescriptor =
+                MethodDescriptor.<byte[], byte[]>newBuilder()
+                        .setType(MethodDescriptor.MethodType.UNARY)
+                        .setFullMethodName(
+                                MethodDescriptor.generateFullMethodName(serviceName, methodName))
+                        .setRequestMarshaller(new BytesMessageMarshaller())
+                        .setResponseMarshaller(new BytesMessageMarshaller())
+                        .build();
+
+        ClientCall<byte[], byte[]> call =
+                channel.newCall(
+                        methodDescriptor,
+                        CallOptions.DEFAULT.withDeadlineAfter(
+                                timeoutMillis * 1000, TimeUnit.MILLISECONDS));
+
+        Metadata metadata = new Metadata();
+        for (Map.Entry<String, String> entry : headers.entries()) {
+            Metadata.Key<String> key =
+                    Metadata.Key.of(entry.getKey(), Metadata.ASCII_STRING_MARSHALLER);
+            metadata.put(key, entry.getValue());
+        }
+
+        call.start(
+                new ClientCall.Listener<>() {
+
+                    @Override
+                    public void onReady() {
+                        super.onReady();
+                    }
+
+                    @Override
+                    public void onHeaders(Metadata metadata) {
+                        if (metadata.keys().isEmpty()) {
+                            return;
+                        }
+                        ArrayBytesProxyMap trailerMap = new ArrayBytesProxyMap();
+                        for (var key : metadata.keys()) {
+                            if (key.endsWith("-bin")) {
+                                var value =
+                                        metadata.get(
+                                                Metadata.Key.of(
+                                                        key, Metadata.BINARY_BYTE_MARSHALLER));
+                                trailerMap.add(key, value);
+                            } else {
+                                var value =
+                                        metadata.get(
+                                                Metadata.Key.of(
+                                                        key, Metadata.ASCII_STRING_MARSHALLER));
+                                trailerMap.add(key, value);
+                            }
+                        }
+                        handler.onHeaders(trailerMap);
+                    }
+
+                    @Override
+                    public void onMessage(byte[] data) {
+                        handler.onMessage(data);
+                    }
+
+                    @Override
+                    public void onClose(Status status, Metadata metadata) {
+                        if (!metadata.keys().isEmpty()) {
+                            ArrayBytesProxyMap trailerMap = new ArrayBytesProxyMap();
+                            for (var key : metadata.keys()) {
+                                var value =
+                                        metadata.get(
+                                                Metadata.Key.of(
+                                                        key, Metadata.BINARY_BYTE_MARSHALLER));
+                                trailerMap.add(key, value);
+                            }
+                            handler.onTrailers(trailerMap);
+                        }
+                        handler.onClose(status.getCode().value());
+                        channel.shutdownNow();
+                    }
+                },
+                metadata);
+        call.sendMessage(message);
+        call.halfClose();
+        call.request(1); // Request a single response
+        return () -> {
+            call.cancel("shutdown", null);
+            channel.shutdownNow();
+        };
+    }
+
+    static class BytesMessageMarshaller implements io.grpc.MethodDescriptor.Marshaller<byte[]> {
+        @Override
+        public InputStream stream(byte[] value) {
+            return new ByteArrayInputStream(value);
+        }
+
+        @Override
+        public byte[] parse(InputStream stream) {
+            try {
+                return stream.readAllBytes();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 }
