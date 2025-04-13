@@ -1,0 +1,7 @@
+---
+- namespace: basic
+  max_value: 30
+  seconds: 60
+  conditions:
+  - "descriptors[0]['a'] == '1'"
+  variables: []
