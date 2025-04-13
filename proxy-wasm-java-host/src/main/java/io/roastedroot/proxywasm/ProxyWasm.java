@@ -36,6 +36,9 @@ public final class ProxyWasm implements Closeable {
     private ProxyMap httpCallResponseTrailers;
     private byte[] httpCallResponseBody;
     private Handler pluginHandler;
+    private ArrayBytesProxyMap grpcReceiveInitialMetadata;
+    private byte[] grpcReceive;
+    private ArrayBytesProxyMap grpcReceiveTrailingMetadata;
 
     private ProxyWasm(Builder other) throws StartException {
         this.pluginHandler = Objects.requireNonNullElse(other.pluginHandler, new Handler() {});
@@ -126,6 +129,21 @@ public final class ProxyWasm implements Closeable {
             public byte[] getHttpCallResponseBody() {
                 return httpCallResponseBody;
             }
+
+            @Override
+            public ProxyMap getGrpcReceiveInitialMetaData() {
+                return grpcReceiveInitialMetadata;
+            }
+
+            @Override
+            public byte[] getGrpcReceiveBuffer() {
+                return grpcReceive;
+            }
+
+            @Override
+            public ProxyMap getGrpcReceiveTrailerMetaData() {
+                return grpcReceiveTrailingMetadata;
+            }
         };
     }
 
@@ -195,7 +213,6 @@ public final class ProxyWasm implements Closeable {
 
     public void sendHttpCallResponse(
             int calloutID, ProxyMap headers, ProxyMap trailers, byte[] body) {
-
         this.httpCallResponseHeaders = headers;
         this.httpCallResponseTrailers = trailers;
         this.httpCallResponseBody = body;
@@ -206,6 +223,28 @@ public final class ProxyWasm implements Closeable {
         this.httpCallResponseHeaders = null;
         this.httpCallResponseTrailers = null;
         this.httpCallResponseBody = null;
+    }
+
+    public void sendGrpcReceiveInitialMetadata(int calloutID, ArrayBytesProxyMap headers) {
+        this.grpcReceiveInitialMetadata = headers;
+        this.abi.proxyOnGrpcReceiveInitialMetadata(pluginContext.id(), calloutID, headers.size());
+        this.grpcReceiveInitialMetadata = null;
+    }
+
+    public void sendGrpcReceive(int calloutID, byte[] body) {
+        this.grpcReceive = body;
+        this.abi.proxyOnGrpcReceive(pluginContext.id(), calloutID, len(body));
+        this.grpcReceive = null;
+    }
+
+    public void sendGrpcReceiveTrailingMetadata(int calloutID, ArrayBytesProxyMap headers) {
+        this.grpcReceiveTrailingMetadata = headers;
+        this.abi.proxyOnGrpcReceiveTrailingMetadata(pluginContext.id(), calloutID, headers.size());
+        this.grpcReceiveTrailingMetadata = null;
+    }
+
+    public void sendGrpcClose(int calloutID, int statusCode) {
+        this.abi.proxyOnGrpcClose(pluginContext.id(), calloutID, statusCode);
     }
 
     public void sendOnQueueReady(int queueId) {

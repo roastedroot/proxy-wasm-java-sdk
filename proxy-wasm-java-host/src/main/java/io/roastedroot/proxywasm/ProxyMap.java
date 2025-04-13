@@ -8,6 +8,8 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 public interface ProxyMap {
 
@@ -36,6 +38,11 @@ public interface ProxyMap {
     void put(String key, String value);
 
     Iterable<? extends Map.Entry<String, String>> entries();
+
+    default Stream<Map.Entry<byte[], byte[]>> streamBytes() {
+        return StreamSupport.stream(entries().spliterator(), false)
+                .map(x -> Map.entry(bytes(x.getKey()), bytes(x.getValue())));
+    }
 
     String get(String key);
 

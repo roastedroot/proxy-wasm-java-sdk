@@ -12,7 +12,7 @@ public interface ServerAdaptor {
 
     HttpRequestAdaptor httpRequestAdaptor(Object context);
 
-    Runnable scheduleHttpCall(
+    default Runnable scheduleHttpCall(
             String method,
             String host,
             int port,
@@ -22,5 +22,21 @@ public interface ServerAdaptor {
             ProxyMap trailers,
             int timeout,
             HttpCallResponseHandler handler)
-            throws InterruptedException;
+            throws InterruptedException {
+        throw new UnsupportedOperationException("scheduleHttpCall not implemented");
+    }
+
+    default Runnable scheduleGrpcCall(
+            String host,
+            int port,
+            boolean plainText,
+            String serviceName,
+            String methodName,
+            ProxyMap headers,
+            byte[] message,
+            int timeoutMillis,
+            GrpcCallResponseHandler handler)
+            throws InterruptedException {
+        throw new UnsupportedOperationException("scheduleGrpcCall not implemented");
+    }
 }
