@@ -1,5 +1,6 @@
 package io.roastedroot.proxywasm.kuadrant.example;
 
+import com.dylibso.chicory.experimental.aot.AotMachine;
 import com.dylibso.chicory.wasm.Parser;
 import com.dylibso.chicory.wasm.WasmModule;
 import io.roastedroot.proxywasm.LogHandler;
@@ -42,6 +43,7 @@ public class App {
         return () ->
                 Plugin.builder()
                         .withName("kuadrant")
+                        .withMachineFactory(AotMachine::new)
                         .withLogger(DEBUG ? LogHandler.SYSTEM : null)
                         .withPluginConfig(CONFIG)
                         .withUpstreams(Map.of("limitador", limitadorUrl))
