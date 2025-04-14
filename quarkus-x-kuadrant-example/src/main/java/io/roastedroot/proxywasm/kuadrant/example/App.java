@@ -1,8 +1,5 @@
 package io.roastedroot.proxywasm.kuadrant.example;
 
-import com.dylibso.chicory.experimental.aot.AotMachine;
-import com.dylibso.chicory.wasm.Parser;
-import com.dylibso.chicory.wasm.WasmModule;
 import io.roastedroot.proxywasm.LogHandler;
 import io.roastedroot.proxywasm.StartException;
 import io.roastedroot.proxywasm.plugin.Plugin;
@@ -19,9 +16,6 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 @ApplicationScoped
 public class App {
-
-    private static WasmModule module =
-            Parser.parse(App.class.getResourceAsStream("wasm_shim.wasm"));
 
     static final String CONFIG;
 
@@ -43,11 +37,11 @@ public class App {
         return () ->
                 Plugin.builder()
                         .withName("kuadrant")
-                        .withMachineFactory(AotMachine::new)
+                        .withMachineFactory(WasmShimModule::create)
                         .withLogger(DEBUG ? LogHandler.SYSTEM : null)
                         .withPluginConfig(CONFIG)
                         .withUpstreams(Map.of("limitador", limitadorUrl))
                         .withMetricsHandler(new SimpleMetricsHandler())
-                        .build(module);
+                        .build(WasmShimModule.load());
     }
 }

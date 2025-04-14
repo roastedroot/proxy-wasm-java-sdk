@@ -2,7 +2,6 @@ package io.roastedroot.proxywasm;
 
 import static io.roastedroot.proxywasm.Helpers.len;
 
-import com.dylibso.chicory.experimental.aot.AotMachine;
 import com.dylibso.chicory.runtime.ByteArrayMemory;
 import com.dylibso.chicory.runtime.HostFunction;
 import com.dylibso.chicory.runtime.ImportMemory;
@@ -324,7 +323,7 @@ public final class ProxyWasm implements Closeable {
             var imports = ImportValues.builder();
 
             if (this.machineFactory != null) {
-                instanceBuilder.withMachineFactory(AotMachine::new);
+                instanceBuilder.withMachineFactory(this.machineFactory);
             }
 
             imports.addMemory(Objects.requireNonNullElseGet(memory, this::defaultImportMemory));
