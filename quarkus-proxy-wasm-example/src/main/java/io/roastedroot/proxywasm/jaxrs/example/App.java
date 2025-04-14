@@ -1,5 +1,6 @@
 package io.roastedroot.proxywasm.jaxrs.example;
 
+import com.dylibso.chicory.experimental.aot.AotMachine;
 import com.dylibso.chicory.wasm.Parser;
 import com.dylibso.chicory.wasm.WasmModule;
 import io.roastedroot.proxywasm.StartException;
@@ -23,6 +24,7 @@ public class App {
                 Plugin.builder()
                         .withName("example")
                         .withPluginConfig("{ \"type\": \"headerTests\" }")
+                        .withMachineFactory(AotMachine::new)
                         .build(module);
     }
 }
