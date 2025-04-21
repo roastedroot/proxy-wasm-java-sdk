@@ -93,7 +93,6 @@ The example above will apply the `waf` plugin instance to all requests to the `/
 
 === Configuring the Proxy-Wasm plugin
 
-
 [source,java]
 ----
 package org.example;
@@ -101,9 +100,9 @@ package org.example;
 import com.dylibso.chicory.wasm.Parser;
 import com.dylibso.chicory.wasm.WasmModule;
 import io.roastedroot.proxywasm.StartException;
-import io.roastedroot.proxywasm.plugin.Plugin;
-import io.roastedroot.proxywasm.plugin.PluginFactory;
-import io.roastedroot.proxywasm.plugin.SimpleMetricsHandler;
+import io.roastedroot.proxywasm.Plugin;
+import io.roastedroot.proxywasm.PluginFactory;
+import io.roastedroot.proxywasm.SimpleMetricsHandler;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Produces;
 import java.io.IOException;

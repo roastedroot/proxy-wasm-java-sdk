@@ -40,11 +40,12 @@ The `WasmPlugin` annotation is used to specify the name of the plugin to be used
 ```java
 package io.roastedroot.proxywasm.jaxrs.example;
 
+import com.dylibso.chicory.experimental.aot.AotMachine;
 import com.dylibso.chicory.wasm.Parser;
 import com.dylibso.chicory.wasm.WasmModule;
+import io.roastedroot.proxywasm.Plugin;
+import io.roastedroot.proxywasm.PluginFactory;
 import io.roastedroot.proxywasm.StartException;
-import io.roastedroot.proxywasm.plugin.Plugin;
-import io.roastedroot.proxywasm.plugin.PluginFactory;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Produces;
 import java.nio.file.Path;
@@ -60,10 +61,11 @@ public class App {
     @Produces
     public PluginFactory example() throws StartException {
         return () ->
-                Plugin.builder()
+                Plugin.builder(module)
                         .withName("example")
                         .withPluginConfig("{ \"type\": \"headerTests\" }")
-                        .build(module);
+                        .withMachineFactory(AotMachine::new)
+                        .build();
     }
 }
 ```
