@@ -21,10 +21,10 @@ public class App {
     @Produces
     public PluginFactory example() throws StartException {
         return () ->
-                Plugin.builder()
+                Plugin.builder(module)
                         .withName("example")
                         .withPluginConfig("{ \"type\": \"headerTests\" }")
                         .withMachineFactory(AotMachine::new)
-                        .build(module);
+                        .build();
     }
 }

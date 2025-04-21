@@ -35,11 +35,11 @@ public class App {
     @Produces
     public PluginFactory waf() throws StartException {
         return () ->
-                Plugin.builder()
+                Plugin.builder(module)
                         .withName("waf")
                         .withLogger(DEBUG ? LogHandler.SYSTEM : null)
                         .withPluginConfig(CONFIG)
                         .withMetricsHandler(new SimpleMetricsHandler())
-                        .build(module);
+                        .build();
     }
 }

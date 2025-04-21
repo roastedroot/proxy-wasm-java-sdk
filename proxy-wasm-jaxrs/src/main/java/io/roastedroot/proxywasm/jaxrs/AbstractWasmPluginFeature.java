@@ -25,7 +25,12 @@ public abstract class AbstractWasmPluginFeature implements DynamicFeature {
         }
 
         for (var factory : factories) {
-            Plugin plugin = factory.create();
+            Plugin plugin = null;
+            try {
+                plugin = factory.create();
+            } catch (Throwable e) {
+                throw new StartException("Plugin create failed.", e);
+            }
             String name = plugin.name();
             if (this.pluginPools.containsKey(name)) {
                 throw new IllegalArgumentException("Duplicate wasm plugin name: " + name);

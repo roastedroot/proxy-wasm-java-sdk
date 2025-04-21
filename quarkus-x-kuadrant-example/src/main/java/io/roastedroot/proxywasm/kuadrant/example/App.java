@@ -10,6 +10,7 @@ import jakarta.enterprise.inject.Produces;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -35,13 +36,13 @@ public class App {
     @Produces
     public PluginFactory kuadrant() throws StartException {
         return () ->
-                Plugin.builder()
+                Plugin.builder(WasmShimModule.load())
                         .withName("kuadrant")
                         .withMachineFactory(WasmShimModule::create)
                         .withLogger(DEBUG ? LogHandler.SYSTEM : null)
                         .withPluginConfig(CONFIG)
-                        .withUpstreams(Map.of("limitador", limitadorUrl))
+                        .withUpstreams(Map.of("limitador", new URI(limitadorUrl)))
                         .withMetricsHandler(new SimpleMetricsHandler())
-                        .build(WasmShimModule.load());
+                        .build();
     }
 }
