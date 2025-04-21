@@ -7,7 +7,7 @@ import io.roastedroot.proxywasm.jaxrs.internal.AbstractWasmPluginFeature;
 import java.util.Arrays;
 
 /**
- * WasmPluginFeature is a JAX-RS feature that allows the use of Wasm-Plugins to filter JAX-RS
+ * WasmPluginFeature is a JAX-RS feature that allows the use of Proxy-Wasm plugins to filter JAX-RS
  * requests.
  */
 public class WasmPluginFeature extends AbstractWasmPluginFeature {

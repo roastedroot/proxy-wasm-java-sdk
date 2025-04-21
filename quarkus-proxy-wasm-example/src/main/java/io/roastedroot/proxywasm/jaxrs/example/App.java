@@ -23,6 +23,7 @@ public class App {
         return () ->
                 Plugin.builder(module)
                         .withName("example")
+                        .withShared(true)
                         .withPluginConfig("{ \"type\": \"headerTests\" }")
                         .withMachineFactory(AotMachine::new)
                         .build();

@@ -23,7 +23,7 @@ import java.util.List;
 
 /**
  * This class implements the JAX-RS filters to intercept requests and responses by
- * one or more Wasm-Plugins.
+ * one or more Proxy-Wasm plugins.
  */
 public class WasmPluginFilter
         implements ContainerRequestFilter, WriterInterceptor, ContainerResponseFilter {
