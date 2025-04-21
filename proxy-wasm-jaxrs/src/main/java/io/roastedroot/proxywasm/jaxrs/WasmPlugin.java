@@ -8,7 +8,7 @@ import java.lang.annotation.Target;
 
 /**
  * This annotation is used to mark a JAX-RS resource class or method
- * as being filters by one or more Wasm-Plugins.
+ * as being filters by one or more Proxy-Wasm plugins.
  */
 @NameBinding
 @Retention(RetentionPolicy.RUNTIME)

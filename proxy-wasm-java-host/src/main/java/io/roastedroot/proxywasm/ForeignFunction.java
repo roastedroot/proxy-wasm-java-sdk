@@ -1,5 +1,6 @@
 package io.roastedroot.proxywasm;
 
-public interface ForeignFunction {
-    byte[] apply(byte[] data);
-}
+/**
+ * A functional interface that represents a foreign function call in the Proxy-Wasm.
+ */
+public interface ForeignFunction extends java.util.function.Function<byte[], byte[]> {}

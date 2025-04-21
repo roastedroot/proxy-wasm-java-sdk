@@ -37,6 +37,7 @@ public class App {
         return () ->
                 Plugin.builder(module)
                         .withName("waf")
+                        .withShared(true)
                         .withLogger(DEBUG ? LogHandler.SYSTEM : null)
                         .withPluginConfig(CONFIG)
                         .withMetricsHandler(new SimpleMetricsHandler())

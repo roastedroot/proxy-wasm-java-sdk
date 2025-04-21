@@ -45,7 +45,8 @@
     <surefire-plugin.version>3.5.2</surefire-plugin.version>
     <failsafe-plugin.version>${surefire-plugin.version}</failsafe-plugin.version>
     <jandex.version>3.2.7</jandex.version>
-    <maven.javadoc.version>3.11.2</maven.javadoc.version>
+    <javadoc-plugin.version>3.11.2</javadoc-plugin.version>
+    <dependency-plugin.version>3.8.1</dependency-plugin.version>
 
     <!-- test time versions -->
     <junit.version>5.12.0</junit.version>
@@ -207,17 +208,6 @@
             <source>11</source>
             <target>11</target>
             <annotationProcessorPathsUseDepMgmt>true</annotationProcessorPathsUseDepMgmt>
-          </configuration>
-        </plugin>
-
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-javadoc-plugin</artifactId>
-          <version>${maven.javadoc.version}</version>
-          <configuration>
-            <sourceFileExcludes>
-              <sourceFileExclude>**/internal/**</sourceFileExclude>
-            </sourceFileExcludes>
           </configuration>
         </plugin>
 

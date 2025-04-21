@@ -24,6 +24,7 @@ public class App {
         return () ->
                 Plugin.builder(parseTestModule("/go-examples/unit_tester/main.wasm"))
                         .withName("headerTests")
+                        .withShared(true)
                         .withLogger(new MockLogger("headerTests"))
                         .withPluginConfig(gson.toJson(Map.of("type", "headerTests")))
                         .withMachineFactory(AotMachine::new)
@@ -34,7 +35,6 @@ public class App {
         return () ->
                 Plugin.builder(parseTestModule("/go-examples/unit_tester/main.wasm"))
                         .withName("headerTestsNotShared")
-                        .withShared(false)
                         .withLogger(new MockLogger("headerTestsNotShared"))
                         .withPluginConfig(gson.toJson(Map.of("type", "headerTests")))
                         .withMachineFactory(AotMachine::new)
@@ -45,6 +45,7 @@ public class App {
         return () ->
                 Plugin.builder(parseTestModule("/go-examples/unit_tester/main.wasm"))
                         .withName("tickTests")
+                        .withShared(true)
                         .withLogger(new MockLogger("tickTests"))
                         .withPluginConfig(gson.toJson(Map.of("type", "tickTests")))
                         .withMachineFactory(AotMachine::new)

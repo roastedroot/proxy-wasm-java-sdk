@@ -14,18 +14,33 @@ import java.util.Map;
 import java.util.function.Function;
 
 /**
- * Plugin is an instance of a Proxy-Wasm plugin.
+ * Represents an instantiated Proxy-WASM plugin, providing the bridge between the host
+ * environment and the WASM module.
+ *
+ * <p>This abstract class defines the core structure and lifecycle of a plugin.
+ * Concrete plugin instances are created using the {@link Builder}.
+ * The actual WASM instance and interaction logic are managed internally.
  */
 public abstract class Plugin {
 
+    /**
+     * Protected constructor for subclasses.
+     */
     protected Plugin() {}
 
+    /**
+     * Returns the configured name of this plugin instance.
+     *
+     * @return the plugin name, which might be null if not explicitly set via the builder.
+     */
     public abstract String name();
 
     /**
-     * Creates a new Plugin builder.
+     * Creates a new {@link Builder} to configure and construct a {@link Plugin} instance
+     * from the given WASM module.
      *
-     * @return a new Plugin builder
+     * @param module the compiled {@link WasmModule} representing the plugin's code.
+     * @return a new {@link Plugin.Builder} instance.
      */
     public static Plugin.Builder builder(WasmModule module) {
         return new Plugin.Builder(module);
@@ -38,7 +53,7 @@ public abstract class Plugin {
 
         private final WasmModule module;
         private final ProxyWasm.Builder proxyWasmBuilder = ProxyWasm.builder().withStart(false);
-        private boolean shared = true;
+        private boolean shared;
         private String name;
         private HashMap<String, ForeignFunction> foreignFunctions;
         private HashMap<String, URI> upstreams;
@@ -52,20 +67,21 @@ public abstract class Plugin {
         private SharedDataHandler sharedDataHandler;
 
         /**
-         * Set the WASM module of the plugin.  The module contains the plugin instructions.
+         * Private constructor for the Builder.
+         * Initializes the builder with the essential WASM module.
          *
-         * @param module the WASM module of the plugin
-         * @return this builder
+         * @param module The compiled {@link WasmModule} containing the plugin code.
          */
         private Builder(WasmModule module) {
             this.module = module;
         }
 
         /**
-         * Set the name of the plugin.
+         * Sets the optional name for this plugin instance.
+         * This name can be used for identification and logging purposes.
          *
-         * @param name the name of the plugin
-         * @return this builder
+         * @param name the desired name for the plugin.
+         * @return this {@code Builder} instance for method chaining.
          */
         public Builder withName(String name) {
             this.name = name;
@@ -73,10 +89,14 @@ public abstract class Plugin {
         }
 
         /**
-         * Set the foreign functions of that can be called from the plugin.
+         * Registers foreign (host-provided) functions that can be called by the WASM plugin.
+         * These functions allow the plugin to interact with the host environment beyond the standard
+         * Proxy-WASM ABI calls.
          *
-         * @param functions the foreign functions of the plugin
-         * @return this builder
+         * @param functions A map where keys are the function names expected by the WASM module,
+         *                  and values are {@link ForeignFunction} implementations provided by the host.
+         * @return this {@code Builder} instance for method chaining.
+         * @see ForeignFunction
          */
         public Builder withForeignFunctions(Map<String, ForeignFunction> functions) {
             this.foreignFunctions = new HashMap<>(functions);
@@ -84,11 +104,13 @@ public abstract class Plugin {
         }
 
         /**
-         * Set the upstream server URL
+         * Defines mappings from logical upstream names (used within the plugin) to actual network URIs.
+         * This allows the plugin to make network calls (e.g., HTTP, gRPC) to services known by name,
+         * without needing to hardcode addresses.
          *
-         * @param upstreams the upstream URI mappings.  When a http or grpc call is made
-         *                  from the plugin, the upstream name is used to lookup the URL.
-         * @return this builder
+         * @param upstreams A map where keys are the logical upstream names used by the plugin,
+         *                  and values are the corresponding {@link URI}s of the target services.
+         * @return this {@code Builder} instance for method chaining.
          */
         public Builder withUpstreams(Map<String, URI> upstreams) {
             this.upstreams = new HashMap<>(upstreams);
@@ -96,12 +118,18 @@ public abstract class Plugin {
         }
 
         /**
-         * Set the strict upstreams mode of the plugin.  If strict upstreams is enabled,
-         * then the plugin will throw an error if an upstream is not found.  If disabled,
-         * then the upstream name is used as the URL.
+         * Configures the behavior when a plugin attempts to call an upstream that is not defined
+         * in the `upstreams` map provided via {@link #withUpstreams(Map)}.
          *
-         * @param strictUpstreams the strict upstreams of the plugin
-         * @return this builder
+         * <p>If {@code strictUpstreams} is {@code true}, attempting to use an undefined upstream name
+         * will result in an error being reported back to the plugin.
+         *
+         * <p>If {@code strictUpstreams} is {@code false} (the default behavior if this method is not called),
+         * the host will try to parse the upstream name as URI.
+         *
+         * @param strictUpstreams {@code true} to enforce that all used upstream names must be explicitly mapped,
+         *                        {@code false} to allow fallback resolution.
+         * @return this {@code Builder} instance for method chaining.
          */
         public Builder withStrictUpstreams(boolean strictUpstreams) {
             this.strictUpstreams = strictUpstreams;
@@ -109,12 +137,17 @@ public abstract class Plugin {
         }
 
         /**
-         * Set the minimum tick period of the plugin.  A pluign that requests
-         * a very small tick period will be ticked very frequently.  Use this
-         * to protect the host from being overwhelmed by the plugin.
+         * Sets a minimum interval for the plugin's periodic timer ticks ({@code proxy_on_tick}).
+         * The Proxy-WASM ABI allows plugins to request a timer tick period. This setting enforces
+         * a lower bound on that period to prevent plugins from requesting excessively frequent ticks,
+         * which could overload the host.
          *
-         * @param minTickPeriodMilliseconds the minimum tick period of the plugin
-         * @return this builder
+         * <p>If the plugin requests a tick period shorter than this minimum, the host will use
+         * this minimum value instead.
+         *
+         * @param minTickPeriodMilliseconds the minimum allowed tick period in milliseconds. A value of 0 or less
+         *                                  implies no minimum enforcement (host default behavior).
+         * @return this {@code Builder} instance for method chaining.
          */
         public Builder withMinTickPeriodMilliseconds(int minTickPeriodMilliseconds) {
             this.minTickPeriodMilliseconds = minTickPeriodMilliseconds;
@@ -122,10 +155,13 @@ public abstract class Plugin {
         }
 
         /**
-         * Set the logger of the plugin.
+         * Provides a {@link LogHandler} implementation for the plugin to use.
+         * This handler receives log messages generated by the WASM module via the {@code proxy_log} ABI call.
+         * If no logger is provided, {@link LogHandler#DEFAULT} (a no-op logger) is used.
          *
-         * @param logger the logger of the plugin
-         * @return this builder
+         * @param logger the {@link LogHandler} implementation to handle plugin logs.
+         * @return this {@code Builder} instance for method chaining.
+         * @see LogHandler
          */
         public Builder withLogger(LogHandler logger) {
             this.logger = logger;
@@ -133,12 +169,15 @@ public abstract class Plugin {
         }
 
         /**
-         * Set the metrics handler of the plugin.  If the metrics handler is not set,
-         * then calls by the guest to define/use metrics will result in UNIMPLEMENTED errors
-         * reported to the guest.
+         * Provides a {@link MetricsHandler} implementation for the plugin to use.
+         * This handler manages metric definition, recording, and retrieval requested by the WASM module
+         * via the relevant {@code proxy_*} ABI calls (e.g., {@code proxy_define_metric}).
+         * If no handler is provided, {@link MetricsHandler#DEFAULT} (which returns UNIMPLEMENTED)
+         * might be used implicitly.
          *
-         * @param metricsHandler the metrics handler of the plugin
-         * @return this builder
+         * @param metricsHandler the {@link MetricsHandler} implementation to manage plugin metrics.
+         * @return this {@code Builder} instance for method chaining.
+         * @see MetricsHandler
          */
         public Builder withMetricsHandler(MetricsHandler metricsHandler) {
             this.metricsHandler = metricsHandler;
@@ -146,12 +185,15 @@ public abstract class Plugin {
         }
 
         /**
-         * Set the shared queue handler of the plugin.  If the sahred queue handler is not set,
-         * then calls by the guest to define/use shared queues will result in UNIMPLEMENTED errors
-         * reported to the guest.
+         * Provides a {@link SharedQueueHandler} implementation for the plugin to use.
+         * This handler manages operations on shared message queues requested by the WASM module
+         * via the relevant {@code proxy_*} ABI calls (e.g., {@code proxy_register_shared_queue}).
+         * If no handler is provided, {@link SharedQueueHandler#DEFAULT} (which returns UNIMPLEMENTED)
+         * might be used implicitly.
          *
-         * @param sharedQueueHandler the shared queue handler of the plugin
-         * @return this builder
+         * @param sharedQueueHandler the {@link SharedQueueHandler} implementation to manage shared queues.
+         * @return this {@code Builder} instance for method chaining.
+         * @see SharedQueueHandler
          */
         public Builder withSharedQueueHandler(SharedQueueHandler sharedQueueHandler) {
             this.sharedQueueHandler = sharedQueueHandler;
@@ -159,12 +201,15 @@ public abstract class Plugin {
         }
 
         /**
-         * Set the shared data handler of the plugin.  If the shared data handler is not set,
-         * then calls by the guest to define/use shared data will result in UNIMPLEMENTED errors
-         * reported to the guest.
+         * Provides a {@link SharedDataHandler} implementation for the plugin to use.
+         * This handler manages operations on shared key-value data requested by the WASM module
+         * via the relevant {@code proxy_*} ABI calls (e.g., {@code proxy_get_shared_data}).
+         * If no handler is provided, {@link SharedDataHandler#DEFAULT} (which returns UNIMPLEMENTED)
+         * might be used implicitly.
          *
-         * @param sharedDataHandler the shared data handler of the plugin
-         * @return this builder
+         * @param sharedDataHandler the {@link SharedDataHandler} implementation to manage shared data.
+         * @return this {@code Builder} instance for method chaining.
+         * @see SharedDataHandler
          */
         public Builder withSharedDataHandler(SharedDataHandler sharedDataHandler) {
             this.sharedDataHandler = sharedDataHandler;
@@ -172,12 +217,19 @@ public abstract class Plugin {
         }
 
         /**
-         * Set whether the plugin is shared between host requests.  If the plugin is shared,
-         * then the plugin will be created once and reused for each host request.  If the plugin
-         * is not shared, then a new plugin MAY be use for each concurrent host request.
+         * Configures whether the plugin instance should be shared across multiple host requests or contexts.
          *
-         * @param shared whether the plugin is shared
-         * @return this builder
+         * <p>If {@code shared} is {@code true}, a single WASM instance will be created and reused.
+         * across multiple concurrent requests.  Since Proxy-Wasm plugins are not thread-safe, the requests will
+         * contend on an access lock for the plugin.  Using a shared plugin allows the plugin to maintain state
+         * between the requests.  It will use less memory but will have a performance impact due to the contention.
+         *
+         * <p>If {@code shared} is {@code false} (the default), the host will create a new, separate WASM instance for each
+         * request or context (depending on the host implementation and threading model). This provides better
+         * isolation, eliminates contention, but consumes more memory.
+         *
+         * @param shared {@code true} to indicate the plugin instance can be shared, {@code false} otherwise.
+         * @return this {@code Builder} instance for method chaining.
          */
         public Builder withShared(boolean shared) {
             this.shared = shared;
@@ -185,10 +237,12 @@ public abstract class Plugin {
         }
 
         /**
-         * Set the VM config of the plugin.
+         * Sets the Virtual Machine (VM) configuration data for the plugin.
+         * This configuration is typically provided once when the VM (and the plugin) is initialized.
+         * It's accessible to the plugin via the {@code proxy_get_vm_configuration} ABI call.
          *
-         * @param vmConfig the VM config of the plugin
-         * @return this builder
+         * @param vmConfig A byte array containing the VM configuration data.
+         * @return this {@code Builder} instance for method chaining.
          */
         public Builder withVmConfig(byte[] vmConfig) {
             this.vmConfig = vmConfig;
@@ -196,10 +250,13 @@ public abstract class Plugin {
         }
 
         /**
-         * Set the VM config of the plugin.
+         * Sets the Virtual Machine (VM) configuration data for the plugin using a String.
+         * The string will be converted to bytes using the platform's default charset.
+         * This configuration is accessible via the {@code proxy_get_vm_configuration} ABI call.
          *
-         * @param vmConfig the VM config of the plugin
-         * @return this builder
+         * @param vmConfig A String containing the VM configuration data.
+         * @return this {@code Builder} instance for method chaining.
+         * @see #withVmConfig(byte[])
          */
         public Builder withVmConfig(String vmConfig) {
             this.vmConfig = bytes(vmConfig);
@@ -207,10 +264,13 @@ public abstract class Plugin {
         }
 
         /**
-         * Set the plugin config of the plugin.
+         * Sets the specific configuration data for this plugin instance.
+         * This configuration is provided during the plugin's initialization phase
+         * (via {@code proxy_on_configure}) and allows tailoring the plugin's behavior.
+         * It's accessible to the plugin via the {@code proxy_get_plugin_configuration} ABI call.
          *
-         * @param pluginConfig the plugin config of the plugin
-         * @return this builder
+         * @param pluginConfig A byte array containing the plugin-specific configuration data.
+         * @return this {@code Builder} instance for method chaining.
          */
         public Builder withPluginConfig(byte[] pluginConfig) {
             this.pluginConfig = pluginConfig;
@@ -218,10 +278,13 @@ public abstract class Plugin {
         }
 
         /**
-         * Set the plugin config of the plugin.
+         * Sets the specific configuration data for this plugin instance using a String.
+         * The string will be converted to bytes using the platform's default charset.
+         * This configuration is accessible via the {@code proxy_get_plugin_configuration} ABI call.
          *
-         * @param pluginConfig the plugin config of the plugin
-         * @return this builder
+         * @param pluginConfig A String containing the plugin-specific configuration data.
+         * @return this {@code Builder} instance for method chaining.
+         * @see #withPluginConfig(byte[])
          */
         public Builder withPluginConfig(String pluginConfig) {
             this.pluginConfig = bytes(pluginConfig);
@@ -229,10 +292,10 @@ public abstract class Plugin {
         }
 
         /**
-         * Set the import memory of the plugin.
+         * Provides an explicit memory instance to be used by the WASM module.
          *
-         * @param memory the import memory of the plugin
-         * @return this builder
+         * @param memory The {@link ImportMemory} instance to be used by the WASM module.
+         * @return this {@code Builder} instance for method chaining.
          */
         public Builder withImportMemory(ImportMemory memory) {
             proxyWasmBuilder.withImportMemory(memory);
@@ -240,14 +303,16 @@ public abstract class Plugin {
         }
 
         /**
-         * Set the machine factory of the plugin.  The machine factory is used to control
-         * how instructions are executed.  By default instructions are executed in a
-         * by an interpreter.  To increase performance, you can use compile the
-         * was instructions to bytecode at runtime or at build time.  For more information
-         * see https://chicory.dev/docs/experimental/aot
+         * Configures a custom factory for creating the {@link Machine} used to execute the WASM code.
+         * The {@link Machine} controls the low-level execution of WASM instructions.
+         * By default, an interpreter-based machine is used.
+         * Providing a custom factory allows using alternative execution strategies, such as
+         * Ahead-Of-Time (AOT) compilation to improve execution performance.
          *
-         * @param machineFactory the machine factory of the plugin
-         * @return this builder
+         * <p>See the Chicory documentation (https://chicory.dev/docs/experimental/aot) for more details on Aot compilation.
+         *
+         * @param machineFactory A function that takes a WASM {@link Instance} and returns a {@link Machine}.
+         * @return this {@code Builder} instance for method chaining.
          */
         public Builder withMachineFactory(Function<Instance, Machine> machineFactory) {
             proxyWasmBuilder.withMachineFactory(machineFactory);
@@ -255,12 +320,13 @@ public abstract class Plugin {
         }
 
         /**
-         * Set the WASI options of the plugin.  A default WASI enviroment will be provided
-         * to the pluign.  You can use this method to customize the WASI environment,
-         * for example to provide it access to some file system resources.
+         * Configures WebAssembly System Interface (WASI) options for the plugin instance.
+         * WASI provides a standard interface for WASM modules to interact with the underlying operating system
+         * for tasks like file system access, environment variables, etc. While Proxy-WASM defines its own ABI,
+         * some modules might also utilize WASI features.
          *
-         * @param options the WASI options of the plugin
-         * @return this builder
+         * @param options The {@link WasiOptions} to configure for the WASI environment.
+         * @return this {@code Builder} instance for method chaining.
          */
         public Builder withWasiOptions(WasiOptions options) {
             proxyWasmBuilder.withWasiOptions(options);
@@ -268,12 +334,18 @@ public abstract class Plugin {
         }
 
         /**
-         * Build the plugin.
+         * Constructs and initializes the {@link Plugin} instance based on the configuration
+         * provided to this builder.
          *
-         * @return the plugin
-         * @throws StartException if the plugin fails to start
+         * <p>This involves setting up the WASM environment, linking host functions, applying configurations,
+         * and calling the necessary Proxy-WASM lifecycle functions (like {@code _start} and
+         * {@code proxy_on_vm_start}).
+         *
+         * @return The fully configured and initialized {@link Plugin} instance.
+         * @throws StartException If any error occurs during the plugin initialization process
+         *                        (e.g., WASM instantiation failure, error during {@code proxy_on_vm_start}).
          */
-        public io.roastedroot.proxywasm.internal.Plugin build() throws StartException {
+        public Plugin build() throws StartException {
             return new io.roastedroot.proxywasm.internal.Plugin(
                     proxyWasmBuilder.build(module),
                     shared,
