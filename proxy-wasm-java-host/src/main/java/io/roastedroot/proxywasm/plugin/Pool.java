@@ -69,7 +69,12 @@ public interface Pool {
 
         @Override
         public Plugin borrow() throws StartException {
-            Plugin plugin = factory.create();
+            Plugin plugin = null;
+            try {
+                plugin = factory.create();
+            } catch (Throwable e) {
+                throw new StartException("Plugin create failed.", e);
+            }
             plugin.setServerAdaptor(serverAdaptor);
             plugin.wasm.start();
             return plugin;

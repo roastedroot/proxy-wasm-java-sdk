@@ -7,6 +7,7 @@ import com.google.gson.Gson;
 import io.roastedroot.proxywasm.StartException;
 import io.roastedroot.proxywasm.plugin.Plugin;
 import io.roastedroot.proxywasm.plugin.PluginFactory;
+import java.net.URI;
 import java.nio.file.Path;
 import java.util.Map;
 
@@ -21,45 +22,45 @@ public class App {
 
     public static PluginFactory headerTests() throws StartException {
         return () ->
-                Plugin.builder()
+                Plugin.builder(parseTestModule("/go-examples/unit_tester/main.wasm"))
                         .withName("headerTests")
                         .withLogger(new MockLogger("headerTests"))
                         .withPluginConfig(gson.toJson(Map.of("type", "headerTests")))
                         .withMachineFactory(AotMachine::new)
-                        .build(parseTestModule("/go-examples/unit_tester/main.wasm"));
+                        .build();
     }
 
     public static PluginFactory headerTestsNotShared() throws StartException {
         return () ->
-                Plugin.builder()
+                Plugin.builder(parseTestModule("/go-examples/unit_tester/main.wasm"))
                         .withName("headerTestsNotShared")
                         .withShared(false)
                         .withLogger(new MockLogger("headerTestsNotShared"))
                         .withPluginConfig(gson.toJson(Map.of("type", "headerTests")))
                         .withMachineFactory(AotMachine::new)
-                        .build(parseTestModule("/go-examples/unit_tester/main.wasm"));
+                        .build();
     }
 
     public static PluginFactory tickTests() throws StartException {
         return () ->
-                Plugin.builder()
+                Plugin.builder(parseTestModule("/go-examples/unit_tester/main.wasm"))
                         .withName("tickTests")
                         .withLogger(new MockLogger("tickTests"))
                         .withPluginConfig(gson.toJson(Map.of("type", "tickTests")))
                         .withMachineFactory(AotMachine::new)
-                        .build(parseTestModule("/go-examples/unit_tester/main.wasm"));
+                        .build();
     }
 
     public static PluginFactory ffiTests() throws StartException {
         return () ->
-                Plugin.builder()
+                Plugin.builder(parseTestModule("/go-examples/unit_tester/main.wasm"))
                         .withName("ffiTests")
                         .withLogger(new MockLogger("ffiTests"))
                         .withPluginConfig(
                                 gson.toJson(Map.of("type", "ffiTests", "function", "reverse")))
                         .withForeignFunctions(Map.of("reverse", App::reverse))
                         .withMachineFactory(AotMachine::new)
-                        .build(parseTestModule("/go-examples/unit_tester/main.wasm"));
+                        .build();
     }
 
     public static byte[] reverse(byte[] data) {
@@ -72,7 +73,7 @@ public class App {
 
     public static PluginFactory httpCallTests() throws StartException {
         return () ->
-                Plugin.builder()
+                Plugin.builder(parseTestModule("/go-examples/unit_tester/main.wasm"))
                         .withName("httpCallTests")
                         .withLogger(new MockLogger("httpCallTests"))
                         .withPluginConfig(
@@ -81,8 +82,8 @@ public class App {
                                                 "type", "httpCallTests",
                                                 "upstream", "web_service",
                                                 "path", "/ok")))
-                        .withUpstreams(Map.of("web_service", "localhost:8081"))
+                        .withUpstreams(Map.of("web_service", new URI("http://localhost:8081")))
                         .withMachineFactory(AotMachine::new)
-                        .build(parseTestModule("/go-examples/unit_tester/main.wasm"));
+                        .build();
     }
 }

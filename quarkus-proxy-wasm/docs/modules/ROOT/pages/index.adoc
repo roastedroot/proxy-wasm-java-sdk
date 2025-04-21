@@ -131,11 +131,11 @@ public class App {
     @Produces
     public PluginFactory waf() throws StartException {
         return () ->
-                Plugin.builder()
+                Plugin.builder(module)
                         .withName("waf")                                            <2>
                         .withPluginConfig(CONFIG)
                         .withMetricsHandler(new SimpleMetricsHandler())             <3>
-                        .build(module);
+                        .build();
     }
 }
 
