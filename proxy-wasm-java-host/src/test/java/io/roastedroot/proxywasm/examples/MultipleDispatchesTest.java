@@ -4,9 +4,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.dylibso.chicory.wasm.Parser;
 import com.dylibso.chicory.wasm.WasmModule;
-import io.roastedroot.proxywasm.Action;
-import io.roastedroot.proxywasm.ProxyWasm;
 import io.roastedroot.proxywasm.StartException;
+import io.roastedroot.proxywasm.internal.Action;
+import io.roastedroot.proxywasm.internal.ProxyWasm;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;

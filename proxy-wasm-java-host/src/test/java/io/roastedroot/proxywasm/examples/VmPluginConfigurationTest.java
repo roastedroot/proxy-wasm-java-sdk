@@ -1,12 +1,12 @@
 package io.roastedroot.proxywasm.examples;
 
-import static io.roastedroot.proxywasm.Helpers.bytes;
+import static io.roastedroot.proxywasm.internal.Helpers.bytes;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.dylibso.chicory.wasm.Parser;
 import com.dylibso.chicory.wasm.WasmModule;
-import io.roastedroot.proxywasm.ProxyWasm;
 import io.roastedroot.proxywasm.StartException;
+import io.roastedroot.proxywasm.internal.ProxyWasm;
 import java.nio.file.Path;
 import java.util.List;
 import org.junit.jupiter.api.Test;

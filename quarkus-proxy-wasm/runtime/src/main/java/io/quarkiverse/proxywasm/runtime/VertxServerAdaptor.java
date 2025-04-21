@@ -7,13 +7,12 @@ import io.grpc.ManagedChannelBuilder;
 import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
 import io.grpc.Status;
-import io.roastedroot.proxywasm.ArrayBytesProxyMap;
-import io.roastedroot.proxywasm.ProxyMap;
-import io.roastedroot.proxywasm.plugin.GrpcCallResponseHandler;
-import io.roastedroot.proxywasm.plugin.HttpCallResponse;
-import io.roastedroot.proxywasm.plugin.HttpCallResponseHandler;
-import io.roastedroot.proxywasm.plugin.HttpRequestAdaptor;
-import io.roastedroot.proxywasm.plugin.ServerAdaptor;
+import io.roastedroot.proxywasm.internal.ArrayBytesProxyMap;
+import io.roastedroot.proxywasm.internal.GrpcCallResponseHandler;
+import io.roastedroot.proxywasm.internal.HttpCallResponseHandler;
+import io.roastedroot.proxywasm.internal.HttpRequestAdaptor;
+import io.roastedroot.proxywasm.internal.ProxyMap;
+import io.roastedroot.proxywasm.internal.ServerAdaptor;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpClient;
@@ -103,17 +102,15 @@ public class VertxServerAdaptor implements ServerAdaptor {
                                                                                     e.getKey(),
                                                                                     e.getValue()));
                                                     handler.call(
-                                                            new HttpCallResponse(
-                                                                    result.statusCode(),
-                                                                    h,
-                                                                    bodyHandler.getBytes()));
+                                                            result.statusCode(),
+                                                            h,
+                                                            bodyHandler.getBytes());
                                                 });
                                     } else {
                                         handler.call(
-                                                new HttpCallResponse(
-                                                        500,
-                                                        ProxyMap.of(),
-                                                        resp.cause().getMessage().getBytes()));
+                                                500,
+                                                ProxyMap.of(),
+                                                resp.cause().getMessage().getBytes());
                                     }
                                 });
 

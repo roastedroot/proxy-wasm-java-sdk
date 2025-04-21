@@ -1,5 +1,7 @@
 package io.roastedroot.proxywasm;
 
+import io.roastedroot.proxywasm.internal.WasmResult;
+
 /**
  * Represents WebAssembly result codes.
  * Converted from Go's WasmResult type.

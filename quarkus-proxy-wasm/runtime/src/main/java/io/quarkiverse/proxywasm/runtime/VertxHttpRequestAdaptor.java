@@ -1,6 +1,6 @@
 package io.quarkiverse.proxywasm.runtime;
 
-import io.roastedroot.proxywasm.jaxrs.JaxrsHttpRequestAdaptor;
+import io.roastedroot.proxywasm.jaxrs.internal.JaxrsHttpRequestAdaptor;
 import jakarta.annotation.Priority;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.enterprise.inject.Alternative;

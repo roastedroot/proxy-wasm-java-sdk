@@ -1,5 +1,7 @@
 package io.roastedroot.proxywasm;
 
+import io.roastedroot.proxywasm.internal.WasmResult;
+
 public interface SharedDataHandler {
 
     SharedDataHandler DEFAULT = new SharedDataHandler() {};
