@@ -1,6 +1,6 @@
 package io.roastedroot.proxywasm.jaxrs.servlet;
 
-import io.roastedroot.proxywasm.jaxrs.JaxrsHttpRequestAdaptor;
+import io.roastedroot.proxywasm.jaxrs.internal.JaxrsHttpRequestAdaptor;
 import jakarta.servlet.http.HttpServletRequest;
 
 public class ServletJaxrsHttpRequestAdaptor extends JaxrsHttpRequestAdaptor {

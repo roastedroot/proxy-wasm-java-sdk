@@ -1,10 +1,10 @@
 package io.roastedroot.proxywasm.kuadrant.example;
 
 import io.roastedroot.proxywasm.LogHandler;
+import io.roastedroot.proxywasm.Plugin;
+import io.roastedroot.proxywasm.PluginFactory;
+import io.roastedroot.proxywasm.SimpleMetricsHandler;
 import io.roastedroot.proxywasm.StartException;
-import io.roastedroot.proxywasm.plugin.Plugin;
-import io.roastedroot.proxywasm.plugin.PluginFactory;
-import io.roastedroot.proxywasm.plugin.SimpleMetricsHandler;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Produces;
 import java.io.IOException;

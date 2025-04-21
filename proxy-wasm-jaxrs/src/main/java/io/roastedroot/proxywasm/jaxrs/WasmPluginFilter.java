@@ -1,13 +1,14 @@
 package io.roastedroot.proxywasm.jaxrs;
 
-import static io.roastedroot.proxywasm.Helpers.string;
+import static io.roastedroot.proxywasm.internal.Helpers.string;
 
-import io.roastedroot.proxywasm.Action;
 import io.roastedroot.proxywasm.StartException;
-import io.roastedroot.proxywasm.plugin.HttpContext;
-import io.roastedroot.proxywasm.plugin.Plugin;
-import io.roastedroot.proxywasm.plugin.Pool;
-import io.roastedroot.proxywasm.plugin.SendResponse;
+import io.roastedroot.proxywasm.internal.Action;
+import io.roastedroot.proxywasm.internal.Plugin;
+import io.roastedroot.proxywasm.internal.PluginHttpContext;
+import io.roastedroot.proxywasm.internal.Pool;
+import io.roastedroot.proxywasm.internal.SendResponse;
+import io.roastedroot.proxywasm.jaxrs.internal.JaxrsHttpRequestAdaptor;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.container.ContainerRequestFilter;
@@ -20,9 +21,14 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.List;
 
+/**
+ * This class implements the JAX-RS filters to intercept requests and responses by
+ * one or more Wasm-Plugins.
+ */
 public class WasmPluginFilter
         implements ContainerRequestFilter, WriterInterceptor, ContainerResponseFilter {
-    private static final String FILTER_CONTEXT_PROPERTY_NAME = HttpContext.class.getName() + ":";
+    private static final String FILTER_CONTEXT_PROPERTY_NAME =
+            PluginHttpContext.class.getName() + ":";
 
     private final List<Pool> pluginPools;
 
@@ -125,7 +131,7 @@ public class WasmPluginFilter
             Pool pluginPool)
             throws IOException {
         var httpContext =
-                (HttpContext)
+                (PluginHttpContext)
                         requestContext.getProperty(
                                 FILTER_CONTEXT_PROPERTY_NAME + pluginPool.name());
         if (httpContext == null) {
@@ -202,7 +208,7 @@ public class WasmPluginFilter
 
             for (var pluginPool : pluginPools) {
                 var httpContext =
-                        (HttpContext)
+                        (PluginHttpContext)
                                 ctx.getProperty(FILTER_CONTEXT_PROPERTY_NAME + pluginPool.name());
                 if (httpContext == null) {
                     throw new WebApplicationException(interalServerError());
@@ -238,7 +244,7 @@ public class WasmPluginFilter
         } finally {
             for (var pluginPool : pluginPools) {
                 var httpContext =
-                        (HttpContext)
+                        (PluginHttpContext)
                                 ctx.getProperty(FILTER_CONTEXT_PROPERTY_NAME + pluginPool.name());
 
                 // allow other request to use the plugin.

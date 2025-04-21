@@ -45,6 +45,7 @@
     <surefire-plugin.version>3.5.2</surefire-plugin.version>
     <failsafe-plugin.version>${surefire-plugin.version}</failsafe-plugin.version>
     <jandex.version>3.2.7</jandex.version>
+    <maven.javadoc.version>3.11.2</maven.javadoc.version>
 
     <!-- test time versions -->
     <junit.version>5.12.0</junit.version>
@@ -209,7 +210,19 @@
           </configuration>
         </plugin>
 
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-javadoc-plugin</artifactId>
+          <version>${maven.javadoc.version}</version>
+          <configuration>
+            <sourceFileExcludes>
+              <sourceFileExclude>**/internal/**</sourceFileExclude>
+            </sourceFileExcludes>
+          </configuration>
+        </plugin>
+
       </plugins>
+
     </pluginManagement>
   </build>
 
