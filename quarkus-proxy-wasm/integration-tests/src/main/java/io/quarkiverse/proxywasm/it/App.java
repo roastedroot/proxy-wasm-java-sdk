@@ -13,16 +13,43 @@ import java.net.URI;
 import java.nio.file.Path;
 import java.util.Map;
 
+/**
+ * Application configuration for integration tests.
+ * Provides CDI producers for various {@link PluginFactory} configurations used in tests.
+ */
 @ApplicationScoped
 public class App {
 
+    /**
+     * Default constructor.
+     */
+    public App() {
+        // Default constructor
+    }
+
+    /**
+     * Directory containing the example Wasm modules used for testing.
+     */
     public static final String EXAMPLES_DIR = "../../proxy-wasm-java-host/src/test";
+
     private static final Gson gson = new Gson();
 
+    /**
+     * Parses a Wasm module from the specified file path relative to the examples directory.
+     *
+     * @param file The relative path to the Wasm module file.
+     * @return The parsed {@link WasmModule}.
+     */
     public static WasmModule parseTestModule(String file) {
         return Parser.parse(Path.of(EXAMPLES_DIR + file));
     }
 
+    /**
+     * Produces a {@link PluginFactory} for header manipulation tests (shared instance).
+     *
+     * @return A configured {@link PluginFactory}.
+     * @throws StartException If plugin initialization fails.
+     */
     @Produces
     public PluginFactory headerTests() throws StartException {
         return () ->
@@ -34,6 +61,12 @@ public class App {
                         .build();
     }
 
+    /**
+     * Produces a {@link PluginFactory} for header manipulation tests (non-shared instances).
+     *
+     * @return A configured {@link PluginFactory}.
+     * @throws StartException If plugin initialization fails.
+     */
     @Produces
     public PluginFactory headerTestsNotShared() throws StartException {
         return () ->
@@ -45,6 +78,12 @@ public class App {
                         .build();
     }
 
+    /**
+     * Produces a {@link PluginFactory} for tick-based tests.
+     *
+     * @return A configured {@link PluginFactory}.
+     * @throws StartException If plugin initialization fails.
+     */
     @Produces
     public PluginFactory tickTests() throws StartException {
         return () ->
@@ -57,6 +96,12 @@ public class App {
                         .build();
     }
 
+    /**
+     * Produces a {@link PluginFactory} for Foreign Function Interface (FFI) tests.
+     *
+     * @return A configured {@link PluginFactory}.
+     * @throws StartException If plugin initialization fails.
+     */
     @Produces
     public PluginFactory ffiTests() throws StartException {
         return () ->
@@ -70,6 +115,12 @@ public class App {
                         .build();
     }
 
+    /**
+     * Reverses the byte order of the input data. Used as an FFI function in tests.
+     *
+     * @param data The byte array to reverse.
+     * @return A new byte array with the reversed content.
+     */
     public static byte[] reverse(byte[] data) {
         byte[] reversed = new byte[data.length];
         for (int i = 0; i < data.length; i++) {
@@ -78,6 +129,12 @@ public class App {
         return reversed;
     }
 
+    /**
+     * Produces a {@link PluginFactory} for HTTP call tests.
+     *
+     * @return A configured {@link PluginFactory}.
+     * @throws StartException If plugin initialization fails.
+     */
     @Produces
     public PluginFactory httpCallTests() throws StartException {
         return () ->
