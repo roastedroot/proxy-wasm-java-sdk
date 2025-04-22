@@ -22,8 +22,18 @@ import java.io.IOException;
 import java.util.List;
 
 /**
- * This class implements the JAX-RS filters to intercept requests and responses by
- * one or more Proxy-Wasm plugins.
+ * Implements the JAX-RS {@link ContainerRequestFilter}, {@link ContainerResponseFilter},
+ * and {@link WriterInterceptor} interfaces to intercept HTTP requests and responses,
+ * allowing Proxy-Wasm plugins to process them.
+ *
+ * <p>This filter is registered by the {@link WasmPluginFeature}. It interacts with
+ * {@link Plugin} instances obtained from configured {@link Pool}s to execute the
+ * appropriate Proxy-Wasm ABI functions (e.g., {@code on_http_request_headers},
+ * {@code on_http_response_body}) at different stages of the JAX-RS request/response lifecycle.
+ *
+ * @see WasmPluginFeature
+ * @see WasmPlugin
+ * @see Plugin
  */
 public class WasmPluginFilter
         implements ContainerRequestFilter, WriterInterceptor, ContainerResponseFilter {
@@ -32,10 +42,27 @@ public class WasmPluginFilter
 
     private final List<Pool> pluginPools;
 
-    public WasmPluginFilter(List<Pool> pluginPool) {
-        this.pluginPools = List.copyOf(pluginPool);
+    /**
+     * Constructs a WasmPluginFilter.
+     *
+     * @param pluginPools A list of {@link Pool} instances, each managing a pool of {@link Plugin}
+     *                    instances for a specific Wasm module.
+     */
+    public WasmPluginFilter(List<Pool> pluginPools) {
+        this.pluginPools = List.copyOf(pluginPools);
     }
 
+    /**
+     * Intercepts incoming JAX-RS requests before they reach the resource method.
+     *
+     * <p>This method iterates through the configured plugin pools, borrows a {@link Plugin}
+     * instance from each, creates a {@link PluginHttpContext}, and calls the plugin's
+     * {@code on_http_request_headers} and potentially {@code on_http_request_body} functions.
+     * It handles potential early responses or modifications dictated by the plugins.
+     *
+     * @param requestContext The JAX-RS request context.
+     * @throws IOException If an I/O error occurs, typically during body processing.
+     */
     @Override
     public void filter(ContainerRequestContext requestContext) throws IOException {
         for (var pluginPool : pluginPools) {
@@ -116,6 +143,19 @@ public class WasmPluginFilter
         return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
     }
 
+    /**
+     * Intercepts outgoing JAX-RS responses before the entity is written.
+     *
+     * <p>This method iterates through the configured plugin pools, retrieves the
+     * {@link PluginHttpContext} created during the request phase, and calls the plugin's
+     * {@code on_http_response_headers} function. It handles potential modifications to the
+     * response headers dictated by the plugins. If the response has no entity but the plugin
+     * implements {@code on_http_response_body}, it invokes that callback as well.
+     *
+     * @param requestContext  The JAX-RS request context.
+     * @param responseContext The JAX-RS response context.
+     * @throws IOException If an I/O error occurs.
+     */
     @Override
     public void filter(
             ContainerRequestContext requestContext, ContainerResponseContext responseContext)
@@ -193,6 +233,20 @@ public class WasmPluginFilter
         }
     }
 
+    /**
+     * Intercepts the response body writing process.
+     *
+     * <p>This method is called when the JAX-RS framework is about to serialize and write
+     * the response entity. It captures the original response body, allows plugins
+     * (via {@code on_http_response_body}) to inspect or modify it, and then writes the
+     * potentially modified body to the original output stream. It handles potential
+     * early responses dictated by the plugins during body processing.
+     *
+     * @param ctx The JAX-RS writer interceptor context.
+     * @throws IOException             If an I/O error occurs during stream processing.
+     * @throws WebApplicationException If a plugin decides to abort processing and send an
+     *                                 alternative response during body filtering.
+     */
     @Override
     public void aroundWriteTo(WriterInterceptorContext ctx)
             throws IOException, WebApplicationException {
@@ -258,7 +312,7 @@ public class WasmPluginFilter
         }
     }
 
-    public Response toResponse(SendResponse other) {
+    Response toResponse(SendResponse other) {
         Response.ResponseBuilder builder =
                 Response.status(other.statusCode(), string(other.statusCodeDetails()));
         if (other.headers() != null) {

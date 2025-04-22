@@ -4,7 +4,7 @@ import io.restassured.specification.RequestSpecification;
 import io.roastedroot.proxywasm.jaxrs.WasmPluginFeature;
 import io.roastedroot.proxywasm.jaxrs.example.App;
 import io.roastedroot.proxywasm.jaxrs.example.Resources;
-import io.roastedroot.proxywasm.jaxrs.internal.ServerAdaptor;
+import io.roastedroot.proxywasm.jaxrs.internal.BlockingServerAdaptor;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
@@ -33,7 +33,7 @@ public class BaseTest {
         // Create mock Instance<PluginFactory> for WasmPluginFeature
         resourceConfig.register(
                 new WasmPluginFeature(
-                        new ServerAdaptor(),
+                        new BlockingServerAdaptor(),
                         App.headerTests(),
                         App.headerTestsNotShared(),
                         App.tickTests(),

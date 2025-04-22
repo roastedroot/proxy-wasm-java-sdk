@@ -4,6 +4,7 @@ import io.roastedroot.proxywasm.internal.ArrayProxyMap;
 import io.roastedroot.proxywasm.internal.HttpCallResponseHandler;
 import io.roastedroot.proxywasm.internal.HttpRequestAdaptor;
 import io.roastedroot.proxywasm.internal.ProxyMap;
+import io.roastedroot.proxywasm.internal.ServerAdaptor;
 import jakarta.ws.rs.core.UriBuilder;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -15,7 +16,12 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-public class ServerAdaptor implements io.roastedroot.proxywasm.internal.ServerAdaptor {
+/**
+ * The BlockingServerAdaptor implements a ServerAdaptor suitable for blocking
+ * HTTP servers like servlet based http servers.  It uses thread pools to handle
+ * performing tick events and http/grpc request for the Proxy-Wasm plugins.
+ */
+public class BlockingServerAdaptor implements ServerAdaptor {
 
     ScheduledExecutorService tickExecutorService = Executors.newScheduledThreadPool(1);
     ExecutorService executorService = Executors.newWorkStealingPool(5);
