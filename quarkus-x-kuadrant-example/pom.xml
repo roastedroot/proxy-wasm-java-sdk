@@ -98,7 +98,7 @@
               <goal>wasm-aot-gen</goal>
             </goals>
             <configuration>
-              <name>io.roastedroot.proxywasm.kuadrant.example.WasmShim</name>
+              <name>io.roastedroot.proxywasm.kuadrant.example.internal.WasmShim</name>
               <wasmFile>src/main/wasm/wasm_shim.wasm</wasmFile>
             </configuration>
           </execution>

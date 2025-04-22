@@ -32,20 +32,40 @@ import java.net.URI;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Vert.x specific implementation of {@link ServerAdaptor}.
+ * Provides Vert.x based implementations for scheduling tasks, adapting HTTP requests,
+ * and making outbound HTTP and gRPC calls.
+ */
 @Alternative
 @Priority(200)
 @ApplicationScoped
 public class VertxServerAdaptor implements ServerAdaptor {
 
+    /**
+     * Default constructor.
+     */
+    public VertxServerAdaptor() {
+        // Default constructor for VertxServerAdaptor
+    }
+
     @Inject Vertx vertx;
 
     HttpClient client;
 
+    /**
+     * Initializes the Vert.x HTTP client.
+     * This method is called by the CDI container after dependency injection.
+     */
     @PostConstruct
     public void setup() {
         this.client = vertx.createHttpClient();
     }
 
+    /**
+     * Closes the Vert.x HTTP client.
+     * This method is called by the CDI container before the bean is destroyed.
+     */
     @PreDestroy
     public void close() {
         client.close();

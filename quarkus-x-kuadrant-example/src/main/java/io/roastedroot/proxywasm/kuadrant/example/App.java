@@ -5,6 +5,7 @@ import io.roastedroot.proxywasm.Plugin;
 import io.roastedroot.proxywasm.PluginFactory;
 import io.roastedroot.proxywasm.SimpleMetricsHandler;
 import io.roastedroot.proxywasm.StartException;
+import io.roastedroot.proxywasm.kuadrant.example.internal.WasmShimModule;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Produces;
 import java.io.IOException;
@@ -15,8 +16,19 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
+/**
+ * Application configuration class for the Kuadrant example.
+ * Sets up the Wasm PluginFactory for the Kuadrant plugin.
+ */
 @ApplicationScoped
 public class App {
+
+    /**
+     * Default constructor.
+     */
+    public App() {
+        // Default constructor
+    }
 
     static final String CONFIG;
 
@@ -33,6 +45,14 @@ public class App {
     @ConfigProperty(name = "limitador.rls.url")
     String limitadorUrl;
 
+    /**
+     * Produces the PluginFactory for the Kuadrant Wasm plugin.
+     * Configures the plugin with necessary settings like name, machine factory,
+     * logger, plugin configuration, upstream URIs, and metrics handler.
+     *
+     * @return A configured PluginFactory for the Kuadrant plugin.
+     * @throws StartException if there is an error during plugin initialization.
+     */
     @Produces
     public PluginFactory kuadrant() throws StartException {
         return () ->
