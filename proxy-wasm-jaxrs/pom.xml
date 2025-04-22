@@ -75,11 +75,8 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-javadoc-plugin</artifactId>
-        <version>${javadoc-plugin.version}</version>
+        <version>${maven-javadoc-plugin.version}</version>
         <configuration>
-          <sourceFileExcludes>
-            <sourceFileExclude>**/internal/**</sourceFileExclude>
-          </sourceFileExcludes>
           <offlineLinks>
             <offlineLink>
               <url>https://www.javadoc.io/doc/io.roastedroot/proxy-wasm-java-host/${project.version}/</url>
