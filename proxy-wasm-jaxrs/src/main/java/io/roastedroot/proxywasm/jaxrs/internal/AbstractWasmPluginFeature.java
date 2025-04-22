@@ -45,6 +45,9 @@ public abstract class AbstractWasmPluginFeature implements DynamicFeature {
         }
     }
 
+    /**
+     * Destroy all plugin pools. This method should be called when the application is shutting down
+     */
     public void destroy() {
         for (var pool : pluginPools.values()) {
             pool.close();
