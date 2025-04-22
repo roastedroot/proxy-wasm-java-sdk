@@ -24,36 +24,81 @@ import jakarta.ws.rs.core.Response;
 @WasmPlugin("waf") // use the corsaWAF filter
 public class Anything {
 
+    /**
+     * Default constructor.
+     */
+    public Anything() {
+        // Default constructor
+    }
+
+    /**
+     * Handles GET requests.
+     * @param headers The HTTP headers.
+     * @return A Response mirroring the request headers.
+     */
     @GET
     public Response gext(@Context HttpHeaders headers) {
         return process(headers, null);
     }
 
+    /**
+     * Handles DELETE requests.
+     * @param headers The HTTP headers.
+     * @return A Response mirroring the request headers.
+     */
     @DELETE
     public Response delete(HttpHeaders headers) {
         return process(headers, null);
     }
 
+    /**
+     * Handles OPTIONS requests.
+     * @param headers The HTTP headers.
+     * @return A Response mirroring the request headers.
+     */
     @OPTIONS
     public Response options(HttpHeaders headers) {
         return process(headers, null);
     }
 
+    /**
+     * Handles HEAD requests.
+     * @param headers The HTTP headers.
+     * @return A Response mirroring the request headers.
+     */
     @HEAD
     public Response head(HttpHeaders headers) {
         return process(headers, null);
     }
 
+    /**
+     * Handles POST requests.
+     * @param headers The HTTP headers.
+     * @param body The request body.
+     * @return A Response mirroring the request headers and body.
+     */
     @POST
     public Response postx(HttpHeaders headers, String body) {
         return process(headers, body);
     }
 
+    /**
+     * Handles PUT requests.
+     * @param headers The HTTP headers.
+     * @param body The request body.
+     * @return A Response mirroring the request headers and body.
+     */
     @PUT
     public Response put(HttpHeaders headers, String body) {
         return process(headers, body);
     }
 
+    /**
+     * Handles PATCH requests.
+     * @param headers The HTTP headers.
+     * @param body The request body.
+     * @return A Response mirroring the request headers and body.
+     */
     @PATCH
     public Response patch(HttpHeaders headers, String body) {
         return process(headers, body);

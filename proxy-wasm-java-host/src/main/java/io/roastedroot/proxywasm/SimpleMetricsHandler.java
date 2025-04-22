@@ -17,6 +17,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class SimpleMetricsHandler implements MetricsHandler {
 
     /**
+     * Default constructor.
+     */
+    public SimpleMetricsHandler() {
+        // Default constructor for SimpleMetricsHandler
+    }
+
+    /**
      * Represents an individual metric managed by {@link SimpleMetricsHandler}.
      * Stores the metric's ID, type, name, and its current value.
      * Note: Histograms are stored as a single value (like a Gauge) in this simple implementation.
@@ -42,6 +49,8 @@ public class SimpleMetricsHandler implements MetricsHandler {
         }
 
         /**
+         * Gets the unique integer ID of the metric.
+         *
          * @return The unique integer ID of the metric.
          */
         public int id() {
@@ -49,6 +58,8 @@ public class SimpleMetricsHandler implements MetricsHandler {
         }
 
         /**
+         * Gets the type of the metric.
+         *
          * @return The {@link MetricType} of the metric.
          */
         public MetricType type() {
@@ -56,6 +67,8 @@ public class SimpleMetricsHandler implements MetricsHandler {
         }
 
         /**
+         * Gets the name of the metric.
+         *
          * @return The name of the metric.
          */
         public String name() {
@@ -63,6 +76,8 @@ public class SimpleMetricsHandler implements MetricsHandler {
         }
 
         /**
+         * Gets the current value of the metric.
+         *
          * @return The current value of the metric.
          */
         public long getValue() {

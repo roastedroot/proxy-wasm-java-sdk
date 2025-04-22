@@ -18,18 +18,18 @@ import java.util.List;
  * <p>If you are using a CDI container like quarkus, you will be using the
  * {@link io.roastedroot.proxywasm.jaxrs.cdi.WasmPluginFeature} instead.
  *
- * <pre>{@code
+ * <pre>
  * public class MyApplication extends jakarta.ws.rs.core.Application {
- *     @Override
- *     public Set<Class<?>> getClasses() {
- *         Set<Class<?>> resources = new HashSet<>();
+ *     &#64;Override
+ *     public Set&lt;Class&lt;?&gt;&gt; getClasses() {
+ *         Set&lt;Class&lt;?&gt;&gt; resources = new HashSet&lt;&gt;();
  *         resources.add(MyResource.class);
  *         return resources;
  *     }
  *
- *     @Override
- *     public Set<Object> getSingletons() {
- *         Set<Object> singletons = new HashSet<>();
+ *     &#64;Override
+ *     public Set&lt;Object&gt; getSingletons() {
+ *         Set&lt;Object&gt; singletons = new HashSet&lt;&gt;();
  *         try {
  *             // Assuming a ServerAdaptor and PluginFactory are available
  *             ServerAdaptor serverAdaptor = ...;
@@ -41,7 +41,7 @@ import java.util.List;
  *         return singletons;
  *     }
  * }
- * }</pre>
+ * </pre>
  *
  * @see WasmPlugin
  * @see WasmPluginFilter

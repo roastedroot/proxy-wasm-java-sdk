@@ -15,6 +15,13 @@ import java.util.HashMap;
  */
 public class SimpleSharedDataHandler implements SharedDataHandler {
 
+    /**
+     * Default constructor.
+     */
+    public SimpleSharedDataHandler() {
+        // Default constructor for SimpleSharedDataHandler
+    }
+
     private final HashMap<String, SharedData> sharedData = new HashMap<>();
 
     /**

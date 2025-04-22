@@ -17,6 +17,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class SimpleSharedQueueHandler implements SharedQueueHandler {
 
     /**
+     * Default constructor.
+     */
+    public SimpleSharedQueueHandler() {
+        // Default constructor for SimpleSharedQueueHandler
+    }
+
+    /**
      * Represents an individual shared queue managed by {@link SimpleSharedQueueHandler}.
      * Each queue has a unique name (within its VM), a host-assigned ID, and holds its data
      * in an in-memory list.
