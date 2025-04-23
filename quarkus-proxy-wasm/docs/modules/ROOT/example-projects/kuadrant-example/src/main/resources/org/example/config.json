@@ -1,0 +1,38 @@
+{
+  "services": {
+    "limitadorA": {
+      "type": "ratelimit",
+      "endpoint": "limitador",
+      "failureMode": "deny"
+    },
+    "limitadorB": {
+      "type": "ratelimit",
+      "endpoint": "limitador",
+      "failureMode": "deny"
+    }
+  },
+  "actionSets": [
+    {
+      "name": "basic",
+      "routeRuleConditions": {
+        "hostnames": [
+          "*.example.com"
+        ]
+      },
+      "actions": [
+        {
+          "service": "limitadorA",
+          "scope": "basic",
+          "data": [
+            {
+              "expression": {
+                "key": "a",
+                "value": "1"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
