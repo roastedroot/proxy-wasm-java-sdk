@@ -53,10 +53,6 @@
 
     <!-- runtime versions -->
     <chicory.version>1.1.0</chicory.version>
-    <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
-    <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
-    <quarkus.platform.version>3.19.3</quarkus.platform.version>
-    <quarkus.version>3.21.0</quarkus.version>
     <jersey.version>3.1.10</jersey.version>
     <jetty.version>11.0.25</jetty.version>
 
@@ -237,19 +233,5 @@
 
     </pluginManagement>
   </build>
-
-  <profiles>
-
-    <!-- Quarkus is only supported on JDK 17 and newer-->
-    <profile>
-      <id>jdk-17-and-newer</id>
-      <activation>
-        <jdk>[17,)</jdk>
-      </activation>
-      <modules>
-        <module>quarkus-proxy-wasm</module>
-      </modules>
-    </profile>
-  </profiles>
 
 </project>
