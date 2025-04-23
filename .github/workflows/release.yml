@@ -41,7 +41,7 @@ jobs:
           gpg --list-secret-keys --keyid-format LONG
 
       - name: Compile
-        run: mvn --no-transfer-progress --batch-mode clean install -DskipTests
+        run: mvn --no-transfer-progress --batch-mode clean install -Prelease
 
       - name: Setup Git
         run: |
