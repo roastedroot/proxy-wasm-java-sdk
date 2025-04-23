@@ -27,7 +27,7 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 
-public final class Plugin extends io.roastedroot.proxywasm.Plugin {
+public final class Plugin implements io.roastedroot.proxywasm.Plugin {
 
     private final ReentrantLock lock = new ReentrantLock();
     final ProxyWasm wasm;

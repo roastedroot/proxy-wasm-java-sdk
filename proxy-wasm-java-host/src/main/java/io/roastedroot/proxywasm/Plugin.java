@@ -14,26 +14,20 @@ import java.util.Map;
 import java.util.function.Function;
 
 /**
- * Represents an instantiated Proxy-WASM plugin, providing the bridge between the host
+ * Represents a Proxy-WASM plugin, providing the bridge between the host
  * environment and the WASM module.
  *
- * <p>This abstract class defines the core structure and lifecycle of a plugin.
- * Concrete plugin instances are created using the {@link Builder}.
+ * <p>Concrete Plugin instances are created using the {@link Builder}.
  * The actual WASM instance and interaction logic are managed internally.
  */
-public abstract class Plugin {
-
-    /**
-     * Protected constructor for subclasses.
-     */
-    protected Plugin() {}
+public interface Plugin {
 
     /**
      * Returns the configured name of this plugin instance.
      *
      * @return the plugin name, which might be null if not explicitly set via the builder.
      */
-    public abstract String name();
+    String name();
 
     /**
      * Creates a new {@link Builder} to configure and construct a {@link Plugin} instance
@@ -42,14 +36,14 @@ public abstract class Plugin {
      * @param module the compiled {@link WasmModule} representing the plugin's code.
      * @return a new {@link Plugin.Builder} instance.
      */
-    public static Plugin.Builder builder(WasmModule module) {
+    static Plugin.Builder builder(WasmModule module) {
         return new Plugin.Builder(module);
     }
 
     /**
      * Builder for creating a Plugin instance.
      */
-    public static final class Builder {
+    final class Builder {
 
         private final WasmModule module;
         private final ProxyWasm.Builder proxyWasmBuilder = ProxyWasm.builder().withStart(false);
