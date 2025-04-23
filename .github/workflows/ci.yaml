@@ -34,4 +34,4 @@ jobs:
           java-version: '${{ matrix.version }}'
           cache: maven
       - name: Test Java
-        run: mvn -B clean install
+        run: mvn --no-transfer-progress -B clean install

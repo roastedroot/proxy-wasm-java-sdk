@@ -8,6 +8,8 @@
   <packaging>pom</packaging>
 
   <name>proxy-wasm-java-host-parent</name>
+
+  <description>The Java host implementation for Proxy-Wasm, enabling developers to run Proxy-Wasm plugins in JAX-RS.</description>
   <url>https://github.com/roastedroot/proxy-wasm-java-host/</url>
 
   <licenses>
@@ -18,11 +20,30 @@
       <comments>A business-friendly OSS license</comments>
     </license>
   </licenses>
+  <developers>
+    <developer>
+      <id>chirino</id>
+      <name>Hiram Chirino</name>
+      <email>hiram@hiramchirino.com</email>
+      <organization>Red Hat</organization>
+    </developer>
+    <developer>
+      <id>andreaTP</id>
+      <name>Andrea Peruffo</name>
+      <email>andrea.peruffo1982@gmail.com</email>
+      <organization>Red Hat</organization>
+    </developer>
+  </developers>
 
   <modules>
     <module>proxy-wasm-java-host</module>
     <module>proxy-wasm-jaxrs</module>
   </modules>
+  <scm>
+    <connection>scm:git:git://github.com/roastedroot/proxy-wasm-java-host.git</connection>
+    <developerConnection>scm:git:git@github.com:roastedroot/proxy-wasm-java-host.git</developerConnection>
+    <url>https://github.com/roastedroot/proxy-wasm-java-host</url>
+  </scm>
 
   <properties>
     <!-- build settings -->
@@ -280,4 +301,5 @@
       </build>
     </profile>
   </profiles>
+
 </project>

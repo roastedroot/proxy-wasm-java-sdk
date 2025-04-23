@@ -41,7 +41,7 @@ jobs:
           gpg --list-secret-keys --keyid-format LONG
 
       - name: Compile
-        run: mvn --batch-mode clean install -DskipTests
+        run: mvn --no-transfer-progress --batch-mode clean install -DskipTests
 
       - name: Setup Git
         run: |
@@ -50,7 +50,7 @@ jobs:
 
       - name: Set the version
         run: |
-          mvn versions:set -DgenerateBackupPoms=false -DnewVersion=${{ github.event.inputs.release-version }}
+          mvn --no-transfer-progress --batch-mode versions:set -DgenerateBackupPoms=false -DnewVersion=${{ github.event.inputs.release-version }}
           git add .
           git commit -m "Release version update ${{ github.event.inputs.release-version }}"
           git tag ${{ github.event.inputs.release-version }}
@@ -60,7 +60,7 @@ jobs:
 
       - name: Release to Maven Central
         run: |
-          mvn --batch-mode deploy -Prelease -DskipTests=true
+          mvn --no-transfer-progress --batch-mode deploy -Prelease -DskipTests=true
         env:
           MAVEN_USERNAME: ${{ secrets.central_username }}
           MAVEN_CENTRAL_TOKEN: ${{ secrets.central_password }}
