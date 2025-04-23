@@ -22,7 +22,6 @@
   <modules>
     <module>proxy-wasm-java-host</module>
     <module>proxy-wasm-jaxrs</module>
-    <module>proxy-wasm-jaxrs-jersey</module>
   </modules>
 
   <properties>
