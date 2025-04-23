@@ -53,7 +53,6 @@ jobs:
           mvn versions:set -DgenerateBackupPoms=false -DnewVersion=${{ github.event.inputs.release-version }}
           git add .
           git commit -m "Release version update ${{ github.event.inputs.release-version }}"
-          git push
           git tag ${{ github.event.inputs.release-version }}
           git push origin ${{ github.event.inputs.release-version }}
         env:
@@ -66,12 +65,3 @@ jobs:
           MAVEN_USERNAME: ${{ secrets.central_username }}
           MAVEN_CENTRAL_TOKEN: ${{ secrets.central_password }}
           MAVEN_GPG_PASSPHRASE: ${{ secrets.java_gpg_passphrase }}
-
-      - name: Back to Snapshot
-        run: |
-          mvn versions:set -DgenerateBackupPoms=false -DnewVersion=9.9.9.9-SNAPSHOT
-          git add .
-          git commit -m "Snapshot version update"
-
-      - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v7
