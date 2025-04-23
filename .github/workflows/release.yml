@@ -72,6 +72,6 @@ jobs:
           mvn versions:set -DgenerateBackupPoms=false -DnewVersion=9.9.9.9-SNAPSHOT
           git add .
           git commit -m "Snapshot version update"
-          git push
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v7
