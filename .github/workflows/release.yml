@@ -41,7 +41,7 @@ jobs:
           gpg --list-secret-keys --keyid-format LONG
 
       - name: Compile
-        run: mvn --no-transfer-progress --batch-mode clean install -Prelease
+        run: mvn --no-transfer-progress --batch-mode clean install
 
       - name: Setup Git
         run: |
@@ -60,7 +60,7 @@ jobs:
 
       - name: Release to Maven Central
         run: |
-          mvn --no-transfer-progress --batch-mode deploy -Prelease -DskipTests=true
+          mvn --no-transfer-progress --batch-mode clean deploy -Prelease -DskipTests=true
         env:
           MAVEN_USERNAME: ${{ secrets.central_username }}
           MAVEN_CENTRAL_TOKEN: ${{ secrets.central_password }}
