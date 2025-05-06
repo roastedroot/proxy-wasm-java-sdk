@@ -29,31 +29,31 @@ import java.util.logging.Logger;
  * and {@link WriterInterceptor} interfaces to intercept HTTP requests and responses,
  * allowing Proxy-Wasm plugins to process them.
  *
- * <p>This filter is registered by the {@link WasmPluginFeature}. It interacts with
+ * <p>This filter is registered by the {@link ProxyWasmFeature}. It interacts with
  * {@link Plugin} instances obtained from configured {@link Pool}s to execute the
  * appropriate Proxy-Wasm ABI functions (e.g., {@code on_http_request_headers},
  * {@code on_http_response_body}) at different stages of the JAX-RS request/response lifecycle.
  *
- * @see WasmPluginFeature
- * @see WasmPlugin
+ * @see ProxyWasmFeature
+ * @see ProxyWasm
  * @see Plugin
  */
-public class WasmPluginFilter
+public class ProxyWasmFilter
         implements ContainerRequestFilter, WriterInterceptor, ContainerResponseFilter {
 
     private static final String FILTER_CONTEXT = PluginHttpContext.class.getName() + ".context";
 
-    private static final Logger LOGGER = Logger.getLogger(WasmPluginFilter.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(ProxyWasmFilter.class.getName());
 
     private final List<Pool> pluginPools;
 
     /**
-     * Constructs a WasmPluginFilter.
+     * Constructs a ProxyWasmFilter.
      *
      * @param pluginPools A list of {@link Pool} instances, each managing a pool of {@link Plugin}
      *                    instances for a specific Wasm module.
      */
-    public WasmPluginFilter(List<Pool> pluginPools) {
+    public ProxyWasmFilter(List<Pool> pluginPools) {
         this.pluginPools = List.copyOf(pluginPools);
     }
 

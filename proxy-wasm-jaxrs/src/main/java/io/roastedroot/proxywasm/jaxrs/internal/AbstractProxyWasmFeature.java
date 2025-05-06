@@ -5,8 +5,8 @@ import io.roastedroot.proxywasm.StartException;
 import io.roastedroot.proxywasm.internal.Plugin;
 import io.roastedroot.proxywasm.internal.Pool;
 import io.roastedroot.proxywasm.internal.ServerAdaptor;
-import io.roastedroot.proxywasm.jaxrs.WasmPlugin;
-import io.roastedroot.proxywasm.jaxrs.WasmPluginFilter;
+import io.roastedroot.proxywasm.jaxrs.ProxyWasm;
+import io.roastedroot.proxywasm.jaxrs.ProxyWasmFilter;
 import jakarta.ws.rs.container.DynamicFeature;
 import jakarta.ws.rs.container.ResourceInfo;
 import jakarta.ws.rs.core.FeatureContext;
@@ -15,7 +15,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.stream.Collectors;
 
-public abstract class AbstractWasmPluginFeature implements DynamicFeature {
+public abstract class AbstractProxyWasmFeature implements DynamicFeature {
 
     private final HashMap<String, Pool> pluginPools = new HashMap<>();
 
@@ -68,11 +68,11 @@ public abstract class AbstractWasmPluginFeature implements DynamicFeature {
 
         var resourceMethod = resourceInfo.getResourceMethod();
         if (resourceMethod != null) {
-            WasmPlugin pluignNameAnnotation = resourceMethod.getAnnotation(WasmPlugin.class);
+            ProxyWasm pluignNameAnnotation = resourceMethod.getAnnotation(ProxyWasm.class);
             if (pluignNameAnnotation == null) {
                 // If no annotation on method, check the class level
                 pluignNameAnnotation =
-                        resourceInfo.getResourceClass().getAnnotation(WasmPlugin.class);
+                        resourceInfo.getResourceClass().getAnnotation(ProxyWasm.class);
             }
             if (pluignNameAnnotation != null) {
                 var pools =
@@ -95,7 +95,7 @@ public abstract class AbstractWasmPluginFeature implements DynamicFeature {
                                             }
                                         })
                                 .collect(Collectors.toList());
-                context.register(new WasmPluginFilter(pools));
+                context.register(new ProxyWasmFilter(pools));
             }
         }
     }
