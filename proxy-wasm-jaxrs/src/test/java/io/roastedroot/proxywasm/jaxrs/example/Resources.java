@@ -1,6 +1,6 @@
 package io.roastedroot.proxywasm.jaxrs.example;
 
-import io.roastedroot.proxywasm.jaxrs.WasmPlugin;
+import io.roastedroot.proxywasm.jaxrs.ProxyWasm;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.HeaderParam;
 import jakarta.ws.rs.POST;
@@ -37,42 +37,42 @@ public class Resources {
 
     @Path("/headerTests")
     @GET
-    @WasmPlugin("headerTests")
+    @ProxyWasm("headerTests")
     public String httpHeaders(@HeaderParam("x-request-counter") String counter) {
         return String.format("counter: %s", counter);
     }
 
     @Path("/headerTestsNotShared")
     @GET
-    @WasmPlugin("headerTestsNotShared")
+    @ProxyWasm("headerTestsNotShared")
     public String notSharedHttpHeaders(@HeaderParam("x-request-counter") String counter) {
         return String.format("counter: %s", counter);
     }
 
     @Path("/tickTests/{sub: .+ }")
     @GET
-    @WasmPlugin("tickTests")
+    @ProxyWasm("tickTests")
     public String tickTests(@PathParam("sub") String sub) {
         return "hello world";
     }
 
     @Path("/ffiTests/reverse")
     @POST
-    @WasmPlugin("ffiTests")
+    @ProxyWasm("ffiTests")
     public String ffiTests(String body) {
         return body;
     }
 
     @Path("/httpCallTests")
     @GET
-    @WasmPlugin("httpCallTests")
+    @ProxyWasm("httpCallTests")
     public String httpCallTests() {
         return "hello world";
     }
 
     @Path("/httpCallTestsAndFFI")
     @GET
-    @WasmPlugin({"ffiTests", "httpCallTests"})
+    @ProxyWasm({"ffiTests", "httpCallTests"})
     public String httpCallTestsAndFFI() {
         return "hello world";
     }

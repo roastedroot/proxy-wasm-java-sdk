@@ -1,7 +1,7 @@
 package io.roastedroot.proxywasm.jaxrs.example.tests;
 
 import io.restassured.specification.RequestSpecification;
-import io.roastedroot.proxywasm.jaxrs.WasmPluginFeature;
+import io.roastedroot.proxywasm.jaxrs.ProxyWasmFeature;
 import io.roastedroot.proxywasm.jaxrs.example.App;
 import io.roastedroot.proxywasm.jaxrs.example.Resources;
 import io.roastedroot.proxywasm.jaxrs.internal.BlockingServerAdaptor;
@@ -30,9 +30,9 @@ public class BaseTest {
         ResourceConfig resourceConfig = new ResourceConfig();
         resourceConfig.register(Resources.class);
 
-        // Create mock Instance<PluginFactory> for WasmPluginFeature
+        // Create mock Instance<PluginFactory> for ProxyWasmFeature
         resourceConfig.register(
-                new WasmPluginFeature(
+                new ProxyWasmFeature(
                         new BlockingServerAdaptor(),
                         App.headerTests(),
                         App.headerTestsNotShared(),

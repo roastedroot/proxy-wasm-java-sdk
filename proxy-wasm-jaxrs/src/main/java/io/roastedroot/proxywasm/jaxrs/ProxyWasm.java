@@ -12,15 +12,15 @@ import java.lang.annotation.Target;
  *
  * <p>Apply this annotation to JAX-RS resource classes or methods to enable filtering
  * by the Proxy-Wasm plugins identified by the names specified in the {@link #value()} attribute.
- * The {@link WasmPluginFeature} must be registered for this annotation to have effect.
+ * The {@link ProxyWasmFeature} must be registered for this annotation to have effect.
  *
- * @see WasmPluginFeature
- * @see WasmPluginFilter
+ * @see ProxyWasmFeature
+ * @see ProxyWasmFilter
  */
 @NameBinding
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE, ElementType.METHOD})
-public @interface WasmPlugin {
+public @interface ProxyWasm {
     /**
      * Specifies the names of the Proxy-Wasm plugins that should filter the annotated
      * resource class or method.

@@ -3,7 +3,8 @@ package io.roastedroot.proxywasm.jaxrs.cdi;
 import io.roastedroot.proxywasm.PluginFactory;
 import io.roastedroot.proxywasm.StartException;
 import io.roastedroot.proxywasm.internal.ServerAdaptor;
-import io.roastedroot.proxywasm.jaxrs.internal.AbstractWasmPluginFeature;
+import io.roastedroot.proxywasm.jaxrs.ProxyWasmFilter;
+import io.roastedroot.proxywasm.jaxrs.internal.AbstractProxyWasmFeature;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -26,11 +27,11 @@ import jakarta.ws.rs.ext.Provider;
  * will then automatically register the necessary filters.
  *
  * <p>Note: This class is intended for use in CDI environments. If you are not using CDI, you can
- * use the {@link io.roastedroot.proxywasm.jaxrs.WasmPluginFeature} class directly to register the
+ * use the {@link io.roastedroot.proxywasm.jaxrs.ProxyWasmFeature} class directly to register the
  * feature with your JAX-RS application.
  *
- * @see io.roastedroot.proxywasm.jaxrs.WasmPluginFeature
- * @see io.roastedroot.proxywasm.jaxrs.WasmPluginFilter
+ * @see io.roastedroot.proxywasm.jaxrs.ProxyWasmFeature
+ * @see ProxyWasmFilter
  * @see PluginFactory
  * @see ServerAdaptor
  * @see Provider
@@ -40,19 +41,19 @@ import jakarta.ws.rs.ext.Provider;
  */
 @Provider
 @ApplicationScoped
-public class WasmPluginFeature extends AbstractWasmPluginFeature {
+public class ProxyWasmFeature extends AbstractProxyWasmFeature {
 
     @Inject Instance<PluginFactory> factories;
 
     @Inject @Any ServerAdaptor serverAdaptor;
 
     /**
-     * Creates a new instance of the WasmPluginFeature.
+     * Creates a new instance of the ProxyWasmFeature.
      */
-    public WasmPluginFeature() {}
+    public ProxyWasmFeature() {}
 
     /**
-     * Initializes the WasmPluginFeature using injected CDI dependencies.
+     * Initializes the ProxyWasmFeature using injected CDI dependencies.
      * This method is automatically called by the CDI container after dependency injection
      * is complete.
      *
