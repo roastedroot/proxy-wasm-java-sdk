@@ -2,7 +2,6 @@ package io.roastedroot.proxywasm.jaxrs.internal;
 
 import io.roastedroot.proxywasm.PluginFactory;
 import io.roastedroot.proxywasm.StartException;
-import io.roastedroot.proxywasm.internal.Plugin;
 import io.roastedroot.proxywasm.internal.Pool;
 import io.roastedroot.proxywasm.internal.ServerAdaptor;
 import io.roastedroot.proxywasm.jaxrs.ProxyWasm;
@@ -27,20 +26,14 @@ public abstract class AbstractProxyWasmFeature implements DynamicFeature {
         }
 
         for (var factory : factories) {
-            Plugin plugin = null;
-            try {
-                plugin = (Plugin) factory.create();
-            } catch (Throwable e) {
-                throw new StartException("Plugin create failed.", e);
-            }
-            String name = plugin.name();
+            String name = factory.name();
             if (this.pluginPools.containsKey(name)) {
                 throw new IllegalArgumentException("Duplicate wasm plugin name: " + name);
             }
             Pool pool =
-                    plugin.isShared()
-                            ? new Pool.SharedPlugin(serverAdaptor, plugin)
-                            : new Pool.PluginPerRequest(serverAdaptor, factory, plugin);
+                    factory.shared()
+                            ? new Pool.SharedPlugin(serverAdaptor, factory)
+                            : new Pool.PluginPerRequest(serverAdaptor, factory);
             this.pluginPools.put(name, pool);
         }
     }
