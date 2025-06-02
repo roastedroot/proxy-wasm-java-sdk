@@ -4,6 +4,7 @@ import static io.roastedroot.proxywasm.internal.Helpers.string;
 
 import io.roastedroot.proxywasm.StartException;
 import io.roastedroot.proxywasm.internal.Action;
+import io.roastedroot.proxywasm.internal.HttpRequestBody;
 import io.roastedroot.proxywasm.internal.Plugin;
 import io.roastedroot.proxywasm.internal.PluginHttpContext;
 import io.roastedroot.proxywasm.internal.Pool;
@@ -25,14 +26,19 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Implements the JAX-RS {@link ContainerRequestFilter}, {@link ContainerResponseFilter},
- * and {@link WriterInterceptor} interfaces to intercept HTTP requests and responses,
+ * Implements the JAX-RS {@link ContainerRequestFilter},
+ * {@link ContainerResponseFilter},
+ * and {@link WriterInterceptor} interfaces to intercept HTTP requests and
+ * responses,
  * allowing Proxy-Wasm plugins to process them.
  *
- * <p>This filter is registered by the {@link ProxyWasmFeature}. It interacts with
- * {@link Plugin} instances obtained from configured {@link Pool}s to execute the
+ * <p>
+ * This filter is registered by the {@link ProxyWasmFeature}. It interacts with
+ * {@link Plugin} instances obtained from configured {@link Pool}s to execute
+ * the
  * appropriate Proxy-Wasm ABI functions (e.g., {@code on_http_request_headers},
- * {@code on_http_response_body}) at different stages of the JAX-RS request/response lifecycle.
+ * {@code on_http_response_body}) at different stages of the JAX-RS
+ * request/response lifecycle.
  *
  * @see ProxyWasmFeature
  * @see ProxyWasm
@@ -50,7 +56,8 @@ public class ProxyWasmFilter
     /**
      * Constructs a ProxyWasmFilter.
      *
-     * @param pluginPools A list of {@link Pool} instances, each managing a pool of {@link Plugin}
+     * @param pluginPools A list of {@link Pool} instances, each managing a pool of
+     *                    {@link Plugin}
      *                    instances for a specific Wasm module.
      */
     public ProxyWasmFilter(List<Pool> pluginPools) {
@@ -76,10 +83,15 @@ public class ProxyWasmFilter
     /**
      * Intercepts incoming JAX-RS requests before they reach the resource method.
      *
-     * <p>This method iterates through the configured plugin pools, borrows a {@link Plugin}
-     * instance from each, creates a {@link PluginHttpContext}, and calls the plugin's
-     * {@code on_http_request_headers} and potentially {@code on_http_request_body} functions.
-     * It handles potential early responses or modifications dictated by the plugins.
+     * <p>
+     * This method iterates through the configured plugin pools, borrows a
+     * {@link Plugin}
+     * instance from each, creates a {@link PluginHttpContext}, and calls the
+     * plugin's
+     * {@code on_http_request_headers} and potentially {@code on_http_request_body}
+     * functions.
+     * It handles potential early responses or modifications dictated by the
+     * plugins.
      *
      * @param requestContext The JAX-RS request context.
      * @throws IOException If an I/O error occurs, typically during body processing.
@@ -89,6 +101,7 @@ public class ProxyWasmFilter
 
         ArrayList<FilterContext> filterContexts = new ArrayList<>();
         requestContext.setProperty(FILTER_CONTEXT, filterContexts);
+
         for (var pluginPool : pluginPools) {
             try {
                 Plugin plugin = pluginPool.borrow();
@@ -100,6 +113,7 @@ public class ProxyWasmFilter
                                     serverAdaptor.httpRequestAdaptor(requestContext);
                     requestAdaptor.setRequestContext(requestContext);
                     var httpContext = plugin.createHttpContext(requestAdaptor);
+
                     filterContexts.add(new FilterContext(pluginPool, plugin, httpContext));
                 } finally {
                     plugin.unlock();
@@ -116,6 +130,17 @@ public class ProxyWasmFilter
                 return;
             }
         }
+
+        // Create a shared lazy body supplier for all plugins
+        HttpRequestBody bodySupplier = new HttpRequestBody(() -> requestContext.getEntityStream());
+
+        // Set up lazy providers for all plugins that need the body
+        for (var filterContext : filterContexts) {
+            if (filterContext.httpContext.context().hasOnRequestBody()) {
+                filterContext.httpContext.setHttpRequestBodyState(bodySupplier);
+            }
+        }
+
         for (var filterContext : filterContexts) {
             filter(requestContext, filterContext);
         }
@@ -147,29 +172,30 @@ public class ProxyWasmFilter
             // the plugin may not be interested in the request body.
             if (httpContext.context().hasOnRequestBody()) {
 
-                // TODO: find out if it's more efficient to read the body in chunks and do multiple
-                // callOnRequestBody calls.
-                byte[] bytes = requestContext.getEntityStream().readAllBytes();
+                HttpRequestBody httpRequestBodyState = httpContext.getHttpRequestBodyState();
 
-                httpContext.setHttpRequestBody(bytes);
-                var action = httpContext.context().callOnRequestBody(true);
-                bytes = httpContext.getHttpRequestBody();
-                if (action == Action.CONTINUE) {
-                    // continue means plugin is done reading the body.
-                    httpContext.setHttpRequestBody(null);
-                } else {
+                while (true) {
+                    // if we streamed body updates, then endOfStream would be initially false
+                    var action = httpContext.context().callOnRequestBody(true);
+
+                    // does the plugin want to respond early?
+                    var sendResponse = httpContext.consumeSentHttpResponse();
+                    if (sendResponse != null) {
+                        requestContext.abortWith(toResponse(sendResponse));
+                        return;
+                    }
+
+                    if (action == Action.CONTINUE) {
+                        break;
+                    }
                     httpContext.maybePause();
                 }
 
-                // does the plugin want to respond early?
-                var sendResponse = httpContext.consumeSentHttpResponse();
-                if (sendResponse != null) {
-                    requestContext.abortWith(toResponse(sendResponse));
-                    return;
+                // Body was accessed and potentially modified, update the request stream
+                if (httpRequestBodyState.isLoaded()) {
+                    byte[] bytes = httpRequestBodyState.getBodyIfLoaded();
+                    requestContext.setEntityStream(new java.io.ByteArrayInputStream(bytes));
                 }
-
-                // plugin may have modified the body
-                requestContext.setEntityStream(new java.io.ByteArrayInputStream(bytes));
             }
 
         } finally {
@@ -184,10 +210,14 @@ public class ProxyWasmFilter
     /**
      * Intercepts outgoing JAX-RS responses before the entity is written.
      *
-     * <p>This method iterates through the configured plugin pools, retrieves the
-     * {@link PluginHttpContext} created during the request phase, and calls the plugin's
-     * {@code on_http_response_headers} function. It handles potential modifications to the
-     * response headers dictated by the plugins. If the response has no entity but the plugin
+     * <p>
+     * This method iterates through the configured plugin pools, retrieves the
+     * {@link PluginHttpContext} created during the request phase, and calls the
+     * plugin's
+     * {@code on_http_response_headers} function. It handles potential modifications
+     * to the
+     * response headers dictated by the plugins. If the response has no entity but
+     * the plugin
      * implements {@code on_http_response_body}, it invokes that callback as well.
      *
      * @param requestContext  The JAX-RS request context.
@@ -274,15 +304,20 @@ public class ProxyWasmFilter
     /**
      * Intercepts the response body writing process.
      *
-     * <p>This method is called when the JAX-RS framework is about to serialize and write
+     * <p>
+     * This method is called when the JAX-RS framework is about to serialize and
+     * write
      * the response entity. It captures the original response body, allows plugins
-     * (via {@code on_http_response_body}) to inspect or modify it, and then writes the
+     * (via {@code on_http_response_body}) to inspect or modify it, and then writes
+     * the
      * potentially modified body to the original output stream. It handles potential
      * early responses dictated by the plugins during body processing.
      *
      * @param ctx The JAX-RS writer interceptor context.
-     * @throws IOException             If an I/O error occurs during stream processing.
-     * @throws WebApplicationException If a plugin decides to abort processing and send an
+     * @throws IOException             If an I/O error occurs during stream
+     *                                 processing.
+     * @throws WebApplicationException If a plugin decides to abort processing and
+     *                                 send an
      *                                 alternative response during body filtering.
      */
     @Override

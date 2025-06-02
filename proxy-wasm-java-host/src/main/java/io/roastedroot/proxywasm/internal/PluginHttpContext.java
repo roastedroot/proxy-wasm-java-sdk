@@ -13,7 +13,9 @@ public class PluginHttpContext {
     private final long startedAt = System.currentTimeMillis();
 
     final HashMap<List<String>, byte[]> properties = new HashMap<>();
-    private byte[] httpRequestBody = new byte[0];
+    private HttpRequestBody httpRequestBodyState;
+
+    // Other body buffers and state fields (not lazy)
     private byte[] grpcReceiveBuffer = new byte[0];
     private byte[] upstreamData = new byte[0];
     private byte[] downStreamData = new byte[0];
@@ -22,10 +24,43 @@ public class PluginHttpContext {
     private Action action;
     private CountDownLatch resumeLatch;
 
-    PluginHttpContext(Plugin plugin, HttpRequestAdaptor requestAdaptor) {
+    public PluginHttpContext(Plugin plugin, HttpRequestAdaptor requestAdaptor) {
         this.plugin = plugin;
         this.requestAdaptor = requestAdaptor;
         this.context = plugin.wasm.createHttpContext(new HandlerImpl());
+    }
+
+    /**
+     * Sets the lazy request body supplier.
+     */
+    public void setHttpRequestBodyState(HttpRequestBody supplier) {
+        this.httpRequestBodyState = supplier;
+    }
+
+    /**
+     * Gets the lazy request body supplier.
+     */
+    public HttpRequestBody getHttpRequestBodyState() {
+        return httpRequestBodyState;
+    }
+
+    /**
+     * Gets the HTTP request body, triggering lazy loading if needed.
+     */
+    public byte[] getHttpRequestBody() {
+        if (httpRequestBodyState != null) {
+            return httpRequestBodyState.get();
+        }
+        return new byte[0];
+    }
+
+    /**
+     * Sets the HTTP request body, updating the supplier if present.
+     */
+    public void setHttpRequestBody(byte[] body) {
+        if (httpRequestBodyState != null && body != null) {
+            httpRequestBodyState.setBody(body);
+        }
     }
 
     public Plugin plugin() {
@@ -66,14 +101,6 @@ public class PluginHttpContext {
             plugin.lock();
             resumeLatch = null;
         }
-    }
-
-    public byte[] getHttpRequestBody() {
-        return httpRequestBody;
-    }
-
-    public void setHttpRequestBody(byte[] httpRequestBody) {
-        this.httpRequestBody = httpRequestBody;
     }
 
     public byte[] getHttpResponseBody() {
@@ -156,17 +183,21 @@ public class PluginHttpContext {
 
         @Override
         public byte[] getHttpRequestBody() {
-            return httpRequestBody;
+            return PluginHttpContext.this
+                    .getHttpRequestBody(); // Delegate to outer class for lazy loading
         }
 
         @Override
         public WasmResult setHttpRequestBody(byte[] body) {
-            httpRequestBody = body;
+            PluginHttpContext.this.setHttpRequestBody(body); // Delegate to outer class
             return WasmResult.OK;
         }
 
         public void appendHttpRequestBody(byte[] body) {
-            httpRequestBody = Helpers.append(httpRequestBody, body);
+            byte[] currentBody =
+                    PluginHttpContext.this
+                            .getHttpRequestBody(); // This will trigger lazy loading if needed
+            PluginHttpContext.this.setHttpRequestBody(Helpers.append(currentBody, body));
         }
 
         @Override
