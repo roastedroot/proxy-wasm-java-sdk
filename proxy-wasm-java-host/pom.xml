@@ -16,12 +16,12 @@
   <dependencies>
     <dependency>
       <groupId>com.dylibso.chicory</groupId>
-      <artifactId>aot-experimental</artifactId>
+      <artifactId>annotations</artifactId>
       <version>${chicory.version}</version>
     </dependency>
     <dependency>
       <groupId>com.dylibso.chicory</groupId>
-      <artifactId>host-module-annotations-experimental</artifactId>
+      <artifactId>chicory-compiler-maven-plugin</artifactId>
       <version>${chicory.version}</version>
     </dependency>
     <dependency>
@@ -93,7 +93,7 @@
           <annotationProcessorPaths>
             <path>
               <groupId>com.dylibso.chicory</groupId>
-              <artifactId>host-module-processor-experimental</artifactId>
+              <artifactId>annotations-processor</artifactId>
               <version>${chicory.version}</version>
             </path>
           </annotationProcessorPaths>

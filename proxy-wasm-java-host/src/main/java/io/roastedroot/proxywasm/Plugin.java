@@ -301,9 +301,10 @@ public interface Plugin {
          * The {@link Machine} controls the low-level execution of WASM instructions.
          * By default, an interpreter-based machine is used.
          * Providing a custom factory allows using alternative execution strategies, such as
-         * Ahead-Of-Time (AOT) compilation to improve execution performance.
+         * wasm to bytecode compilation to improve execution performance.
          *
-         * <p>See the Chicory documentation (https://chicory.dev/docs/experimental/aot) for more details on Aot compilation.
+         * <p>See the Chicory documentation (https://chicory.dev/docs/usage/runtime-compiler) for more details
+         * on WASM to bytecode compilation and execution.
          *
          * @param machineFactory A function that takes a WASM {@link Instance} and returns a {@link Machine}.
          * @return this {@code Builder} instance for method chaining.
