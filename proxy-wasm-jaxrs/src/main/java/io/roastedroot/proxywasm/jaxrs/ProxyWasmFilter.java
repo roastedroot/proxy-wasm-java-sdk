@@ -5,6 +5,7 @@ import static io.roastedroot.proxywasm.internal.Helpers.string;
 import io.roastedroot.proxywasm.StartException;
 import io.roastedroot.proxywasm.internal.Action;
 import io.roastedroot.proxywasm.internal.HttpRequestBody;
+import io.roastedroot.proxywasm.internal.HttpResponseBody;
 import io.roastedroot.proxywasm.internal.Plugin;
 import io.roastedroot.proxywasm.internal.PluginHttpContext;
 import io.roastedroot.proxywasm.internal.Pool;
@@ -170,32 +171,33 @@ public class ProxyWasmFilter
             }
 
             // the plugin may not be interested in the request body.
-            if (httpContext.context().hasOnRequestBody()) {
+            if (!httpContext.context().hasOnRequestBody()) {
+                return;
+            }
 
-                HttpRequestBody httpRequestBodyState = httpContext.getHttpRequestBodyState();
+            HttpRequestBody httpRequestBodyState = httpContext.getHttpRequestBodyState();
 
-                while (true) {
-                    // if we streamed body updates, then endOfStream would be initially false
-                    var action = httpContext.context().callOnRequestBody(true);
+            while (true) {
+                // if we streamed body updates, then endOfStream would be initially false
+                var action = httpContext.context().callOnRequestBody(true);
 
-                    // does the plugin want to respond early?
-                    var sendResponse = httpContext.consumeSentHttpResponse();
-                    if (sendResponse != null) {
-                        requestContext.abortWith(toResponse(sendResponse));
-                        return;
-                    }
-
-                    if (action == Action.CONTINUE) {
-                        break;
-                    }
-                    httpContext.maybePause();
+                // does the plugin want to respond early?
+                var sendResponse = httpContext.consumeSentHttpResponse();
+                if (sendResponse != null) {
+                    requestContext.abortWith(toResponse(sendResponse));
+                    return;
                 }
 
-                // Body was accessed and potentially modified, update the request stream
-                if (httpRequestBodyState.isLoaded()) {
-                    byte[] bytes = httpRequestBodyState.getBodyIfLoaded();
-                    requestContext.setEntityStream(new java.io.ByteArrayInputStream(bytes));
+                if (action == Action.CONTINUE) {
+                    break;
                 }
+                httpContext.maybePause();
+            }
+
+            // Body was accessed and potentially modified, update the request stream
+            if (httpRequestBodyState.isLoaded()) {
+                byte[] bytes = httpRequestBodyState.getBodyIfLoaded();
+                requestContext.setEntityStream(new java.io.ByteArrayInputStream(bytes));
             }
 
         } finally {
@@ -269,19 +271,17 @@ public class ProxyWasmFilter
                 }
 
                 // aroundWriteTo won't be called if there is no entity to send.
-                if (responseContext.getEntity() == null
-                        && httpContext.context().hasOnResponseBody()) {
+                if (responseContext.getEntity() != null
+                        || !httpContext.context().hasOnResponseBody()) {
+                    return;
+                }
 
-                    byte[] bytes = new byte[0];
-                    httpContext.setHttpResponseBody(bytes);
+                // Set up empty response body for plugins that need it
+                HttpResponseBody responseBodyState = new HttpResponseBody(new byte[0]);
+                httpContext.setHttpResponseBodyState(responseBodyState);
+
+                while (true) {
                     action = httpContext.context().callOnResponseBody(true);
-                    bytes = httpContext.getHttpResponseBody();
-                    if (action == Action.CONTINUE) {
-                        // continue means plugin is done reading the body.
-                        httpContext.setHttpResponseBody(null);
-                    } else {
-                        httpContext.maybePause();
-                    }
 
                     // does the plugin want to respond early?
                     sendResponse = httpContext.consumeSentHttpResponse();
@@ -292,6 +292,11 @@ public class ProxyWasmFilter
                         responseContext.setEntity(response.getEntity());
                         return;
                     }
+
+                    if (action == Action.CONTINUE) {
+                        break;
+                    }
+                    httpContext.maybePause();
                 }
 
             } finally {
@@ -332,41 +337,57 @@ public class ProxyWasmFilter
         try {
 
             var original = ctx.getOutputStream();
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            ctx.setOutputStream(baos);
-            ctx.proceed();
 
-            byte[] bytes = baos.toByteArray();
+            HttpResponseBody sharedResponseBody =
+                    new HttpResponseBody(
+                            () -> {
+                                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                                ctx.setOutputStream(baos);
+                                try {
+                                    ctx.proceed();
+                                } catch (Exception e) {
+                                    throw new RuntimeException("Failed to read response body", e);
+                                }
+                                return baos.toByteArray();
+                            });
 
             for (var filterContext : List.copyOf(filterContexts)) {
                 var httpContext = filterContext.httpContext;
 
                 httpContext.plugin().lock();
 
-                // the plugin may not be interested in the request body.
+                // the plugin may not be interested in the response body.
                 if (!httpContext.context().hasOnResponseBody()) {
-                    ctx.proceed();
+                    continue;
                 }
 
-                httpContext.setHttpResponseBody(bytes);
-                var action = httpContext.context().callOnResponseBody(true);
-                bytes = httpContext.getHttpResponseBody();
-                if (action == Action.CONTINUE) {
-                    // continue means plugin is done reading the body.
-                    httpContext.setHttpResponseBody(null);
-                } else {
+                // Set up lazy response body - will only be accessed if plugin needs it
+                httpContext.setHttpResponseBodyState(sharedResponseBody);
+
+                while (true) {
+                    var action = httpContext.context().callOnResponseBody(true);
+
+                    // does the plugin want to respond early?
+                    var sendResponse = httpContext.consumeSentHttpResponse();
+                    if (sendResponse != null) {
+                        throw new WebApplicationException(toResponse(sendResponse));
+                    }
+
+                    if (action == Action.CONTINUE) {
+                        break;
+                    }
                     httpContext.maybePause();
-                }
-
-                // does the plugin want to respond early?
-                var sendResponse = httpContext.consumeSentHttpResponse();
-                if (sendResponse != null) {
-                    throw new WebApplicationException(toResponse(sendResponse));
                 }
             }
 
-            // plugin may have modified the body
-            original.write(bytes);
+            // Write the response body - if it was accessed and modified, use that,
+            // otherwise continue with the original stream.
+            if (sharedResponseBody.isLoaded()) {
+                original.write(sharedResponseBody.get());
+            } else {
+                // Body was never accessed by any plugin, use original
+                ctx.proceed();
+            }
 
         } finally {
             for (var filterContext : List.copyOf(filterContexts)) {

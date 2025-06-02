@@ -14,12 +14,12 @@ public class PluginHttpContext {
 
     final HashMap<List<String>, byte[]> properties = new HashMap<>();
     private HttpRequestBody httpRequestBodyState;
+    private HttpResponseBody httpResponseBodyState;
 
     // Other body buffers and state fields (not lazy)
     private byte[] grpcReceiveBuffer = new byte[0];
     private byte[] upstreamData = new byte[0];
     private byte[] downStreamData = new byte[0];
-    private byte[] httpResponseBody = new byte[0];
     private SendResponse sendResponse;
     private Action action;
     private CountDownLatch resumeLatch;
@@ -63,6 +63,39 @@ public class PluginHttpContext {
         }
     }
 
+    /**
+     * Sets the HTTP response body state.
+     */
+    public void setHttpResponseBodyState(HttpResponseBody responseBody) {
+        this.httpResponseBodyState = responseBody;
+    }
+
+    /**
+     * Gets the HTTP response body state.
+     */
+    public HttpResponseBody getHttpResponseBodyState() {
+        return httpResponseBodyState;
+    }
+
+    /**
+     * Gets the HTTP response body, triggering lazy loading if needed.
+     */
+    public byte[] getHttpResponseBody() {
+        if (httpResponseBodyState != null) {
+            return httpResponseBodyState.get();
+        }
+        return new byte[0];
+    }
+
+    /**
+     * Sets the HTTP response body, updating the state if present.
+     */
+    public void setHttpResponseBody(byte[] httpResponseBody) {
+        if (httpResponseBodyState != null && httpResponseBody != null) {
+            httpResponseBodyState.setBody(httpResponseBody);
+        }
+    }
+
     public Plugin plugin() {
         return plugin;
     }
@@ -101,14 +134,6 @@ public class PluginHttpContext {
             plugin.lock();
             resumeLatch = null;
         }
-    }
-
-    public byte[] getHttpResponseBody() {
-        return httpResponseBody;
-    }
-
-    public void setHttpResponseBody(byte[] httpResponseBody) {
-        this.httpResponseBody = httpResponseBody;
     }
 
     public byte[] getGrpcReceiveBuffer() {
@@ -235,17 +260,18 @@ public class PluginHttpContext {
 
         @Override
         public byte[] getHttpResponseBody() {
-            return httpResponseBody;
+            return PluginHttpContext.this.getHttpResponseBody();
         }
 
         @Override
         public WasmResult setHttpResponseBody(byte[] body) {
-            httpResponseBody = body;
+            PluginHttpContext.this.setHttpResponseBody(body);
             return WasmResult.OK;
         }
 
         public void appendHttpResponseBody(byte[] body) {
-            httpResponseBody = Helpers.append(httpResponseBody, body);
+            byte[] currentBody = PluginHttpContext.this.getHttpResponseBody();
+            PluginHttpContext.this.setHttpResponseBody(Helpers.append(currentBody, body));
         }
 
         // //////////////////////////////////////////////////////////////////////
