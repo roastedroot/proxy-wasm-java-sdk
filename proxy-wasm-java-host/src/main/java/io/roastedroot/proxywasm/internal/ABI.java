@@ -5,8 +5,8 @@ import static io.roastedroot.proxywasm.internal.Helpers.replaceBytes;
 import static io.roastedroot.proxywasm.internal.Helpers.split;
 import static io.roastedroot.proxywasm.internal.Helpers.string;
 
-import com.dylibso.chicory.experimental.hostmodule.annotations.HostModule;
-import com.dylibso.chicory.experimental.hostmodule.annotations.WasmExport;
+import com.dylibso.chicory.annotations.HostModule;
+import com.dylibso.chicory.annotations.WasmExport;
 import com.dylibso.chicory.runtime.ExportFunction;
 import com.dylibso.chicory.runtime.Instance;
 import com.dylibso.chicory.runtime.Memory;
