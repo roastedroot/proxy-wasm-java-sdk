@@ -32,7 +32,6 @@ public final class Plugin implements io.roastedroot.proxywasm.Plugin {
     private final ReentrantLock lock = new ReentrantLock();
     final ProxyWasm wasm;
     ServerAdaptor serverAdaptor;
-    private final boolean shared;
     private final String name;
 
     private final MetricsHandler metricsHandler;
@@ -41,7 +40,6 @@ public final class Plugin implements io.roastedroot.proxywasm.Plugin {
 
     public Plugin(
             ProxyWasm proxyWasm,
-            boolean shared,
             String name,
             HashMap<String, ForeignFunction> foreignFunctions,
             HashMap<String, URI> upstreams,
@@ -56,7 +54,6 @@ public final class Plugin implements io.roastedroot.proxywasm.Plugin {
             throws StartException {
         Objects.requireNonNull(proxyWasm);
         this.name = Objects.requireNonNullElse(name, "default");
-        this.shared = shared;
         this.foreignFunctions = Objects.requireNonNullElseGet(foreignFunctions, HashMap::new);
         this.upstreams = Objects.requireNonNullElseGet(upstreams, HashMap::new);
         this.strictUpstreams = strictUpstreams;
@@ -87,10 +84,6 @@ public final class Plugin implements io.roastedroot.proxywasm.Plugin {
 
     public void unlock() {
         lock.unlock();
-    }
-
-    public boolean isShared() {
-        return shared;
     }
 
     public ServerAdaptor getServerAdaptor() {

@@ -8,7 +8,7 @@ The Java host implementation for Proxy-Wasm, enabling developers to run Proxy-Wa
 
 TODO: still need to document how to use in non-cdi containers.
 
-If your using Quarkus, see the [Quarkus Proxy-Wasm Extension](https://github.com/roastedroot/quarkus-proxy-wasm) docs.
+If your using Quarkus, see the [Quarkus Proxy-Wasm Extension](https://docs.quarkiverse.io/quarkus-proxy-wasm/dev/index.html) docs.
 
 ## Building
 
