@@ -3,7 +3,7 @@ package io.roastedroot.proxywasm;
 /**
  * Exception thrown when an error occurs during the initialization or startup phase of a Proxy-WASM plugin.
  *
- * <p>This typically happens during the execution of the {@link Plugin.Builder#build()} method,
+ * <p>This typically happens during the execution of the {@link PluginFactory.Builder#build()} method,
  * encompassing issues such as WASM module instantiation failures, errors within the WASM
  * {@code _start} function, or failures during the initial {@code proxy_on_vm_start} or
  * {@code proxy_on_configure} calls within the plugin.

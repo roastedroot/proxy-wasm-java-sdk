@@ -12,6 +12,13 @@ import jakarta.ws.rs.Path;
 public class Resources {
 
     /**
+     * Default constructor.
+     */
+    public Resources() {
+        // Default constructor for JAX-RS
+    }
+
+    /**
      * Endpoint for testing header manipulation with a shared Wasm plugin instance.
      *
      * @param counter The value of the "x-request-counter" header.

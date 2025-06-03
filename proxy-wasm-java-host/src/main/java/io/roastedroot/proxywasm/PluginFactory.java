@@ -26,7 +26,7 @@ public interface PluginFactory {
     /**
      * Creates and returns a new {@link Plugin} instance.
      * Implementations are responsible for all necessary setup, including potentially
-     * loading the WASM module and configuring it using {@link Plugin#builder(com.dylibso.chicory.wasm.WasmModule)}.
+     * loading the WASM module and configuring it using {@link PluginFactory#builder(com.dylibso.chicory.wasm.WasmModule)}.
      *
      * @return A newly created {@link Plugin} instance.
      * @throws Exception If any error occurs during plugin creation (e.g., file loading, WASM instantiation,

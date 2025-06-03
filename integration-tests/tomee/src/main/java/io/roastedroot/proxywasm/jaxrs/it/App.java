@@ -13,10 +13,19 @@ import java.util.Map;
 @ApplicationScoped
 public class App {
 
+    /**
+     * Default constructor.
+     */
+    public App() {
+        // Default constructor for CDI
+    }
+
     private static final Gson gson = new Gson();
 
     /**
      * Configures the headerTests PluginFactory.
+     *
+     * @return a configured PluginFactory for header testing
      */
     @Produces
     public PluginFactory headerTests() {
