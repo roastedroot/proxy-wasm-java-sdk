@@ -36,3 +36,6 @@ build/
 
 ### Rust ###
 target/
+
+### TomEE ###
+.distribution

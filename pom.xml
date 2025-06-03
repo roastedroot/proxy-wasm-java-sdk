@@ -78,6 +78,21 @@
 
   </properties>
 
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>io.roastedroot</groupId>
+        <artifactId>proxy-wasm-java-host</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.roastedroot</groupId>
+        <artifactId>proxy-wasm-jaxrs</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
   <build>
     <pluginManagement>
       <plugins>
@@ -369,6 +384,17 @@
         </plugins>
       </build>
     </profile>
+
+    <profile>
+      <id>jdk17-modules</id>
+      <activation>
+        <jdk>[17,)</jdk>
+      </activation>
+      <modules>
+        <module>integration-tests/tomee</module>
+      </modules>
+    </profile>
+
   </profiles>
 
 </project>
